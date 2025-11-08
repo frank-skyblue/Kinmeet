@@ -11,6 +11,24 @@ export interface LoginCredentials {
     password: string;
 }
 
+export interface RegisterData {
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+    homeCountry: string;
+    currentLocation?: {
+        province: string;
+        country: string;
+    };
+    currentProvince?: string;
+    currentCountry?: string;
+    languages: string[];
+    interests: string[];
+    lookingFor: string[];
+    photo?: string;
+}
+
 export interface LoginResponse {
     success: boolean;
     message: string;
@@ -18,8 +36,9 @@ export interface LoginResponse {
     user?: {
         id: string;
         email: string;
-        name?: string;
-        role?: string;
+        firstName?: string;
+        lastName?: string;
+        profileComplete?: boolean;
     };
 }
 
@@ -55,9 +74,9 @@ export const authenticationService = {
 
             // Generate JWT token (replace 'your_jwt_secret' with your actual secret)
             const token = jwt.sign(
-                { id: user._id.toString(), email: user.email, name: user.name },
+                { id: user._id.toString(), email: user.email, firstName: user.firstName },
                 process.env.JWT_SECRET || 'your_jwt_secret',
-                { expiresIn: '1d' }
+                { expiresIn: '7d' }
             );
 
             return {
@@ -67,7 +86,9 @@ export const authenticationService = {
                 user: {
                     id: user._id.toString(),
                     email: user.email,
-                    name: user.name
+                    firstName: user.firstName,
+                    lastName: user.lastName,
+                    profileComplete: user.profileComplete
                 }
             };
         } catch (error) {
@@ -78,15 +99,49 @@ export const authenticationService = {
         }
     },
 
-    register: async (credentials: LoginCredentials & { name?: string, role?: string }): Promise<LoginResponse> => {
+    register: async (data: RegisterData): Promise<LoginResponse> => {
         try {
-            const { email, password, name, role } = credentials;
-            if (!email || !password) {
+            const { 
+                email, 
+                password, 
+                firstName, 
+                lastName, 
+                homeCountry, 
+                currentLocation,
+                currentProvince, 
+                currentCountry,
+                languages,
+                interests,
+                lookingFor,
+                photo 
+            } = data;
+
+            // Handle both currentLocation object and separate fields
+            const province = currentLocation?.province || currentProvince;
+            const country = currentLocation?.country || currentCountry;
+
+            // Validate required fields
+            if (!email || !password || !firstName || !lastName || !homeCountry || !province || !country) {
                 return {
                     success: false,
-                    message: "Email and password are required"
+                    message: "All required fields must be provided"
                 };
             }
+
+            if (!languages || languages.length === 0) {
+                return {
+                    success: false,
+                    message: "At least one language is required"
+                };
+            }
+
+            if (!lookingFor || lookingFor.length === 0) {
+                return {
+                    success: false,
+                    message: "Please select what you're looking for"
+                };
+            }
+
             // Password security check
             if (!isPasswordSecure(password)) {
                 return {
@@ -94,6 +149,7 @@ export const authenticationService = {
                     message: "Password must be at least 8 characters long and include uppercase, lowercase, number, and optionally a special character."
                 };
             }
+
             // Check if user already exists
             const existingUser = await User.findOne({ email });
             if (existingUser) {
@@ -102,15 +158,32 @@ export const authenticationService = {
                     message: "User already exists"
                 };
             }
-            // Create new user
-            const newUser = new User({ email, password, name, role });
+
+            // Create new user with profile
+            const newUser = new User({ 
+                email, 
+                password, 
+                firstName,
+                lastName,
+                homeCountry,
+                currentProvince: province,
+                currentCountry: country,
+                languages,
+                interests: interests || [],
+                lookingFor,
+                photo,
+                profileComplete: true
+            });
+            
             await newUser.save();
+
             // Generate JWT token
             const token = jwt.sign(
-                { id: newUser._id.toString(), email: newUser.email, name: newUser.name, role: newUser.role },
+                { id: newUser._id.toString(), email: newUser.email, firstName: newUser.firstName },
                 process.env.JWT_SECRET || 'your_jwt_secret',
-                { expiresIn: '1d' }
+                { expiresIn: '7d' }
             );
+
             return {
                 success: true,
                 message: "Registration successful",
@@ -118,11 +191,13 @@ export const authenticationService = {
                 user: {
                     id: newUser._id.toString(),
                     email: newUser.email,
-                    name: newUser.name,
-                    role: newUser.role
+                    firstName: newUser.firstName,
+                    lastName: newUser.lastName,
+                    profileComplete: newUser.profileComplete
                 }
             };
         } catch (error) {
+            console.error('Registration error:', error);
             return {
                 success: false,
                 message: "Registration failed"

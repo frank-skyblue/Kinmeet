@@ -18,4 +18,7 @@ export const authenticateJWT = (req: AuthRequest, res: Response, next: NextFunct
     } catch (err) {
         return res.status(401).json({ success: false, message: 'Invalid token' });
     }
-}; 
+};
+
+// Alias for backward compatibility
+export const authenticateToken = authenticateJWT; 

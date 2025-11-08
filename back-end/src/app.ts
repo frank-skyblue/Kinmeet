@@ -1,13 +1,19 @@
 import express, { Express } from 'express';
 import cors from 'cors';
 import { connectToDatabase } from './services/mongooseService';
-import lessonRoutes from './routes/lessonRoutes';
 import authRoutes from './routes/authRoutes';
+import profileRoutes from './routes/profileRoutes';
+import matchingRoutes from './routes/matchingRoutes';
+import connectionsRoutes from './routes/connectionsRoutes';
+import chatRoutes from './routes/chatRoutes';
+import blockRoutes from './routes/blockRoutes';
 
 const corsConfig = {
     origin: [
         'http://localhost:3000', // React development server
         'http://localhost:3001', // Alternative React port
+        'http://localhost:5173', // Vite default port
+        'http://localhost:5174', // Vite alternative port
         process.env.REACT_FRONTEND_URL,
         process.env.REACT_FRONTEND_URL_WWW
     ].filter((url): url is string => !!url), // Type guard to ensure only strings
@@ -21,14 +27,37 @@ const port = 8080
 app.use(cors(corsConfig))
 app.use(express.json())
 
+// Request logging middleware
+app.use((req, res, next) => {
+    const start = Date.now();
+    const timestamp = new Date().toISOString();
+    
+    // Log request
+    console.log(`[${timestamp}] ${req.method} ${req.path}`);
+    
+    // Log response when finished
+    res.on('finish', () => {
+        const duration = Date.now() - start;
+        const statusColor = res.statusCode >= 400 ? '\x1b[31m' : res.statusCode >= 300 ? '\x1b[33m' : '\x1b[32m';
+        const resetColor = '\x1b[0m';
+        console.log(`${statusColor}[${timestamp}] ${req.method} ${req.path} - ${res.statusCode}${resetColor} (${duration}ms)`);
+    });
+    
+    next();
+});
+
 router.get('/hello', (req, res) => {
-    res.send('Hello from the backend!')
+    res.send('Hello from KinMeet backend!')
 })
 
 // Routes
 app.use('/api', router)
 app.use('/api/auth', authRoutes);
-app.use('/api/lessons', lessonRoutes);
+app.use('/api/profile', profileRoutes);
+app.use('/api/matching', matchingRoutes);
+app.use('/api/connections', connectionsRoutes);
+app.use('/api/chat', chatRoutes);
+app.use('/api/block', blockRoutes);
 
 const start = async () => {
     try {
