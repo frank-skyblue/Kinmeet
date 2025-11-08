@@ -31,3 +31,4 @@ export const connectToDatabase = async () => {
 mongoose.connection.on('disconnected', () => {
     console.warn('MongoDB disconnected. Trying to reconnect...');
 }); 
+
