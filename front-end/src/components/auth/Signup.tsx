@@ -145,11 +145,11 @@ const Signup: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4 py-8">
-      <div className="max-w-2xl w-full bg-white rounded-2xl shadow-xl p-8">
+    <div className="min-h-screen flex items-center justify-center bg-kin-beige px-4 py-8">
+      <div className="max-w-2xl w-full bg-white rounded-kin-xl shadow-kin-strong p-8">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-indigo-600 mb-2">Join KinMeet</h1>
-          <p className="text-gray-600">Connect with people from your homeland living abroad</p>
+          <h1 className="text-4xl font-bold font-montserrat text-kin-navy mb-2">Join KinMeet</h1>
+          <p className="text-kin-teal font-inter">Connect with people from your homeland living abroad</p>
         </div>
 
         {/* Progress Indicator */}
@@ -157,16 +157,16 @@ const Signup: React.FC = () => {
           {[1, 2, 3].map((s) => (
             <React.Fragment key={s}>
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
-                  step >= s ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-500'
+                className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold font-montserrat shadow-kin-soft transition ${
+                  step >= s ? 'bg-kin-coral text-white' : 'bg-kin-stone-200 text-kin-stone-500'
                 }`}
               >
                 {s}
               </div>
               {s < 3 && (
                 <div
-                  className={`w-16 h-1 ${
-                    step > s ? 'bg-indigo-600' : 'bg-gray-200'
+                  className={`w-16 h-1 rounded-full transition ${
+                    step > s ? 'bg-kin-coral' : 'bg-kin-stone-200'
                   }`}
                 />
               )}
@@ -175,7 +175,7 @@ const Signup: React.FC = () => {
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+          <div className="bg-kin-coral-50 border border-kin-coral-200 text-kin-coral-700 px-4 py-3 rounded-kin font-inter mb-6">
             {error}
           </div>
         )}
@@ -183,10 +183,10 @@ const Signup: React.FC = () => {
         {/* Step 1: Account */}
         {step === 1 && (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Create Account</h2>
+            <h2 className="text-2xl font-bold font-montserrat text-kin-navy mb-4">Create Account</h2>
             
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="email" className="block text-sm font-medium font-inter text-kin-navy mb-2">
                 Email
               </label>
               <input
@@ -194,14 +194,14 @@ const Signup: React.FC = () => {
                 id="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
+                className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
                 placeholder="you@example.com"
                 required
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="password" className="block text-sm font-medium font-inter text-kin-navy mb-2">
                 Password
               </label>
               <input
@@ -209,17 +209,17 @@ const Signup: React.FC = () => {
                 id="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
+                className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
                 placeholder="••••••••"
                 required
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-kin-teal font-inter mt-1">
                 Must be at least 8 characters with uppercase, lowercase, and number
               </p>
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="confirmPassword" className="block text-sm font-medium font-inter text-kin-navy mb-2">
                 Confirm Password
               </label>
               <input
@@ -227,7 +227,7 @@ const Signup: React.FC = () => {
                 id="confirmPassword"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
+                className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
                 placeholder="••••••••"
                 required
               />
@@ -236,7 +236,7 @@ const Signup: React.FC = () => {
             <button
               type="button"
               onClick={handleNextStep}
-              className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-300 transition"
+              className="w-full bg-kin-coral text-white py-4 px-6 rounded-kin-sm font-bold font-montserrat text-lg hover:bg-kin-coral-600 focus:ring-4 focus:ring-kin-coral-300 shadow-kin-medium hover:shadow-kin-strong transition-all duration-200 mt-4"
             >
               Next
             </button>
@@ -246,11 +246,11 @@ const Signup: React.FC = () => {
         {/* Step 2: Profile Info */}
         {step === 2 && (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Profile Information</h2>
+            <h2 className="text-2xl font-bold font-montserrat text-kin-navy mb-4">Profile Information</h2>
             
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="firstName" className="block text-sm font-medium font-inter text-kin-navy mb-2">
                   First Name
                 </label>
                 <input
@@ -258,13 +258,13 @@ const Signup: React.FC = () => {
                   id="firstName"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
+                  className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
                   required
                 />
               </div>
 
               <div>
-                <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="lastName" className="block text-sm font-medium font-inter text-kin-navy mb-2">
                   Last Name
                 </label>
                 <input
@@ -272,17 +272,17 @@ const Signup: React.FC = () => {
                   id="lastName"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
+                  className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
                   required
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-kin-teal font-inter mt-1">
                   Hidden until connection is accepted
                 </p>
               </div>
             </div>
 
             <div>
-              <label htmlFor="homeCountry" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="homeCountry" className="block text-sm font-medium font-inter text-kin-navy mb-2">
                 Your Home Country
               </label>
               <input
@@ -290,17 +290,17 @@ const Signup: React.FC = () => {
                 id="homeCountry"
                 value={homeCountry}
                 onChange={(e) => setHomeCountry(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
+                className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
                 placeholder="e.g., France"
                 required
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-kin-teal font-inter mt-1">
                 The country where you were born or raised
               </p>
             </div>
 
             <div>
-              <label htmlFor="currentCountry" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="currentCountry" className="block text-sm font-medium font-inter text-kin-navy mb-2">
                 Where You Live Now (Country)
               </label>
               <input
@@ -308,14 +308,14 @@ const Signup: React.FC = () => {
                 id="currentCountry"
                 value={currentCountry}
                 onChange={(e) => setCurrentCountry(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
+                className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
                 placeholder="e.g., Canada"
                 required
               />
             </div>
 
             <div>
-              <label htmlFor="currentProvince" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="currentProvince" className="block text-sm font-medium font-inter text-kin-navy mb-2">
                 Province/State
               </label>
               <input
@@ -323,27 +323,27 @@ const Signup: React.FC = () => {
                 id="currentProvince"
                 value={currentProvince}
                 onChange={(e) => setCurrentProvince(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
+                className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
                 placeholder="e.g., Ontario"
                 required
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-kin-teal font-inter mt-1">
                 Your current province/state of residence abroad
               </p>
             </div>
 
-            <div className="flex gap-4">
+            <div className="flex gap-4 mt-4">
               <button
                 type="button"
                 onClick={() => setStep(1)}
-                className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300 transition"
+                className="flex-1 bg-kin-stone-200 text-kin-navy py-4 px-4 rounded-kin-sm font-bold font-montserrat text-lg hover:bg-kin-stone-300 transition-all duration-200 shadow-kin-soft hover:shadow-kin-medium"
               >
                 Back
               </button>
               <button
                 type="button"
                 onClick={handleNextStep}
-                className="flex-1 bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-300 transition"
+                className="flex-1 bg-kin-coral text-white py-4 px-4 rounded-kin-sm font-bold font-montserrat text-lg hover:bg-kin-coral-600 focus:ring-4 focus:ring-kin-coral-300 shadow-kin-medium hover:shadow-kin-strong transition-all duration-200"
               >
                 Next
               </button>
@@ -354,10 +354,10 @@ const Signup: React.FC = () => {
         {/* Step 3: Languages & Interests */}
         {step === 3 && (
           <form onSubmit={handleSubmit} className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Languages & Interests</h2>
+            <h2 className="text-2xl font-bold font-montserrat text-kin-navy mb-4">Languages & Interests</h2>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium font-inter text-kin-navy mb-2">
                 Languages Spoken *
               </label>
               {languages.map((lang, index) => (
@@ -366,14 +366,14 @@ const Signup: React.FC = () => {
                     type="text"
                     value={lang}
                     onChange={(e) => handleLanguageChange(index, e.target.value)}
-                    className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
+                    className="flex-1 px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
                     placeholder="e.g., French"
                   />
                   {languages.length > 1 && (
                     <button
                       type="button"
                       onClick={() => handleRemoveLanguage(index)}
-                      className="px-4 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition"
+                      className="px-4 py-2 bg-kin-coral-100 text-kin-coral-700 rounded-kin-sm font-inter font-medium hover:bg-kin-coral-200 transition"
                     >
                       Remove
                     </button>
@@ -383,14 +383,14 @@ const Signup: React.FC = () => {
               <button
                 type="button"
                 onClick={handleAddLanguage}
-                className="text-indigo-600 font-semibold hover:text-indigo-700"
+                className="text-kin-teal font-semibold font-inter hover:text-kin-teal-600 transition"
               >
                 + Add Language
               </button>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium font-inter text-kin-navy mb-2">
                 Personal Interests (Optional)
               </label>
               {interests.map((interest, index) => (
@@ -399,14 +399,14 @@ const Signup: React.FC = () => {
                     type="text"
                     value={interest}
                     onChange={(e) => handleInterestChange(index, e.target.value)}
-                    className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
+                    className="flex-1 px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
                     placeholder="e.g., Cooking, Hiking"
                   />
                   {interests.length > 1 && (
                     <button
                       type="button"
                       onClick={() => handleRemoveInterest(index)}
-                      className="px-4 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition"
+                      className="px-4 py-2 bg-kin-coral-100 text-kin-coral-700 rounded-kin-sm font-inter font-medium hover:bg-kin-coral-200 transition"
                     >
                       Remove
                     </button>
@@ -416,46 +416,48 @@ const Signup: React.FC = () => {
               <button
                 type="button"
                 onClick={handleAddInterest}
-                className="text-indigo-600 font-semibold hover:text-indigo-700"
+                className="text-kin-teal font-semibold font-inter hover:text-kin-teal-600 transition"
               >
                 + Add Interest
               </button>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium font-inter text-kin-navy mb-2">
                 Looking For * (Select all that apply)
               </label>
               <div className="space-y-2">
                 {LOOKING_FOR_OPTIONS.map((option) => (
                   <label
                     key={option}
-                    className="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition"
+                    className="flex items-center p-3 border border-kin-stone-300 rounded-kin-sm cursor-pointer hover:bg-kin-beige hover:border-kin-coral transition"
+                    tabIndex={0}
+                    aria-label={`Select ${option}`}
                   >
                     <input
                       type="checkbox"
                       checked={lookingFor.includes(option)}
                       onChange={() => handleLookingForToggle(option)}
-                      className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500"
+                      className="w-5 h-5 text-kin-coral rounded focus:ring-kin-coral"
                     />
-                    <span className="ml-3 text-gray-700">{option}</span>
+                    <span className="ml-3 text-kin-navy font-inter">{option}</span>
                   </label>
                 ))}
               </div>
             </div>
 
-            <div className="flex gap-4">
+            <div className="flex gap-4 mt-4">
               <button
                 type="button"
                 onClick={() => setStep(2)}
-                className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300 transition"
+                className="flex-1 bg-kin-stone-200 text-kin-navy py-4 px-4 rounded-kin-sm font-bold font-montserrat text-lg hover:bg-kin-stone-300 transition-all duration-200 shadow-kin-soft hover:shadow-kin-medium"
               >
                 Back
               </button>
               <button
                 type="submit"
                 disabled={isLoading}
-                className="flex-1 bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-300 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 bg-kin-coral text-white py-4 px-4 rounded-kin-sm font-bold font-montserrat text-lg hover:bg-kin-coral-600 focus:ring-4 focus:ring-kin-coral-300 shadow-kin-medium hover:shadow-kin-strong transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? 'Creating Account...' : 'Complete Signup'}
               </button>
@@ -464,9 +466,9 @@ const Signup: React.FC = () => {
         )}
 
         <div className="mt-6 text-center">
-          <p className="text-gray-600">
+          <p className="text-kin-navy font-inter">
             Already have an account?{' '}
-            <Link to="/login" className="text-indigo-600 font-semibold hover:text-indigo-700">
+            <Link to="/login" className="text-kin-coral font-semibold hover:text-kin-coral-600 transition">
               Sign in
             </Link>
           </p>
