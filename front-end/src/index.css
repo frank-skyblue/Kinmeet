@@ -1,14 +1,94 @@
 @import "tailwindcss";
 
+@theme {
+  /* KinMeet Brand Colors */
+  --color-kin-coral-50: #FEF5F3;
+  --color-kin-coral-100: #FDE9E5;
+  --color-kin-coral-200: #FACDC3;
+  --color-kin-coral-300: #F7B1A1;
+  --color-kin-coral-400: #F4957D;
+  --color-kin-coral-500: #F47A5F;
+  --color-kin-coral-600: #F15A3A;
+  --color-kin-coral-700: #D73C1E;
+  --color-kin-coral-800: #A82E17;
+  --color-kin-coral-900: #792111;
+  --color-kin-coral: #F47A5F;
+
+  --color-kin-navy-50: #E8F0F5;
+  --color-kin-navy-100: #D1E1EB;
+  --color-kin-navy-200: #A3C3D7;
+  --color-kin-navy-300: #75A5C3;
+  --color-kin-navy-400: #4787AF;
+  --color-kin-navy-500: #2B6180;
+  --color-kin-navy-600: #1F4D66;
+  --color-kin-navy-700: #113B50;
+  --color-kin-navy-800: #0D2E3E;
+  --color-kin-navy-900: #09212C;
+  --color-kin-navy: #113B50;
+
+  --color-kin-teal-50: #EDF3F2;
+  --color-kin-teal-100: #DBE7E5;
+  --color-kin-teal-200: #B7CFCB;
+  --color-kin-teal-300: #93B7B1;
+  --color-kin-teal-400: #6F9F97;
+  --color-kin-teal-500: #4F7A72;
+  --color-kin-teal-600: #3F625B;
+  --color-kin-teal-700: #2F4944;
+  --color-kin-teal-800: #1F312D;
+  --color-kin-teal-900: #101916;
+  --color-kin-teal: #4F7A72;
+
+  --color-kin-beige-50: #FFFFFF;
+  --color-kin-beige-100: #FFFEFB;
+  --color-kin-beige-200: #FEF9EF;
+  --color-kin-beige-300: #FDF4E6;
+  --color-kin-beige-400: #FBF2E4;
+  --color-kin-beige-500: #F9F1E3;
+  --color-kin-beige-600: #F0E0C0;
+  --color-kin-beige-700: #E7CF9D;
+  --color-kin-beige-800: #DEBE7A;
+  --color-kin-beige-900: #D5AD57;
+  --color-kin-beige: #F9F1E3;
+
+  --color-kin-stone-50: #F5F4F3;
+  --color-kin-stone-100: #EBE9E7;
+  --color-kin-stone-200: #D7D3CF;
+  --color-kin-stone-300: #C3BDB7;
+  --color-kin-stone-400: #BFB7AF;
+  --color-kin-stone-500: #A79F97;
+  --color-kin-stone-600: #8F877F;
+  --color-kin-stone-700: #726B65;
+  --color-kin-stone-800: #54504B;
+  --color-kin-stone-900: #373431;
+  --color-kin-stone: #BFB7AF;
+
+  /* Font Families */
+  --font-family-montserrat: 'Montserrat', sans-serif;
+  --font-family-inter: 'Inter', sans-serif;
+  --font-family-sans: 'Montserrat', 'Inter', system-ui, sans-serif;
+
+  /* Border Radius */
+  --radius-kin: 1rem;
+  --radius-kin-sm: 0.75rem;
+  --radius-kin-lg: 1.5rem;
+  --radius-kin-xl: 2rem;
+
+  /* Box Shadows */
+  --shadow-kin-soft: 0 2px 8px rgba(17, 59, 80, 0.08);
+  --shadow-kin-medium: 0 4px 12px rgba(17, 59, 80, 0.12);
+  --shadow-kin-strong: 0 8px 24px rgba(17, 59, 80, 0.16);
+}
+
+/* KinMeet Theme Global Styles */
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: 'Montserrat', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;
-  background-color: #f9fafb;
+  background-color: #F9F1E3; /* Kin Warm Beige */
+  color: #113B50; /* Kin Deep Navy */
 }
 
 code {
@@ -18,4 +98,38 @@ code {
 
 * {
   box-sizing: border-box;
+}
+
+/* Custom scrollbar styling */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F9F1E3;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #BFB7AF;
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #4F7A72;
+}
+
+/* Smooth transitions for interactive elements */
+button, a, input, textarea, select {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Focus styles for accessibility */
+button:focus-visible, 
+a:focus-visible, 
+input:focus-visible, 
+textarea:focus-visible, 
+select:focus-visible {
+  outline: 2px solid #F47A5F;
+  outline-offset: 2px;
 }

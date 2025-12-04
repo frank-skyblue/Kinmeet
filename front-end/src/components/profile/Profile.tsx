@@ -41,10 +41,10 @@ const Profile: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-kin-beige">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading profile...</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-kin-coral mx-auto mb-4"></div>
+          <p className="text-kin-navy font-inter">Loading profile...</p>
         </div>
       </div>
     );
@@ -52,20 +52,20 @@ const Profile: React.FC = () => {
 
   if (error || !profile) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-kin-beige">
         <div className="text-center">
-          <p className="text-red-600">{error}</p>
+          <p className="text-kin-coral-700 font-inter">{error}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
+    <div className="min-h-screen bg-kin-beige py-8 px-4">
       <div className="max-w-3xl mx-auto">
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+        <div className="bg-white rounded-kin-xl shadow-kin-strong overflow-hidden">
           {/* Header */}
-          <div className="bg-gradient-to-br from-indigo-500 to-purple-600 h-32"></div>
+          <div className="bg-gradient-to-br from-kin-coral to-kin-teal h-32"></div>
           
           {/* Profile Content */}
           <div className="px-8 pb-8">
@@ -75,10 +75,10 @@ const Profile: React.FC = () => {
                 <img
                   src={profile.photo}
                   alt={`${profile.firstName} ${profile.lastName}`}
-                  className="w-32 h-32 rounded-full border-4 border-white object-cover shadow-lg"
+                  className="w-32 h-32 rounded-full border-4 border-white object-cover shadow-kin-medium"
                 />
               ) : (
-                <div className="w-32 h-32 rounded-full border-4 border-white bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-5xl font-bold shadow-lg">
+                <div className="w-32 h-32 rounded-full border-4 border-white bg-gradient-to-br from-kin-coral to-kin-teal flex items-center justify-center text-white text-5xl font-bold font-montserrat shadow-kin-medium">
                   {profile.firstName.charAt(0)}
                 </div>
               )}
@@ -86,33 +86,33 @@ const Profile: React.FC = () => {
 
             {/* Name & Email */}
             <div className="mb-6">
-              <h1 className="text-3xl font-bold text-gray-800 mb-2">
+              <h1 className="text-3xl font-bold font-montserrat text-kin-navy mb-2">
                 {profile.firstName} {profile.lastName}
               </h1>
-              <p className="text-gray-600">{profile.email}</p>
+              <p className="text-kin-teal font-inter">{profile.email}</p>
             </div>
 
             {/* Profile Details */}
             <div className="space-y-6">
               <div>
-                <h3 className="text-sm font-semibold text-gray-500 mb-2">Home Country</h3>
-                <p className="text-lg text-gray-800">{profile.homeCountry}</p>
+                <h3 className="text-sm font-semibold font-inter text-kin-navy mb-2">Home Country</h3>
+                <p className="text-lg text-kin-navy font-montserrat">{profile.homeCountry}</p>
               </div>
 
               <div>
-                <h3 className="text-sm font-semibold text-gray-500 mb-2">Current Location</h3>
-                <p className="text-lg text-gray-800">
+                <h3 className="text-sm font-semibold font-inter text-kin-navy mb-2">Current Location</h3>
+                <p className="text-lg text-kin-navy font-montserrat">
                   {profile.currentProvince}, {profile.currentCountry}
                 </p>
               </div>
 
               <div>
-                <h3 className="text-sm font-semibold text-gray-500 mb-3">Languages</h3>
+                <h3 className="text-sm font-semibold font-inter text-kin-navy mb-3">Languages</h3>
                 <div className="flex flex-wrap gap-2">
                   {profile.languages.map((lang, index) => (
                     <span
                       key={index}
-                      className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg font-medium"
+                      className="px-4 py-2 bg-kin-teal-100 text-kin-teal-700 rounded-kin-sm font-medium font-inter"
                     >
                       {lang}
                     </span>
@@ -122,12 +122,12 @@ const Profile: React.FC = () => {
 
               {profile.interests.length > 0 && (
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-500 mb-3">Interests</h3>
+                  <h3 className="text-sm font-semibold font-inter text-kin-navy mb-3">Interests</h3>
                   <div className="flex flex-wrap gap-2">
                     {profile.interests.map((interest, index) => (
                       <span
                         key={index}
-                        className="px-4 py-2 bg-green-100 text-green-700 rounded-lg font-medium"
+                        className="px-4 py-2 bg-kin-teal-200 text-kin-teal-800 rounded-kin-sm font-medium font-inter"
                       >
                         {interest}
                       </span>
@@ -137,12 +137,12 @@ const Profile: React.FC = () => {
               )}
 
               <div>
-                <h3 className="text-sm font-semibold text-gray-500 mb-3">Looking For</h3>
+                <h3 className="text-sm font-semibold font-inter text-kin-navy mb-3">Looking For</h3>
                 <div className="flex flex-wrap gap-2">
                   {profile.lookingFor.map((item, index) => (
                     <span
                       key={index}
-                      className="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg font-medium"
+                      className="px-4 py-2 bg-kin-coral-100 text-kin-coral-700 rounded-kin-sm font-medium font-inter"
                     >
                       {item}
                     </span>
@@ -153,7 +153,7 @@ const Profile: React.FC = () => {
 
             {/* Edit Profile Button (placeholder for future feature) */}
             <div className="mt-8">
-              <button className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition">
+              <button className="w-full bg-kin-teal text-white py-3 rounded-kin-sm font-semibold font-montserrat hover:bg-kin-teal-600 shadow-kin-soft hover:shadow-kin-medium transition">
                 Edit Profile (Coming Soon)
               </button>
             </div>
@@ -161,9 +161,9 @@ const Profile: React.FC = () => {
         </div>
 
         {/* Community Guidelines */}
-        <div className="mt-8 bg-white rounded-xl shadow-md p-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Community Guidelines</h2>
-          <div className="space-y-3 text-gray-600">
+        <div className="mt-8 bg-white rounded-kin-lg shadow-kin-medium p-6">
+          <h2 className="text-xl font-bold font-montserrat text-kin-navy mb-4">Community Guidelines</h2>
+          <div className="space-y-3 text-kin-navy font-inter">
             <p>• Treat all members with respect and kindness</p>
             <p>• Celebrate cultural diversity and inclusivity</p>
             <p>• Be mindful of cultural sensitivities</p>

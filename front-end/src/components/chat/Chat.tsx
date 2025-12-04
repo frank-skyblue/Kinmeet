@@ -124,24 +124,25 @@ const Chat: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-kin-beige">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading conversation...</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-kin-coral mx-auto mb-4"></div>
+          <p className="text-kin-navy font-inter">Loading conversation...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50">
+    <div className="h-screen flex flex-col bg-kin-beige">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className="bg-white border-b border-kin-stone-200 px-6 py-4 shadow-kin-soft">
         <div className="flex items-center justify-between max-w-5xl mx-auto">
           <div className="flex items-center gap-4">
             <button
               onClick={() => navigate('/connections')}
-              className="text-gray-600 hover:text-gray-800"
+              className="text-kin-navy hover:text-kin-coral transition"
+              aria-label="Back to connections"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -154,19 +155,19 @@ const Chat: React.FC = () => {
                   <img
                     src={otherUser.photo}
                     alt={`${otherUser.firstName} ${otherUser.lastName}`}
-                    className="w-12 h-12 rounded-full object-cover"
+                    className="w-12 h-12 rounded-full object-cover shadow-kin-soft"
                   />
                 ) : (
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xl font-bold">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-kin-coral to-kin-teal flex items-center justify-center text-white text-xl font-bold font-montserrat shadow-kin-soft">
                     {otherUser.firstName.charAt(0)}
                   </div>
                 )}
                 
                 <div>
-                  <h2 className="text-lg font-bold text-gray-800">
+                  <h2 className="text-lg font-bold font-montserrat text-kin-navy">
                     {otherUser.firstName} {otherUser.lastName}
                   </h2>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-kin-teal font-inter">
                     {otherUser.currentProvince}, {otherUser.currentCountry}
                   </p>
                 </div>
@@ -180,7 +181,7 @@ const Chat: React.FC = () => {
       <div className="flex-1 overflow-y-auto px-6 py-6">
         <div className="max-w-3xl mx-auto space-y-4">
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
+            <div className="bg-kin-coral-50 border border-kin-coral-200 text-kin-coral-700 px-4 py-3 rounded-kin font-inter mb-4">
               {error}
             </div>
           )}
@@ -188,8 +189,8 @@ const Chat: React.FC = () => {
           {messages.length === 0 ? (
             <div className="text-center py-16">
               <div className="text-6xl mb-4">💬</div>
-              <h3 className="text-xl font-bold text-gray-800 mb-2">Start the conversation</h3>
-              <p className="text-gray-600">Send a message to begin chatting!</p>
+              <h3 className="text-xl font-bold font-montserrat text-kin-navy mb-2">Start the conversation</h3>
+              <p className="text-kin-teal font-inter">Send a message to begin chatting!</p>
             </div>
           ) : (
             messages.map((message) => {
@@ -201,16 +202,16 @@ const Chat: React.FC = () => {
                   className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
                 >
                   <div
-                    className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl ${
+                    className={`max-w-xs lg:max-w-md px-4 py-3 rounded-kin-lg font-inter ${
                       isOwn
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-white text-gray-800 shadow-sm'
+                        ? 'bg-kin-coral text-white shadow-kin-soft'
+                        : 'bg-white text-kin-navy shadow-kin-soft'
                     }`}
                   >
                     <p className="break-words">{message.content}</p>
                     <p
                       className={`text-xs mt-1 ${
-                        isOwn ? 'text-indigo-200' : 'text-gray-500'
+                        isOwn ? 'text-kin-beige' : 'text-kin-teal'
                       }`}
                     >
                       {formatTime(message.createdAt)}
@@ -225,7 +226,7 @@ const Chat: React.FC = () => {
       </div>
 
       {/* Input */}
-      <div className="bg-white border-t border-gray-200 px-6 py-4">
+      <div className="bg-white border-t border-kin-stone-200 px-6 py-4 shadow-kin-soft">
         <form onSubmit={handleSendMessage} className="max-w-3xl mx-auto">
           <div className="flex gap-3">
             <input
@@ -233,13 +234,15 @@ const Chat: React.FC = () => {
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               placeholder="Type a message..."
-              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
+              className="flex-1 px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
               disabled={isSending}
+              aria-label="Type a message"
             />
             <button
               type="submit"
               disabled={isSending || !newMessage.trim()}
-              className="bg-indigo-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+              className="bg-kin-coral text-white px-6 py-3 rounded-kin-sm font-semibold font-montserrat hover:bg-kin-coral-600 shadow-kin-soft hover:shadow-kin-medium transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+              aria-label="Send message"
             >
               {isSending ? (
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>

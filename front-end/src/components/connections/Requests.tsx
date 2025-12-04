@@ -61,27 +61,27 @@ const Requests: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-kin-beige">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading requests...</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-kin-coral mx-auto mb-4"></div>
+          <p className="text-kin-navy font-inter">Loading requests...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
+    <div className="min-h-screen bg-kin-beige py-8 px-4">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Connection Requests</h1>
-          <p className="text-gray-600">
+          <h1 className="text-3xl font-bold font-montserrat text-kin-navy mb-2">Connection Requests</h1>
+          <p className="text-kin-teal font-inter">
             {requests.length} pending request{requests.length !== 1 ? 's' : ''}
           </p>
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+          <div className="bg-kin-coral-50 border border-kin-coral-200 text-kin-coral-700 px-4 py-3 rounded-kin font-inter mb-6">
             {error}
           </div>
         )}
@@ -89,8 +89,8 @@ const Requests: React.FC = () => {
         {requests.length === 0 ? (
           <div className="text-center py-16">
             <div className="text-6xl mb-4">👋</div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">No Pending Requests</h2>
-            <p className="text-gray-600">
+            <h2 className="text-2xl font-bold font-montserrat text-kin-navy mb-2">No Pending Requests</h2>
+            <p className="text-kin-teal font-inter">
               When someone sends you a Meet request, it will appear here
             </p>
           </div>
@@ -99,7 +99,7 @@ const Requests: React.FC = () => {
             {requests.map((request) => (
               <div
                 key={request._id}
-                className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition"
+                className="bg-white rounded-kin-lg shadow-kin-medium p-6 hover:shadow-kin-strong transition"
               >
                 <div className="flex items-start gap-4">
                   {/* Avatar */}
@@ -108,10 +108,10 @@ const Requests: React.FC = () => {
                       <img
                         src={request.sender.photo}
                         alt={request.sender.firstName}
-                        className="w-16 h-16 rounded-full object-cover"
+                        className="w-16 h-16 rounded-full object-cover shadow-kin-soft"
                       />
                     ) : (
-                      <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold">
+                      <div className="w-16 h-16 rounded-full bg-gradient-to-br from-kin-coral to-kin-teal flex items-center justify-center text-white text-2xl font-bold font-montserrat shadow-kin-soft">
                         {request.sender.firstName.charAt(0)}
                       </div>
                     )}
@@ -120,27 +120,27 @@ const Requests: React.FC = () => {
                   {/* Info */}
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <h3 className="text-xl font-bold text-gray-800">
+                      <h3 className="text-xl font-bold font-montserrat text-kin-navy">
                         {request.sender.firstName}
                       </h3>
-                      <span className="text-sm text-gray-500">sent you a Meet request</span>
+                      <span className="text-sm text-kin-teal font-inter">sent you a Meet request</span>
                     </div>
 
                     <div className="space-y-2 mb-4">
-                      <p className="text-gray-600 text-sm">
+                      <p className="text-kin-navy text-sm font-inter">
                         <span className="font-semibold">Home Country:</span> {request.sender.homeCountry}
                       </p>
-                      <p className="text-gray-600 text-sm">
+                      <p className="text-kin-navy text-sm font-inter">
                         <span className="font-semibold">Living in:</span>{' '}
                         {request.sender.currentProvince}, {request.sender.currentCountry}
                       </p>
                       <div className="flex items-center gap-2">
-                        <span className="text-gray-600 text-sm font-semibold">Speaks:</span>
+                        <span className="text-kin-navy text-sm font-semibold font-inter">Speaks:</span>
                         <div className="flex flex-wrap gap-1">
                           {request.sender.languages.map((lang, index) => (
                             <span
                               key={index}
-                              className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs"
+                              className="px-2 py-1 bg-kin-teal-100 text-kin-teal-700 rounded-full text-xs font-inter"
                             >
                               {lang}
                             </span>
@@ -148,12 +148,12 @@ const Requests: React.FC = () => {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-gray-600 text-sm font-semibold">Looking For:</span>
+                        <span className="text-kin-navy text-sm font-semibold font-inter">Looking For:</span>
                         <div className="flex flex-wrap gap-1">
                           {request.sender.lookingFor.map((item, index) => (
                             <span
                               key={index}
-                              className="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs"
+                              className="px-2 py-1 bg-kin-coral-100 text-kin-coral-700 rounded-full text-xs font-inter"
                             >
                               {item}
                             </span>
@@ -166,7 +166,8 @@ const Requests: React.FC = () => {
                     <div className="flex gap-3">
                       <button
                         onClick={() => handleAccept(request._id)}
-                        className="bg-indigo-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition flex items-center"
+                        className="bg-kin-coral text-white px-6 py-2 rounded-kin-sm font-semibold font-montserrat hover:bg-kin-coral-600 shadow-kin-soft hover:shadow-kin-medium transition flex items-center"
+                        aria-label="Accept connection request"
                       >
                         <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -175,7 +176,8 @@ const Requests: React.FC = () => {
                       </button>
                       <button
                         onClick={() => handleIgnore(request._id)}
-                        className="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg font-semibold hover:bg-gray-300 transition flex items-center"
+                        className="bg-kin-stone-200 text-kin-navy px-6 py-2 rounded-kin-sm font-semibold font-montserrat hover:bg-kin-stone-300 shadow-kin-soft transition flex items-center"
+                        aria-label="Ignore connection request"
                       >
                         <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
