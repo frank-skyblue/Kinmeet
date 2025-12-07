@@ -1,6 +1,8 @@
 import express, { Express } from 'express';
+import { createServer } from 'http';
 import cors from 'cors';
 import { connectToDatabase } from './services/mongooseService';
+import { initializeSocket } from './socket/socketServer';
 import authRoutes from './routes/authRoutes';
 import profileRoutes from './routes/profileRoutes';
 import matchingRoutes from './routes/matchingRoutes';
@@ -29,6 +31,7 @@ const corsConfig = {
 }
 
 const app: Express = express()
+const httpServer = createServer(app) // Wrap Express with HTTP server for Socket.io
 const router = express.Router()
 const port = process.env.PORT || 8080
 
@@ -70,8 +73,15 @@ app.use('/api/block', blockRoutes);
 const start = async () => {
     try {
         await connectToDatabase();
-        app.listen(port, () => {
-            console.log(`Server started on port ${port}`);
+        
+        // Initialize Socket.io
+        const io = initializeSocket(httpServer);
+        console.log('✅ Socket.io server initialized');
+        
+        // Listen with HTTP server instead of Express app
+        httpServer.listen(port, () => {
+            console.log(`🚀 Server started on port ${port}`);
+            console.log(`📡 WebSocket server ready`);
         });
     } catch (error) {
         console.error(error);
