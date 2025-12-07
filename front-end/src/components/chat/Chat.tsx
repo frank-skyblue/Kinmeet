@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { chatAPI, profileAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
+import { useSocket } from '../../contexts/SocketContext';
 
 interface Message {
   _id: string;
@@ -32,24 +33,74 @@ interface UserProfile {
 const Chat: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
   const { user } = useAuth();
+  const { socket, isConnected } = useSocket();
   const navigate = useNavigate();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [otherUser, setOtherUser] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
   const [error, setError] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (userId) {
       loadConversation();
       loadUserProfile();
-      // Poll for new messages every 3 seconds
-      const interval = setInterval(loadConversation, 3000);
-      return () => clearInterval(interval);
     }
   }, [userId]);
+
+  // Socket event listeners
+  useEffect(() => {
+    if (!socket || !userId) return;
+
+    const handleNewMessage = (message: Message) => {
+      // Only add message if it's from the current conversation
+      if (message.sender._id === userId || message.receiver._id === userId) {
+        setMessages(prev => {
+          // Avoid duplicates
+          const exists = prev.some(m => m._id === message._id);
+          if (exists) return prev;
+          return [...prev, message];
+        });
+      }
+    };
+
+    const handleUserTyping = (data: { userId: string; isTyping: boolean }) => {
+      if (data.userId === userId) {
+        setIsTyping(data.isTyping);
+      }
+    };
+
+    const handleMessagesRead = (data: { readBy: string }) => {
+      if (data.readBy === userId) {
+        setMessages(prev =>
+          prev.map(msg =>
+            msg.receiver._id === userId ? { ...msg, read: true } : msg
+          )
+        );
+      }
+    };
+
+    // Register event listeners
+    socket.on('chat:new_message', handleNewMessage);
+    socket.on('chat:user_typing', handleUserTyping);
+    socket.on('chat:messages_read', handleMessagesRead);
+
+    // Mark messages as read when entering chat
+    if (socket.connected) {
+      socket.emit('chat:mark_read', { senderId: userId });
+    }
+
+    // Cleanup listeners on unmount
+    return () => {
+      socket.off('chat:new_message', handleNewMessage);
+      socket.off('chat:user_typing', handleUserTyping);
+      socket.off('chat:messages_read', handleMessagesRead);
+    };
+  }, [socket, userId]);
 
   useEffect(() => {
     scrollToBottom();
@@ -58,6 +109,7 @@ const Chat: React.FC = () => {
   const loadConversation = async () => {
     try {
       if (!userId) return;
+      
       const response = await chatAPI.getConversation(userId);
       if (response.success) {
         setMessages(response.messages);
@@ -89,19 +141,92 @@ const Chat: React.FC = () => {
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!newMessage.trim() || !userId) return;
+    if (!newMessage.trim() || !userId || !user || !socket) return;
 
+    const messageContent = newMessage.trim();
+    const tempId = `temp-${Date.now()}`;
+    
+    // Create optimistic message with current user's data
+    const optimisticMessage: Message = {
+      _id: tempId,
+      sender: {
+        _id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+      },
+      receiver: {
+        _id: userId,
+        firstName: otherUser?.firstName || '',
+        lastName: otherUser?.lastName || '',
+      },
+      content: messageContent,
+      read: false,
+      createdAt: new Date().toISOString(),
+    };
+
+    // Immediately add optimistic message to UI
+    setMessages(prevMessages => [...prevMessages, optimisticMessage]);
+    setNewMessage('');
     setIsSending(true);
+
+    // Stop typing indicator
+    socket.emit('chat:typing_stop', { receiverId: userId });
+
     try {
-      const response = await chatAPI.sendMessage(userId, newMessage);
-      if (response.success) {
-        setMessages([...messages, response.message]);
-        setNewMessage('');
-      }
+      // Send message via WebSocket with acknowledgment
+      socket.emit(
+        'chat:send_message',
+        { receiverId: userId, content: messageContent },
+        (response: { success: boolean; message?: Message; error?: string }) => {
+          if (response.success && response.message) {
+            // Replace optimistic message with real message from backend
+            setMessages(prevMessages =>
+              prevMessages.map(msg =>
+                msg._id === tempId ? response.message! : msg
+              )
+            );
+          } else {
+            // Remove optimistic message on error
+            setMessages(prevMessages =>
+              prevMessages.filter(msg => msg._id !== tempId)
+            );
+            setError(response.error || 'Failed to send message');
+            setNewMessage(messageContent); // Restore message text
+          }
+          setIsSending(false);
+        }
+      );
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to send message');
-    } finally {
+      // Remove optimistic message on error
+      setMessages(prevMessages =>
+        prevMessages.filter(msg => msg._id !== tempId)
+      );
+      setError('Failed to send message');
+      setNewMessage(messageContent); // Restore message text
       setIsSending(false);
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewMessage(e.target.value);
+
+    if (!socket || !userId) return;
+
+    // Clear existing timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    // Send typing start
+    if (e.target.value.trim()) {
+      socket.emit('chat:typing_start', { receiverId: userId });
+
+      // Set timeout to stop typing indicator
+      typingTimeoutRef.current = setTimeout(() => {
+        socket.emit('chat:typing_stop', { receiverId: userId });
+      }, 2000);
+    } else {
+      socket.emit('chat:typing_stop', { receiverId: userId });
     }
   };
 
@@ -158,7 +283,7 @@ const Chat: React.FC = () => {
                     className="w-12 h-12 rounded-full object-cover shadow-kin-soft"
                   />
                 ) : (
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-kin-coral to-kin-teal flex items-center justify-center text-white text-xl font-bold font-montserrat shadow-kin-soft">
+                  <div className="w-12 h-12 rounded-full bg-linear-to-br from-kin-coral to-kin-teal flex items-center justify-center text-white text-xl font-bold font-montserrat shadow-kin-soft">
                     {otherUser.firstName.charAt(0)}
                   </div>
                 )}
@@ -172,6 +297,22 @@ const Chat: React.FC = () => {
                   </p>
                 </div>
               </>
+            )}
+          </div>
+          
+          {/* Connection Status */}
+          <div className="flex items-center gap-2">
+            {!isConnected && (
+              <div className="flex items-center gap-2 text-kin-coral text-sm font-inter">
+                <div className="w-2 h-2 bg-kin-coral rounded-full animate-pulse"></div>
+                Reconnecting...
+              </div>
+            )}
+            {isConnected && (
+              <div className="flex items-center gap-2 text-green-600 text-sm font-inter">
+                <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                Connected
+              </div>
             )}
           </div>
         </div>
@@ -208,7 +349,7 @@ const Chat: React.FC = () => {
                         : 'bg-white text-kin-navy shadow-kin-soft'
                     }`}
                   >
-                    <p className="break-words">{message.content}</p>
+                    <p className="wrap-break-word whitespace-pre-wrap">{message.content}</p>
                     <p
                       className={`text-xs mt-1 ${
                         isOwn ? 'text-kin-beige' : 'text-kin-teal'
@@ -221,6 +362,20 @@ const Chat: React.FC = () => {
               );
             })
           )}
+          
+          {/* Typing Indicator */}
+          {isTyping && (
+            <div className="flex justify-start">
+              <div className="bg-white px-4 py-3 rounded-kin-lg shadow-kin-soft">
+                <div className="flex gap-1">
+                  <div className="w-2 h-2 bg-kin-teal rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                  <div className="w-2 h-2 bg-kin-teal rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                  <div className="w-2 h-2 bg-kin-teal rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                </div>
+              </div>
+            </div>
+          )}
+          
           <div ref={messagesEndRef} />
         </div>
       </div>
@@ -232,15 +387,15 @@ const Chat: React.FC = () => {
             <input
               type="text"
               value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
+              onChange={handleInputChange}
               placeholder="Type a message..."
               className="flex-1 px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
-              disabled={isSending}
+              disabled={isSending || !isConnected}
               aria-label="Type a message"
             />
             <button
               type="submit"
-              disabled={isSending || !newMessage.trim()}
+              disabled={isSending || !newMessage.trim() || !isConnected}
               className="bg-kin-coral text-white px-6 py-3 rounded-kin-sm font-semibold font-montserrat hover:bg-kin-coral-600 shadow-kin-soft hover:shadow-kin-medium transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
               aria-label="Send message"
             >
