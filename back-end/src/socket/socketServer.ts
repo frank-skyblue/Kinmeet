@@ -18,6 +18,11 @@ if (process.env.VERCEL_URL) {
   corsOrigins.push(vercelUrl);
 }
 
+// Add custom frontend URL (for Vercel or other deployments)
+if (process.env.REACT_FRONTEND_URL) {
+  corsOrigins.push(process.env.REACT_FRONTEND_URL);
+}
+
 if (process.env.FRONTEND_URL) {
   corsOrigins.push(process.env.FRONTEND_URL);
 }

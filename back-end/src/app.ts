@@ -18,11 +18,17 @@ const corsOrigins: string[] = [
     'http://localhost:5174', // Vite alternative port
 ];
 
+// Add Vercel frontend URL
 if (process.env.VERCEL_URL) {
     const vercelUrl = process.env.VERCEL_URL.startsWith('http') 
         ? process.env.VERCEL_URL 
         : `https://${process.env.VERCEL_URL}`;
     corsOrigins.push(vercelUrl);
+}
+
+// Add custom frontend URL (for Vercel or other deployments)
+if (process.env.REACT_FRONTEND_URL) {
+    corsOrigins.push(process.env.REACT_FRONTEND_URL);
 }
 
 const corsConfig = {
@@ -79,9 +85,11 @@ const start = async () => {
         console.log('✅ Socket.io server initialized');
         
         // Listen with HTTP server instead of Express app
-        httpServer.listen(port, () => {
+        // Render requires binding to 0.0.0.0 (all interfaces), not localhost
+        httpServer.listen(port, '0.0.0.0', () => {
             console.log(`🚀 Server started on port ${port}`);
             console.log(`📡 WebSocket server ready`);
+            console.log(`🌐 Server is listening on 0.0.0.0:${port}`);
         });
     } catch (error) {
         console.error(error);
