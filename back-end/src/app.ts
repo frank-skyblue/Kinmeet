@@ -39,7 +39,7 @@ const corsConfig = {
 const app: Express = express()
 const httpServer = createServer(app) // Wrap Express with HTTP server for Socket.io
 const router = express.Router()
-const port = process.env.PORT || 8080
+const port = Number(process.env.PORT) || 8080
 
 app.use(cors(corsConfig))
 app.use(express.json())
