@@ -63,6 +63,19 @@ app.use((req, res, next) => {
     next();
 });
 
+// Health check endpoints for Render
+app.get('/', (req, res) => {
+    res.status(200).json({ 
+        status: 'ok', 
+        message: 'KinMeet API is running',
+        timestamp: new Date().toISOString()
+    });
+});
+
+app.head('/', (req, res) => {
+    res.status(200).end();
+});
+
 router.get('/hello', (req, res) => {
     res.send('Hello from KinMeet backend!')
 })
