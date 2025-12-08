@@ -18,11 +18,17 @@ const corsOrigins: string[] = [
     'http://localhost:5174', // Vite alternative port
 ];
 
+// Add Vercel frontend URL
 if (process.env.VERCEL_URL) {
     const vercelUrl = process.env.VERCEL_URL.startsWith('http') 
         ? process.env.VERCEL_URL 
         : `https://${process.env.VERCEL_URL}`;
     corsOrigins.push(vercelUrl);
+}
+
+// Add custom frontend URL (for Vercel or other deployments)
+if (process.env.REACT_FRONTEND_URL) {
+    corsOrigins.push(process.env.REACT_FRONTEND_URL);
 }
 
 const corsConfig = {
@@ -33,7 +39,7 @@ const corsConfig = {
 const app: Express = express()
 const httpServer = createServer(app) // Wrap Express with HTTP server for Socket.io
 const router = express.Router()
-const port = process.env.PORT || 8080
+const port = Number(process.env.PORT) || 8080
 
 app.use(cors(corsConfig))
 app.use(express.json())
@@ -57,6 +63,19 @@ app.use((req, res, next) => {
     next();
 });
 
+// Health check endpoints for Render
+app.get('/', (req, res) => {
+    res.status(200).json({ 
+        status: 'ok', 
+        message: 'KinMeet API is running',
+        timestamp: new Date().toISOString()
+    });
+});
+
+app.head('/', (req, res) => {
+    res.status(200).end();
+});
+
 router.get('/hello', (req, res) => {
     res.send('Hello from KinMeet backend!')
 })
@@ -72,6 +91,12 @@ app.use('/api/block', blockRoutes);
 
 const start = async () => {
     try {
+        // Log environment info for debugging
+        console.log('🔍 Environment Check:');
+        console.log(`   - NODE_ENV: ${process.env.NODE_ENV}`);
+        console.log(`   - PORT (raw): ${process.env.PORT}`);
+        console.log(`   - PORT (parsed): ${port}`);
+        
         await connectToDatabase();
         
         // Initialize Socket.io
@@ -79,9 +104,11 @@ const start = async () => {
         console.log('✅ Socket.io server initialized');
         
         // Listen with HTTP server instead of Express app
-        httpServer.listen(port, () => {
+        // Render requires binding to 0.0.0.0 (all interfaces), not localhost
+        httpServer.listen(port, '0.0.0.0', () => {
             console.log(`🚀 Server started on port ${port}`);
             console.log(`📡 WebSocket server ready`);
+            console.log(`🌐 Server is listening on 0.0.0.0:${port}`);
         });
     } catch (error) {
         console.error(error);
