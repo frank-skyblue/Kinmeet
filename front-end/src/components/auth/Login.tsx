@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import Logo from '../common/Logo';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -29,6 +30,9 @@ const Login: React.FC = () => {
     <div className="min-h-screen flex items-center justify-center bg-kin-beige px-4">
       <div className="max-w-md w-full bg-white rounded-kin-xl shadow-kin-strong p-8">
         <div className="text-center mb-8">
+          <div className="flex justify-center mb-4">
+            <Logo size="xl" />
+          </div>
           <h1 className="text-4xl font-bold font-montserrat text-kin-navy mb-2">KinMeet</h1>
           <p className="text-kin-teal font-inter">Connect with your homeland community abroad</p>
         </div>

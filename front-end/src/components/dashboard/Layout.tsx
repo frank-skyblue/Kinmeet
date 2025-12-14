@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import Logo from '../common/Logo';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -34,7 +35,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
-              <Link to="/discover" className="flex items-center">
+              <Link to="/discover" className="flex items-center gap-2">
+                <Logo size="md" />
                 <span className="text-2xl font-bold font-montserrat text-kin-navy">KinMeet</span>
               </Link>
               
