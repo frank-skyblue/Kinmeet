@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import Logo from '../common/Logo';
 
 const LOOKING_FOR_OPTIONS = ['Friendship', 'Networking', 'Support'];
 
@@ -148,6 +149,9 @@ const Signup: React.FC = () => {
     <div className="min-h-screen flex items-center justify-center bg-kin-beige px-4 py-8">
       <div className="max-w-2xl w-full bg-white rounded-kin-xl shadow-kin-strong p-8">
         <div className="text-center mb-8">
+          <div className="flex justify-center mb-4">
+            <Logo size="lg" />
+          </div>
           <h1 className="text-4xl font-bold font-montserrat text-kin-navy mb-2">Join KinMeet</h1>
           <p className="text-kin-teal font-inter">Connect with people from your homeland living abroad</p>
         </div>
