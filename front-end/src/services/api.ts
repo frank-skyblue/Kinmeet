@@ -66,6 +66,11 @@ export const profileAPI = {
     const response = await api.put('/profile/me', data);
     return response.data;
   },
+
+  deleteProfile: async () => {
+    const response = await api.delete('/profile/me');
+    return response.data;
+  },
 };
 
 // Matching API
