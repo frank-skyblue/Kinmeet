@@ -1,9 +1,16 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import {
+  LOOKING_FOR_OPTIONS,
+  LANGUAGE_OPTIONS,
+  COUNTRY_OPTIONS,
+  INTEREST_OPTIONS,
+  getProvinceOptions,
+  getCountryCode,
+} from '../../constants/profileOptions';
 import { useAuth } from '../../contexts/AuthContext';
 import Logo from '../common/Logo';
-
-const LOOKING_FOR_OPTIONS = ['Friendship', 'Networking', 'Support'];
+import SearchableSelect from '../common/SearchableSelect';
 
 const Signup: React.FC = () => {
   const [step, setStep] = useState(1);
@@ -20,6 +27,7 @@ const Signup: React.FC = () => {
   const [lastName, setLastName] = useState('');
   const [homeCountry, setHomeCountry] = useState('');
   const [currentCountry, setCurrentCountry] = useState('');
+  const [currentCountryCode, setCurrentCountryCode] = useState('');
   const [currentProvince, setCurrentProvince] = useState('');
   const [languages, setLanguages] = useState<string[]>(['']);
   const [interests, setInterests] = useState<string[]>(['']);
@@ -53,6 +61,12 @@ const Signup: React.FC = () => {
     const newInterests = [...interests];
     newInterests[index] = value;
     setInterests(newInterests);
+  };
+
+  const handleCurrentCountryChange = (countryName: string) => {
+    setCurrentCountry(countryName);
+    setCurrentCountryCode(getCountryCode(countryName));
+    setCurrentProvince('');
   };
 
   const handleLookingForToggle = (option: string) => {
@@ -285,56 +299,41 @@ const Signup: React.FC = () => {
               </div>
             </div>
 
-            <div>
-              <label htmlFor="homeCountry" className="block text-sm font-medium font-inter text-kin-navy mb-2">
-                Your Home Country
-              </label>
-              <input
-                type="text"
-                id="homeCountry"
-                value={homeCountry}
-                onChange={(e) => setHomeCountry(e.target.value)}
-                className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
-                placeholder="e.g., France"
-                required
-              />
-              <p className="text-xs text-kin-teal font-inter mt-1">
-                The country where you were born or raised
-              </p>
-            </div>
+            <SearchableSelect
+              id="homeCountry"
+              label="Your Home Country"
+              options={COUNTRY_OPTIONS}
+              value={homeCountry}
+              onChange={setHomeCountry}
+              placeholder="e.g., Canada"
+              required
+              searchable="typeahead"
+              helperText="The country where you were born or raised"
+            />
 
-            <div>
-              <label htmlFor="currentCountry" className="block text-sm font-medium font-inter text-kin-navy mb-2">
-                Where You Live Now (Country)
-              </label>
-              <input
-                type="text"
-                id="currentCountry"
-                value={currentCountry}
-                onChange={(e) => setCurrentCountry(e.target.value)}
-                className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
-                placeholder="e.g., Canada"
-                required
-              />
-            </div>
+            <SearchableSelect
+              id="currentCountry"
+              label="Where You Live Now (Country)"
+              options={COUNTRY_OPTIONS}
+              value={currentCountry}
+              onChange={handleCurrentCountryChange}
+              placeholder="e.g., Canada"
+              required
+              searchable="typeahead"
+            />
 
-            <div>
-              <label htmlFor="currentProvince" className="block text-sm font-medium font-inter text-kin-navy mb-2">
-                Province/State
-              </label>
-              <input
-                type="text"
-                id="currentProvince"
-                value={currentProvince}
-                onChange={(e) => setCurrentProvince(e.target.value)}
-                className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
-                placeholder="e.g., Ontario"
-                required
-              />
-              <p className="text-xs text-kin-teal font-inter mt-1">
-                Your current province/state of residence abroad
-              </p>
-            </div>
+            <SearchableSelect
+              id="currentProvince"
+              label="Province/State"
+              options={getProvinceOptions(currentCountryCode)}
+              value={currentProvince}
+              onChange={setCurrentProvince}
+              placeholder="e.g., Ontario"
+              disabled={!currentCountry}
+              required
+              searchable="typeahead"
+              helperText="Your current province/state of residence abroad"
+            />
 
             <div className="flex gap-4 mt-4">
               <button
@@ -365,19 +364,30 @@ const Signup: React.FC = () => {
                 Languages Spoken *
               </label>
               {languages.map((lang, index) => (
-                <div key={index} className="flex gap-2 mb-2">
-                  <input
-                    type="text"
-                    value={lang}
-                    onChange={(e) => handleLanguageChange(index, e.target.value)}
-                    className="flex-1 px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
-                    placeholder="e.g., French"
-                  />
+                <div key={index} className="flex gap-2 mb-2 items-end">
+                  <div className="flex-1">
+                    <SearchableSelect
+                      id={`language-${index}`}
+                      label="Language"
+                      options={LANGUAGE_OPTIONS.filter(
+                        (opt) =>
+                          opt.value === lang ||
+                          !languages.some((l, i) => i !== index && l === opt.value)
+                      )}
+                      value={lang}
+                      onChange={(value) => handleLanguageChange(index, value)}
+                      placeholder="Select a language"
+                      required={index === 0}
+                      hideLabel
+                      searchable="typeahead"
+                    />
+                  </div>
                   {languages.length > 1 && (
                     <button
                       type="button"
                       onClick={() => handleRemoveLanguage(index)}
-                      className="px-4 py-2 bg-kin-coral-100 text-kin-coral-700 rounded-kin-sm font-inter font-medium hover:bg-kin-coral-200 transition"
+                      className="px-4 py-3 bg-kin-coral-100 text-kin-coral-700 rounded-kin-sm font-inter font-medium hover:bg-kin-coral-200 transition shrink-0"
+                      aria-label="Remove language"
                     >
                       Remove
                     </button>
@@ -398,19 +408,29 @@ const Signup: React.FC = () => {
                 Personal Interests (Optional)
               </label>
               {interests.map((interest, index) => (
-                <div key={index} className="flex gap-2 mb-2">
-                  <input
-                    type="text"
-                    value={interest}
-                    onChange={(e) => handleInterestChange(index, e.target.value)}
-                    className="flex-1 px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
-                    placeholder="e.g., Cooking, Hiking"
-                  />
+                <div key={index} className="flex gap-2 mb-2 items-end">
+                  <div className="flex-1">
+                    <SearchableSelect
+                      id={`interest-${index}`}
+                      label="Interest"
+                      options={INTEREST_OPTIONS.filter(
+                        (opt) =>
+                          opt.value === interest ||
+                          !interests.some((int, i) => i !== index && int === opt.value)
+                      )}
+                      value={interest}
+                      onChange={(value) => handleInterestChange(index, value)}
+                      placeholder="Select an interest"
+                      hideLabel
+                      searchable="typeahead"
+                    />
+                  </div>
                   {interests.length > 1 && (
                     <button
                       type="button"
                       onClick={() => handleRemoveInterest(index)}
-                      className="px-4 py-2 bg-kin-coral-100 text-kin-coral-700 rounded-kin-sm font-inter font-medium hover:bg-kin-coral-200 transition"
+                      className="px-4 py-3 bg-kin-coral-100 text-kin-coral-700 rounded-kin-sm font-inter font-medium hover:bg-kin-coral-200 transition shrink-0"
+                      aria-label="Remove interest"
                     >
                       Remove
                     </button>
