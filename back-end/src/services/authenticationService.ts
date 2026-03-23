@@ -43,6 +43,7 @@ export interface LoginResponse {
         email: string;
         firstName?: string;
         lastName?: string;
+        photo?: string;
         profileComplete?: boolean;
     };
 }
@@ -93,6 +94,7 @@ export const authenticationService = {
                     email: user.email,
                     firstName: user.firstName,
                     lastName: user.lastName,
+                    photo: user.photo,
                     profileComplete: user.profileComplete
                 }
             };
@@ -208,6 +210,7 @@ export const authenticationService = {
                     email: newUser.email,
                     firstName: newUser.firstName,
                     lastName: newUser.lastName,
+                    photo: newUser.photo,
                     profileComplete: newUser.profileComplete
                 }
             };

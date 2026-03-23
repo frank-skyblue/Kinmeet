@@ -1,12 +1,13 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
-import { authAPI } from '../services/api';
+import { authAPI, profileAPI } from '../services/api';
 
 interface User {
   id: string;
   email: string;
   firstName: string;
   lastName: string;
+  photo?: string;
   profileComplete: boolean;
 }
 
@@ -104,11 +105,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const refreshUser = async () => {
-    // This can be implemented later to refresh user data from the server
     try {
-      // const response = await profileAPI.getProfile();
-      // setUser(response.user);
-      // localStorage.setItem('user', JSON.stringify(response.user));
+      const response = await profileAPI.getProfile();
+      if (response.success && response.user) {
+        const updated: User = {
+          id: response.user._id,
+          email: response.user.email,
+          firstName: response.user.firstName,
+          lastName: response.user.lastName,
+          photo: response.user.photo,
+          profileComplete: response.user.profileComplete,
+        };
+        setUser(updated);
+        localStorage.setItem('user', JSON.stringify(updated));
+      }
     } catch (error) {
       console.error('Failed to refresh user:', error);
     }

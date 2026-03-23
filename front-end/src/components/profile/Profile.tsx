@@ -40,7 +40,7 @@ const Profile: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
-  const { logout } = useAuth();
+  const { logout, refreshUser } = useAuth();
   const navigate = useNavigate();
 
   // Edit form state
@@ -264,6 +264,7 @@ const Profile: React.FC = () => {
       const response = await profileAPI.uploadPhoto(file);
       if (response.success) {
         setProfile((prev) => prev ? { ...prev, photo: response.photo } : prev);
+        await refreshUser();
       }
     } catch (err: unknown) {
       setError('Failed to upload photo');
@@ -283,6 +284,7 @@ const Profile: React.FC = () => {
       if (response.success) {
         setProfile((prev) => prev ? { ...prev, photo: undefined } : prev);
         setPhotoPreview(null);
+        await refreshUser();
       }
     } catch (err: unknown) {
       setError('Failed to remove photo');

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { getPhotoUrl } from '../../services/api';
 import Logo from '../common/Logo';
 
 interface LayoutProps {
@@ -70,9 +71,17 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   aria-label="User menu"
                   aria-expanded={showMenu}
                 >
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-kin-coral to-kin-teal flex items-center justify-center text-white font-bold font-montserrat shadow-kin-soft">
-                    {user?.firstName.charAt(0)}
-                  </div>
+                  {user?.photo ? (
+                    <img
+                      src={getPhotoUrl(user.photo)}
+                      alt={user.firstName}
+                      className="w-8 h-8 rounded-full object-cover shadow-kin-soft"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-kin-coral to-kin-teal flex items-center justify-center text-white font-bold font-montserrat shadow-kin-soft">
+                      {user?.firstName.charAt(0)}
+                    </div>
+                  )}
                   <span className="hidden md:block text-sm font-medium font-inter text-kin-navy">
                     {user?.firstName}
                   </span>
