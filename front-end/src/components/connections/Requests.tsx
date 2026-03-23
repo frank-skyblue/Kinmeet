@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { connectionsAPI } from '../../services/api';
+import { connectionsAPI, getPhotoUrl } from '../../services/api';
 
 interface ConnectionRequest {
   _id: string;
@@ -61,7 +61,7 @@ const Requests: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-kin-beige">
+      <div className="h-full flex items-center justify-center bg-kin-beige">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-kin-coral mx-auto mb-4"></div>
           <p className="text-kin-navy font-inter">Loading requests...</p>
@@ -71,7 +71,7 @@ const Requests: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-kin-beige py-8 px-4">
+    <div className="bg-kin-beige py-8 px-4">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold font-montserrat text-kin-navy mb-2">Connection Requests</h1>
@@ -106,7 +106,7 @@ const Requests: React.FC = () => {
                   <div className="flex-shrink-0">
                     {request.sender.photo ? (
                       <img
-                        src={request.sender.photo}
+                        src={getPhotoUrl(request.sender.photo)}
                         alt={request.sender.firstName}
                         className="w-16 h-16 rounded-full object-cover shadow-kin-soft"
                       />

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { connectionsAPI } from '../../services/api';
+import { connectionsAPI, getPhotoUrl } from '../../services/api';
 
 interface Connection {
   _id: string;
@@ -46,7 +46,7 @@ const ConnectionsList: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-kin-beige">
+      <div className="h-full flex items-center justify-center bg-kin-beige">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-kin-coral mx-auto mb-4"></div>
           <p className="text-kin-navy font-inter">Loading connections...</p>
@@ -56,7 +56,7 @@ const ConnectionsList: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-kin-beige py-8 px-4">
+    <div className="bg-kin-beige py-8 px-4">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold font-montserrat text-kin-navy mb-2">My Connections</h1>
@@ -97,7 +97,7 @@ const ConnectionsList: React.FC = () => {
                   <div className="flex-shrink-0">
                     {connection.photo ? (
                       <img
-                        src={connection.photo}
+                        src={getPhotoUrl(connection.photo)}
                         alt={`${connection.firstName} ${connection.lastName}`}
                         className="w-16 h-16 rounded-full object-cover shadow-kin-soft"
                       />

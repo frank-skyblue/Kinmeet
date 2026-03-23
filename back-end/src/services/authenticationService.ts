@@ -16,6 +16,11 @@ export interface RegisterData {
     password: string;
     firstName: string;
     lastName: string;
+    about?: string;
+    jobTitle?: string;
+    company?: string;
+    institution?: string;
+    graduationYear?: number;
     homeCountry: string;
     currentLocation?: {
         province: string;
@@ -105,7 +110,12 @@ export const authenticationService = {
                 email, 
                 password, 
                 firstName, 
-                lastName, 
+                lastName,
+                about,
+                jobTitle,
+                company,
+                institution,
+                graduationYear,
                 homeCountry, 
                 currentLocation,
                 currentProvince, 
@@ -165,6 +175,11 @@ export const authenticationService = {
                 password, 
                 firstName,
                 lastName,
+                about: about || undefined,
+                jobTitle: jobTitle || undefined,
+                company: company || undefined,
+                institution: institution || undefined,
+                graduationYear: graduationYear || undefined,
                 homeCountry,
                 currentProvince: province,
                 currentCountry: country,

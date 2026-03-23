@@ -8,6 +8,11 @@ export interface IUser extends Document {
     password: string;
     firstName: string;
     lastName: string;
+    about?: string;
+    jobTitle?: string;
+    company?: string;
+    institution?: string;
+    graduationYear?: number;
     homeCountry: string;
     currentProvince: string;
     currentCountry: string;
@@ -28,6 +33,11 @@ const UserSchema: Schema<IUser> = new Schema({
     password: { type: String, required: true },
     firstName: { type: String, required: true },
     lastName: { type: String, required: true },
+    about: { type: String, maxlength: 500 },
+    jobTitle: { type: String, trim: true },
+    company: { type: String, trim: true },
+    institution: { type: String, trim: true },
+    graduationYear: { type: Number, min: 1950, max: 2100 },
     homeCountry: { type: String, required: true },
     currentProvince: { type: String, required: true },
     currentCountry: { type: String, required: true },

@@ -1,6 +1,7 @@
 import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+const API_BASE = API_URL.replace(/\/api$/, '');
 
 const api = axios.create({
   baseURL: API_URL,
@@ -30,6 +31,11 @@ export const authAPI = {
     password: string;
     firstName: string;
     lastName: string;
+    about?: string;
+    jobTitle?: string;
+    company?: string;
+    institution?: string;
+    graduationYear?: number;
     homeCountry: string;
     currentLocation: {
       province: string;
@@ -69,6 +75,20 @@ export const profileAPI = {
 
   deleteProfile: async () => {
     const response = await api.delete('/profile/me');
+    return response.data;
+  },
+
+  uploadPhoto: async (file: File) => {
+    const formData = new FormData();
+    formData.append('photo', file);
+    const response = await api.post('/profile/photo', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  deletePhoto: async () => {
+    const response = await api.delete('/profile/photo');
     return response.data;
   },
 };
@@ -158,6 +178,11 @@ export const blockAPI = {
     const response = await api.post('/block/report', { userId, reason });
     return response.data;
   },
+};
+
+export const getPhotoUrl = (photoPath: string) => {
+  if (photoPath.startsWith('http')) return photoPath;
+  return `${API_BASE}${photoPath}`;
 };
 
 export default api;

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { chatAPI, profileAPI } from '../../services/api';
+import { chatAPI, profileAPI, getPhotoUrl } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSocket } from '../../contexts/SocketContext';
 
@@ -278,7 +278,7 @@ const Chat: React.FC = () => {
               <>
                 {otherUser.photo ? (
                   <img
-                    src={otherUser.photo}
+                    src={getPhotoUrl(otherUser.photo)}
                     alt={`${otherUser.firstName} ${otherUser.lastName}`}
                     className="w-12 h-12 rounded-full object-cover shadow-kin-soft"
                   />

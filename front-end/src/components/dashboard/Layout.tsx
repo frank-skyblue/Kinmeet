@@ -29,9 +29,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   ];
 
   return (
-    <div className="min-h-screen bg-kin-beige">
+    <div className="h-screen flex flex-col bg-kin-beige overflow-hidden">
       {/* Top Navigation */}
-      <nav className="bg-white shadow-kin-soft border-b border-kin-stone-200">
+      <nav className="shrink-0 bg-white shadow-kin-soft border-b border-kin-stone-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
@@ -129,7 +129,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       </div>
 
       {/* Main Content */}
-      <main className="pb-16 md:pb-0">
+      <main className="flex-1 overflow-y-auto pb-16 md:pb-0">
         {children}
       </main>
     </div>

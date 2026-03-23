@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { profileAPI } from '../../services/api';
+import { profileAPI, getPhotoUrl } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import SearchableSelect from '../common/SearchableSelect';
 import {
@@ -17,6 +17,11 @@ interface UserProfile {
   firstName: string;
   lastName: string;
   email: string;
+  about?: string;
+  jobTitle?: string;
+  company?: string;
+  institution?: string;
+  graduationYear?: number;
   homeCountry: string;
   currentProvince: string;
   currentCountry: string;
@@ -41,6 +46,7 @@ const Profile: React.FC = () => {
   // Edit form state
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [about, setAbout] = useState('');
   const [homeCountry, setHomeCountry] = useState('');
   const [currentCountry, setCurrentCountry] = useState('');
   const [currentCountryCode, setCurrentCountryCode] = useState('');
@@ -48,6 +54,9 @@ const Profile: React.FC = () => {
   const [languages, setLanguages] = useState<string[]>(['']);
   const [interests, setInterests] = useState<string[]>(['']);
   const [lookingFor, setLookingFor] = useState<string[]>([]);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadProfile();
@@ -57,6 +66,7 @@ const Profile: React.FC = () => {
     if (profile && isEditing) {
       setFirstName(profile.firstName);
       setLastName(profile.lastName);
+      setAbout(profile.about || '');
       setHomeCountry(profile.homeCountry);
       setCurrentCountry(profile.currentCountry);
       setCurrentCountryCode(getCountryCode(profile.currentCountry));
@@ -136,6 +146,10 @@ const Profile: React.FC = () => {
       setError('First name and last name are required');
       return false;
     }
+    if (about && about.length > 500) {
+      setError('About section must be 500 characters or fewer');
+      return false;
+    }
     if (!homeCountry || !currentCountry || !currentProvince) {
       setError('Location fields are required');
       return false;
@@ -165,6 +179,7 @@ const Profile: React.FC = () => {
       const response = await profileAPI.updateProfile({
         firstName: firstName.trim(),
         lastName: lastName.trim(),
+        about: about.trim() || undefined,
         homeCountry,
         currentCountry,
         currentProvince,
@@ -225,9 +240,61 @@ const Profile: React.FC = () => {
     setDeleteConfirmText('');
   };
 
+  const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      setError('Image must be under 5 MB');
+      return;
+    }
+
+    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!allowed.includes(file.type)) {
+      setError('Only JPEG, PNG, WebP, and GIF images are allowed');
+      return;
+    }
+
+    setPhotoPreview(URL.createObjectURL(file));
+    setIsUploadingPhoto(true);
+    setError('');
+
+    try {
+      const response = await profileAPI.uploadPhoto(file);
+      if (response.success) {
+        setProfile((prev) => prev ? { ...prev, photo: response.photo } : prev);
+      }
+    } catch (err: unknown) {
+      setError('Failed to upload photo');
+      setPhotoPreview(null);
+      console.error(err);
+    } finally {
+      setIsUploadingPhoto(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleRemovePhoto = async () => {
+    setIsUploadingPhoto(true);
+    setError('');
+    try {
+      const response = await profileAPI.deletePhoto();
+      if (response.success) {
+        setProfile((prev) => prev ? { ...prev, photo: undefined } : prev);
+        setPhotoPreview(null);
+      }
+    } catch (err: unknown) {
+      setError('Failed to remove photo');
+      console.error(err);
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
+
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-kin-beige">
+      <div className="h-full flex items-center justify-center bg-kin-beige">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-kin-coral mx-auto mb-4"></div>
           <p className="text-kin-navy font-inter">Loading profile...</p>
@@ -238,7 +305,7 @@ const Profile: React.FC = () => {
 
   if (error && !profile) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-kin-beige">
+      <div className="h-full flex items-center justify-center bg-kin-beige">
         <div className="text-center">
           <p className="text-kin-coral-700 font-inter">{error}</p>
         </div>
@@ -252,7 +319,7 @@ const Profile: React.FC = () => {
 
   if (isEditing) {
     return (
-      <div className="min-h-screen bg-kin-beige py-8 px-4">
+      <div className="bg-kin-beige py-8 px-4">
         <div className="max-w-2xl mx-auto">
           <div className="bg-white rounded-kin-xl shadow-kin-strong p-8">
             <h1 className="text-2xl font-bold font-montserrat text-kin-navy mb-6">Edit Profile</h1>
@@ -264,6 +331,59 @@ const Profile: React.FC = () => {
             )}
 
             <form onSubmit={handleSaveProfile} className="space-y-6">
+              {/* Profile Photo */}
+              <div className="flex flex-col items-center gap-4">
+                <div className="relative group">
+                  {photoPreview || profile.photo ? (
+                    <img
+                      src={photoPreview || getPhotoUrl(profile.photo!)}
+                      alt="Profile"
+                      className="w-28 h-28 rounded-full object-cover border-4 border-kin-stone-200"
+                    />
+                  ) : (
+                    <div className="w-28 h-28 rounded-full border-4 border-kin-stone-200 bg-gradient-to-br from-kin-coral to-kin-teal flex items-center justify-center text-white text-4xl font-bold font-montserrat">
+                      {profile.firstName.charAt(0)}
+                    </div>
+                  )}
+                  {isUploadingPhoto && (
+                    <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                    </div>
+                  )}
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploadingPhoto}
+                    className="px-4 py-2 text-sm font-semibold font-inter text-kin-teal border border-kin-teal rounded-kin-sm hover:bg-kin-teal hover:text-white transition disabled:opacity-50"
+                    aria-label="Upload profile photo"
+                  >
+                    {profile.photo ? 'Change Photo' : 'Upload Photo'}
+                  </button>
+                  {profile.photo && (
+                    <button
+                      type="button"
+                      onClick={handleRemovePhoto}
+                      disabled={isUploadingPhoto}
+                      className="px-4 py-2 text-sm font-semibold font-inter text-kin-coral-700 border border-kin-coral-200 rounded-kin-sm hover:bg-kin-coral-50 transition disabled:opacity-50"
+                      aria-label="Remove profile photo"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  onChange={handlePhotoSelect}
+                  className="hidden"
+                  aria-hidden="true"
+                />
+                <p className="text-xs text-kin-teal font-inter">JPEG, PNG, WebP, or GIF. Max 5 MB.</p>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="firstName" className="block text-sm font-medium font-inter text-kin-navy mb-2">
@@ -292,6 +412,25 @@ const Profile: React.FC = () => {
                   />
                   <p className="text-xs text-kin-teal font-inter mt-1">Hidden until connection is accepted</p>
                 </div>
+              </div>
+
+              <div>
+                <label htmlFor="about" className="block text-sm font-medium font-inter text-kin-navy mb-2">
+                  About You
+                </label>
+                <textarea
+                  id="about"
+                  value={about}
+                  onChange={(e) => setAbout(e.target.value)}
+                  className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter resize-none"
+                  placeholder="Tell others a bit about yourself..."
+                  rows={3}
+                  maxLength={500}
+                  aria-label="About you"
+                />
+                <p className="text-xs text-kin-teal font-inter mt-1">
+                  {about.length}/500 characters
+                </p>
               </div>
 
               <SearchableSelect
@@ -462,7 +601,7 @@ const Profile: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-kin-beige py-8 px-4">
+    <div className="bg-kin-beige py-8 px-4">
       <div className="max-w-3xl mx-auto">
         <div className="bg-white rounded-kin-xl shadow-kin-strong overflow-hidden">
           <div className="bg-gradient-to-br from-kin-coral to-kin-teal h-32"></div>
@@ -471,7 +610,7 @@ const Profile: React.FC = () => {
             <div className="-mt-16 mb-6">
               {profile.photo ? (
                 <img
-                  src={profile.photo}
+                  src={getPhotoUrl(profile.photo)}
                   alt={`${profile.firstName} ${profile.lastName}`}
                   className="w-32 h-32 rounded-full border-4 border-white object-cover shadow-kin-medium"
                 />
@@ -490,6 +629,38 @@ const Profile: React.FC = () => {
             </div>
 
             <div className="space-y-6">
+              {/* About */}
+              {profile.about && (
+                <div>
+                  <h3 className="text-sm font-semibold font-inter text-kin-navy mb-2">About</h3>
+                  <p className="text-kin-navy font-inter leading-relaxed">{profile.about}</p>
+                </div>
+              )}
+
+              {/* Work */}
+              {(profile.jobTitle || profile.company) && (
+                <div>
+                  <h3 className="text-sm font-semibold font-inter text-kin-navy mb-2">Work</h3>
+                  <p className="text-lg text-kin-navy font-montserrat">
+                    {profile.jobTitle}
+                    {profile.jobTitle && profile.company && ' at '}
+                    {profile.company}
+                  </p>
+                </div>
+              )}
+
+              {/* Education */}
+              {(profile.institution || profile.graduationYear) && (
+                <div>
+                  <h3 className="text-sm font-semibold font-inter text-kin-navy mb-2">Education</h3>
+                  <p className="text-lg text-kin-navy font-montserrat">
+                    {profile.institution}
+                    {profile.institution && profile.graduationYear && ' · '}
+                    {profile.graduationYear && `Class of ${profile.graduationYear}`}
+                  </p>
+                </div>
+              )}
+
               <div>
                 <h3 className="text-sm font-semibold font-inter text-kin-navy mb-2">Home Country</h3>
                 <p className="text-lg text-kin-navy font-montserrat">{profile.homeCountry}</p>

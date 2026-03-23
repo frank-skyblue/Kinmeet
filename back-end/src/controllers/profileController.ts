@@ -1,9 +1,41 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
+import path from 'path';
+import fs from 'fs';
+import multer from 'multer';
 import { User } from '../models/User';
 import { Connection } from '../models/Connection';
 import { ConnectionRequest } from '../models/ConnectionRequest';
 import { Message } from '../models/Message';
+
+const UPLOADS_DIR = path.join(__dirname, '../../uploads/avatars');
+
+const storage = multer.diskStorage({
+    destination: (_req, _file, cb) => {
+        fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+        cb(null, UPLOADS_DIR);
+    },
+    filename: (req, file, cb) => {
+        const userId = (req as any).user.id;
+        const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
+        cb(null, `${userId}-${Date.now()}${ext}`);
+    },
+});
+
+const fileFilter = (_req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (allowed.includes(file.mimetype)) {
+        cb(null, true);
+    } else {
+        cb(new Error('Only JPEG, PNG, WebP, and GIF images are allowed'));
+    }
+};
+
+export const avatarUpload = multer({
+    storage,
+    fileFilter,
+    limits: { fileSize: 5 * 1024 * 1024 },
+});
 
 export const getProfile = async (req: Request, res: Response) => {
     try {
@@ -115,6 +147,11 @@ export const deleteProfile = async (req: Request, res: Response) => {
         const userId = (req as any).user.id;
         const userObjectId = new mongoose.Types.ObjectId(userId);
 
+        const userToDelete = await User.findById(userId);
+        if (userToDelete?.photo) {
+            removeOldAvatar(userToDelete.photo);
+        }
+
         await Promise.all([
             Connection.deleteMany({
                 $or: [{ user1: userObjectId }, { user2: userObjectId }]
@@ -149,6 +186,86 @@ export const deleteProfile = async (req: Request, res: Response) => {
         return res.status(500).json({
             success: false,
             message: 'Internal server error'
+        });
+    }
+};
+
+const removeOldAvatar = (photoPath: string) => {
+    try {
+        const filename = path.basename(photoPath);
+        const filePath = path.join(UPLOADS_DIR, filename);
+        if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+        }
+    } catch {
+        // non-critical — old file may already be gone
+    }
+};
+
+export const uploadPhoto = async (req: Request, res: Response) => {
+    try {
+        const userId = (req as any).user.id;
+
+        if (!req.file) {
+            return res.status(400).json({
+                success: false,
+                message: 'No image file provided',
+            });
+        }
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        if (user.photo) {
+            removeOldAvatar(user.photo);
+        }
+
+        const photoUrl = `/uploads/avatars/${req.file.filename}`;
+
+        user.photo = photoUrl;
+        await user.save();
+
+        return res.status(200).json({
+            success: true,
+            message: 'Photo uploaded successfully',
+            photo: photoUrl,
+        });
+    } catch (error) {
+        console.error('Upload photo error:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Internal server error',
+        });
+    }
+};
+
+export const deletePhoto = async (req: Request, res: Response) => {
+    try {
+        const userId = (req as any).user.id;
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        if (user.photo) {
+            removeOldAvatar(user.photo);
+        }
+
+        user.photo = undefined;
+        await user.save();
+
+        return res.status(200).json({
+            success: true,
+            message: 'Photo removed successfully',
+        });
+    } catch (error) {
+        console.error('Delete photo error:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Internal server error',
         });
     }
 };

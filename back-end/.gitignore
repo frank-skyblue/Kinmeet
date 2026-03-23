@@ -5,3 +5,5 @@
 /logs
 /temp
 /cache
+/uploads/avatars/*
+!/uploads/avatars/.gitkeep

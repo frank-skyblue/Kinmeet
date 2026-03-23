@@ -85,6 +85,26 @@
             ]
         },
         {
+            "type": "node",
+            "request": "launch",
+            "name": "Seed Users",
+            "runtimeExecutable": "${workspaceFolder}/back-end/node_modules/.bin/ts-node",
+            "args": [
+                "${workspaceFolder}/back-end/src/scripts/seedUsers.ts"
+            ],
+            "cwd": "${workspaceFolder}/back-end",
+            "skipFiles": [
+                "<node_internals>/**",
+                "node_modules/**"
+            ],
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen",
+            "envFile": "${workspaceFolder}/back-end/.env",
+            "env": {
+                "NODE_ENV": "development"
+            }
+        },
+        {
             "type": "node-terminal",
             "name": "JavaScript Debug Terminal",
             "request": "launch",

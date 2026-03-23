@@ -8,6 +8,10 @@ export const LANGUAGE_OPTIONS: SearchableSelectOption[] = ISO6391.getAllNames()
   .sort((a, b) => a.localeCompare(b))
   .map((name) => ({ value: name, label: name }));
 
+export const HOME_COUNTRY_OPTIONS: SearchableSelectOption[] = Country.getAllCountries()
+  .map((c) => ({ value: c.name, label: c.name }))
+  .sort((a, b) => a.label.localeCompare(b.label));
+
 export const COUNTRY_OPTIONS: SearchableSelectOption[] = Country.getAllCountries()
   .filter((c) => c.isoCode === 'CA' || c.isoCode === 'US')
   .map((c) => ({ value: c.name, label: c.name }));

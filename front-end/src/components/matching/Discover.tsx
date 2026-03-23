@@ -1,9 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { matchingAPI } from '../../services/api';
+import { matchingAPI, getPhotoUrl } from '../../services/api';
 
 interface Match {
   _id: string;
   firstName: string;
+  about?: string;
+  jobTitle?: string;
+  company?: string;
+  institution?: string;
+  graduationYear?: number;
   homeCountry: string;
   currentProvince: string;
   currentCountry: string;
@@ -69,7 +74,7 @@ const Discover: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-kin-beige">
+      <div className="h-full flex items-center justify-center bg-kin-beige">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-kin-coral mx-auto mb-4"></div>
           <p className="text-kin-navy font-inter">Loading matches...</p>
@@ -80,7 +85,7 @@ const Discover: React.FC = () => {
 
   if (matches.length === 0 || currentIndex >= matches.length) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-kin-beige px-4">
+      <div className="h-full flex items-center justify-center bg-kin-beige px-4">
         <div className="text-center max-w-md">
           <div className="text-6xl mb-4">🌍</div>
           <h2 className="text-2xl font-bold font-montserrat text-kin-navy mb-2">No More Matches</h2>
@@ -101,7 +106,7 @@ const Discover: React.FC = () => {
   const currentMatch = matches[currentIndex];
 
   return (
-    <div className="min-h-screen bg-kin-beige py-8 px-4">
+    <div className="bg-kin-beige py-8 px-4">
       <div className="max-w-lg mx-auto">
         <div className="text-center mb-6">
           <h1 className="text-3xl font-bold font-montserrat text-kin-navy mb-2">Discover</h1>
@@ -121,7 +126,7 @@ const Discover: React.FC = () => {
           <div className="bg-gradient-to-br from-kin-coral to-kin-teal h-64 flex items-center justify-center">
             {currentMatch.photo ? (
               <img 
-                src={currentMatch.photo} 
+                src={getPhotoUrl(currentMatch.photo)} 
                 alt={currentMatch.firstName} 
                 className="w-full h-full object-cover"
               />
@@ -134,10 +139,39 @@ const Discover: React.FC = () => {
 
           {/* Profile Info */}
           <div className="p-6">
-            <h2 className="text-3xl font-bold font-montserrat text-kin-navy mb-2">
+            <h2 className="text-3xl font-bold font-montserrat text-kin-navy mb-1">
               {currentMatch.firstName}
             </h2>
-            
+
+            {(currentMatch.jobTitle || currentMatch.company) && (
+              <p className="text-kin-teal font-inter mb-3">
+                {currentMatch.jobTitle}
+                {currentMatch.jobTitle && currentMatch.company && ' at '}
+                {currentMatch.company}
+              </p>
+            )}
+
+            {currentMatch.about && (
+              <p className="text-kin-navy font-inter text-sm leading-relaxed mb-4">
+                {currentMatch.about}
+              </p>
+            )}
+
+            {(currentMatch.institution || currentMatch.graduationYear) && (
+              <div className="flex items-center text-kin-teal mb-4 font-inter">
+                <svg className="w-5 h-5 mr-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5zM12 14v7" />
+                </svg>
+                <span>
+                  {currentMatch.institution}
+                  {currentMatch.institution && currentMatch.graduationYear && ' · '}
+                  {currentMatch.graduationYear && `Class of ${currentMatch.graduationYear}`}
+                </span>
+              </div>
+            )}
+
             <div className="flex items-center text-kin-teal mb-4 font-inter">
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
