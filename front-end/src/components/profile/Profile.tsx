@@ -47,6 +47,10 @@ const Profile: React.FC = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [about, setAbout] = useState('');
+  const [jobTitle, setJobTitle] = useState('');
+  const [company, setCompany] = useState('');
+  const [institution, setInstitution] = useState('');
+  const [graduationYear, setGraduationYear] = useState('');
   const [homeCountry, setHomeCountry] = useState('');
   const [currentCountry, setCurrentCountry] = useState('');
   const [currentCountryCode, setCurrentCountryCode] = useState('');
@@ -67,6 +71,10 @@ const Profile: React.FC = () => {
       setFirstName(profile.firstName);
       setLastName(profile.lastName);
       setAbout(profile.about || '');
+      setJobTitle(profile.jobTitle || '');
+      setCompany(profile.company || '');
+      setInstitution(profile.institution || '');
+      setGraduationYear(profile.graduationYear != null ? String(profile.graduationYear) : '');
       setHomeCountry(profile.homeCountry);
       setCurrentCountry(profile.currentCountry);
       setCurrentCountryCode(getCountryCode(profile.currentCountry));
@@ -150,6 +158,13 @@ const Profile: React.FC = () => {
       setError('About section must be 500 characters or fewer');
       return false;
     }
+    if (graduationYear.trim() !== '') {
+      const y = parseInt(graduationYear.trim(), 10);
+      if (Number.isNaN(y) || y < 1950 || y > 2100) {
+        setError('Graduation year must be a number between 1950 and 2100');
+        return false;
+      }
+    }
     if (!homeCountry || !currentCountry || !currentProvince) {
       setError('Location fields are required');
       return false;
@@ -176,10 +191,15 @@ const Profile: React.FC = () => {
       const validLanguages = languages.filter((lang) => lang.trim() !== '');
       const validInterests = interests.filter((int) => int.trim() !== '');
 
+      const gy = graduationYear.trim();
       const response = await profileAPI.updateProfile({
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         about: about.trim() || undefined,
+        jobTitle: jobTitle.trim() || undefined,
+        company: company.trim() || undefined,
+        institution: institution.trim() || undefined,
+        graduationYear: gy ? parseInt(gy, 10) : undefined,
         homeCountry,
         currentCountry,
         currentProvince,
@@ -433,6 +453,62 @@ const Profile: React.FC = () => {
                 <p className="text-xs text-kin-teal font-inter mt-1">
                   {about.length}/500 characters
                 </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="jobTitle" className="block text-sm font-medium font-inter text-kin-navy mb-2">
+                    Job Title
+                  </label>
+                  <input
+                    type="text"
+                    id="jobTitle"
+                    value={jobTitle}
+                    onChange={(e) => setJobTitle(e.target.value)}
+                    className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="company" className="block text-sm font-medium font-inter text-kin-navy mb-2">
+                    Company
+                  </label>
+                  <input
+                    type="text"
+                    id="company"
+                    value={company}
+                    onChange={(e) => setCompany(e.target.value)}
+                    className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="institution" className="block text-sm font-medium font-inter text-kin-navy mb-2">
+                    School / Institution
+                  </label>
+                  <input
+                    type="text"
+                    id="institution"
+                    value={institution}
+                    onChange={(e) => setInstitution(e.target.value)}
+                    className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="graduationYear" className="block text-sm font-medium font-inter text-kin-navy mb-2">
+                    Graduation Year
+                  </label>
+                  <input
+                    type="number"
+                    id="graduationYear"
+                    value={graduationYear}
+                    onChange={(e) => setGraduationYear(e.target.value)}
+                    className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
+                    min={1950}
+                    max={2100}
+                  />
+                </div>
               </div>
 
               <SearchableSelect
