@@ -1,6 +1,5 @@
 import express, { Express } from 'express';
 import { createServer } from 'http';
-import path from 'path';
 import cors from 'cors';
 import { connectToDatabase } from './services/mongooseService';
 import { initializeSocket } from './socket/socketServer';
@@ -44,7 +43,6 @@ const port = Number(process.env.PORT) || 8080
 
 app.use(cors(corsConfig))
 app.use(express.json())
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')))
 
 // Request logging middleware
 app.use((req, res, next) => {

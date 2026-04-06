@@ -1,25 +1,16 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
-import path from 'path';
-import fs from 'fs';
 import multer from 'multer';
+import { v2 as cloudinary } from 'cloudinary';
 import { User } from '../models/User';
 import { Connection } from '../models/Connection';
 import { ConnectionRequest } from '../models/ConnectionRequest';
 import { Message } from '../models/Message';
 
-const UPLOADS_DIR = path.join(__dirname, '../../uploads/avatars');
-
-const storage = multer.diskStorage({
-    destination: (_req, _file, cb) => {
-        fs.mkdirSync(UPLOADS_DIR, { recursive: true });
-        cb(null, UPLOADS_DIR);
-    },
-    filename: (req, file, cb) => {
-        const userId = (req as any).user.id;
-        const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
-        cb(null, `${userId}-${Date.now()}${ext}`);
-    },
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
 const fileFilter = (_req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
@@ -32,7 +23,7 @@ const fileFilter = (_req: Request, file: Express.Multer.File, cb: multer.FileFil
 };
 
 export const avatarUpload = multer({
-    storage,
+    storage: multer.memoryStorage(),
     fileFilter,
     limits: { fileSize: 5 * 1024 * 1024 },
 });
@@ -149,7 +140,7 @@ export const deleteProfile = async (req: Request, res: Response) => {
 
         const userToDelete = await User.findById(userId);
         if (userToDelete?.photo) {
-            removeOldAvatar(userToDelete.photo);
+            await destroyCloudinaryAvatar(userToDelete.photo);
         }
 
         await Promise.all([
@@ -190,15 +181,23 @@ export const deleteProfile = async (req: Request, res: Response) => {
     }
 };
 
-const removeOldAvatar = (photoPath: string) => {
+const getCloudinaryPublicId = (url: string): string | null => {
     try {
-        const filename = path.basename(photoPath);
-        const filePath = path.join(UPLOADS_DIR, filename);
-        if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
-        }
+        const match = url.match(/\/kinmeet\/avatars\/([^/.]+)/);
+        return match ? `kinmeet/avatars/${match[1]}` : null;
     } catch {
-        // non-critical — old file may already be gone
+        return null;
+    }
+};
+
+const destroyCloudinaryAvatar = async (photoUrl: string) => {
+    const publicId = getCloudinaryPublicId(photoUrl);
+    if (publicId) {
+        try {
+            await cloudinary.uploader.destroy(publicId);
+        } catch {
+            // non-critical — old image may already be gone
+        }
     }
 };
 
@@ -219,18 +218,34 @@ export const uploadPhoto = async (req: Request, res: Response) => {
         }
 
         if (user.photo) {
-            removeOldAvatar(user.photo);
+            await destroyCloudinaryAvatar(user.photo);
         }
 
-        const photoUrl = `/uploads/avatars/${req.file.filename}`;
+        const result = await new Promise<{ secure_url: string }>((resolve, reject) => {
+            const stream = cloudinary.uploader.upload_stream(
+                {
+                    folder: 'kinmeet/avatars',
+                    public_id: `${userId}-${Date.now()}`,
+                    transformation: [
+                        { width: 500, height: 500, crop: 'fill', gravity: 'face' },
+                        { quality: 'auto', fetch_format: 'auto' },
+                    ],
+                },
+                (error, result) => {
+                    if (error || !result) return reject(error);
+                    resolve(result);
+                },
+            );
+            stream.end(req.file!.buffer);
+        });
 
-        user.photo = photoUrl;
+        user.photo = result.secure_url;
         await user.save();
 
         return res.status(200).json({
             success: true,
             message: 'Photo uploaded successfully',
-            photo: photoUrl,
+            photo: result.secure_url,
         });
     } catch (error) {
         console.error('Upload photo error:', error);
@@ -251,7 +266,7 @@ export const deletePhoto = async (req: Request, res: Response) => {
         }
 
         if (user.photo) {
-            removeOldAvatar(user.photo);
+            await destroyCloudinaryAvatar(user.photo);
         }
 
         user.photo = undefined;
