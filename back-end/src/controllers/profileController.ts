@@ -13,6 +13,10 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+const CLOUDINARY_FOLDER = process.env.NODE_ENV === 'production'
+    ? 'kinmeet/avatars'
+    : 'kinmeet-dev/avatars';
+
 const fileFilter = (_req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
     const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
     if (allowed.includes(file.mimetype)) {
@@ -183,8 +187,9 @@ export const deleteProfile = async (req: Request, res: Response) => {
 
 const getCloudinaryPublicId = (url: string): string | null => {
     try {
-        const match = url.match(/\/kinmeet\/avatars\/([^/.]+)/);
-        return match ? `kinmeet/avatars/${match[1]}` : null;
+        const folderPattern = CLOUDINARY_FOLDER.replace(/\//g, '\\/');
+        const match = url.match(new RegExp(`\\/${folderPattern}\\/([^/.]+)`));
+        return match ? `${CLOUDINARY_FOLDER}/${match[1]}` : null;
     } catch {
         return null;
     }
@@ -224,7 +229,7 @@ export const uploadPhoto = async (req: Request, res: Response) => {
         const result = await new Promise<{ secure_url: string }>((resolve, reject) => {
             const stream = cloudinary.uploader.upload_stream(
                 {
-                    folder: 'kinmeet/avatars',
+                    folder: CLOUDINARY_FOLDER,
                     public_id: `${userId}-${Date.now()}`,
                     transformation: [
                         { width: 500, height: 500, crop: 'fill', gravity: 'face' },
