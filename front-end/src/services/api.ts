@@ -68,6 +68,7 @@ export const profileAPI = {
     return response.data;
   },
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   updateProfile: async (data: any) => {
     const response = await api.put('/profile/me', data);
     return response.data;
