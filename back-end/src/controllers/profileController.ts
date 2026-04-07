@@ -35,16 +35,16 @@ export const avatarUpload = multer({
 export const getProfile = async (req: Request, res: Response) => {
     try {
         const userId = (req as any).user.id;
-        
+
         const user = await User.findById(userId).select('-password');
-        
+
         if (!user) {
             return res.status(404).json({
                 success: false,
                 message: 'User not found'
             });
         }
-        
+
         return res.status(200).json({
             success: true,
             user
@@ -62,7 +62,7 @@ export const getUserProfile = async (req: Request, res: Response) => {
     try {
         const userId = (req as any).user.id;
         const { userId: targetUserId } = req.params;
-        
+
         // Check if users are connected
         const connection = await Connection.findOne({
             $or: [
@@ -70,21 +70,21 @@ export const getUserProfile = async (req: Request, res: Response) => {
                 { user1: targetUserId, user2: userId }
             ]
         });
-        
+
         // Select fields based on connection status
-        const selectFields = connection 
+        const selectFields = connection
             ? '-password -blockedUsers'  // Show full name if connected
             : '-password -lastName -blockedUsers';  // Hide last name if not connected
-        
+
         const user = await User.findById(targetUserId).select(selectFields);
-        
+
         if (!user) {
             return res.status(404).json({
                 success: false,
                 message: 'User not found'
             });
         }
-        
+
         return res.status(200).json({
             success: true,
             user,
@@ -102,27 +102,45 @@ export const getUserProfile = async (req: Request, res: Response) => {
 export const updateProfile = async (req: Request, res: Response) => {
     try {
         const userId = (req as any).user.id;
-        const updates = req.body;
-        
-        // Prevent updating sensitive fields
-        delete updates.email;
-        delete updates.password;
-        delete updates._id;
-        delete updates.blockedUsers;
-        
+        const updates = { ...req.body };
+
+        const forbiddenFields = ['email', 'password', '_id', 'blockedUsers'];
+        for (const field of forbiddenFields) {
+            delete updates[field];
+        }
+
+        const clearableFields = ['about', 'jobTitle', 'company', 'institution', 'graduationYear'];
+        const fieldsToSet: Record<string, unknown> = {};
+        const fieldsToUnset: Record<string, 1> = {};
+
+        for (const [key, value] of Object.entries(updates)) {
+            if (clearableFields.includes(key) && (value === null || value === '')) {
+                fieldsToUnset[key] = 1;
+            } else {
+                fieldsToSet[key] = value;
+            }
+        }
+
+        fieldsToSet.profileComplete = true;
+
+        const updateQuery: Record<string, unknown> = { $set: fieldsToSet };
+        if (Object.keys(fieldsToUnset).length > 0) {
+            updateQuery.$unset = fieldsToUnset;
+        }
+
         const user = await User.findByIdAndUpdate(
             userId,
-            { ...updates, profileComplete: true },
+            updateQuery,
             { new: true, runValidators: true }
         ).select('-password');
-        
+
         if (!user) {
             return res.status(404).json({
                 success: false,
                 message: 'User not found'
             });
         }
-        
+
         return res.status(200).json({
             success: true,
             message: 'Profile updated successfully',
