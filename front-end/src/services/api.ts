@@ -1,4 +1,5 @@
 import axios from 'axios';
+import type { RegisterPayload, UpdateProfilePayload } from '../types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
 const API_BASE = API_URL.replace(/\/api$/, '');
@@ -10,7 +11,6 @@ const api = axios.create({
   },
 });
 
-// Add token to requests
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
@@ -19,33 +19,13 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Auth API
 export const authAPI = {
   login: async (email: string, password: string) => {
     const response = await api.post('/auth/login', { email, password });
     return response.data;
   },
 
-  register: async (data: {
-    email: string;
-    password: string;
-    firstName: string;
-    lastName: string;
-    about?: string;
-    jobTitle?: string;
-    company?: string;
-    institution?: string;
-    graduationYear?: number;
-    homeCountry: string;
-    currentLocation: {
-      province: string;
-      country: string;
-    };
-    languages: string[];
-    interests: string[];
-    lookingFor: string[];
-    profilePhoto?: string;
-  }) => {
+  register: async (data: RegisterPayload) => {
     const response = await api.post('/auth/register', data);
     return response.data;
   },
@@ -56,7 +36,6 @@ export const authAPI = {
   },
 };
 
-// Profile API
 export const profileAPI = {
   getProfile: async () => {
     const response = await api.get('/profile/me');
@@ -68,8 +47,7 @@ export const profileAPI = {
     return response.data;
   },
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  updateProfile: async (data: any) => {
+  updateProfile: async (data: UpdateProfilePayload) => {
     const response = await api.put('/profile/me', data);
     return response.data;
   },
@@ -94,7 +72,6 @@ export const profileAPI = {
   },
 };
 
-// Matching API
 export const matchingAPI = {
   getMatches: async () => {
     const response = await api.get('/matching');
@@ -112,7 +89,6 @@ export const matchingAPI = {
   },
 };
 
-// Connections API
 export const connectionsAPI = {
   getConnections: async () => {
     const response = await api.get('/connections');
@@ -135,7 +111,6 @@ export const connectionsAPI = {
   },
 };
 
-// Chat API
 export const chatAPI = {
   getConversations: async () => {
     const response = await api.get('/chat/conversations');
@@ -158,7 +133,6 @@ export const chatAPI = {
   },
 };
 
-// Block API
 export const blockAPI = {
   blockUser: async (userId: string, reason?: string) => {
     const response = await api.post('/block/block', { userId, reason });
@@ -187,4 +161,3 @@ export const getPhotoUrl = (photoPath: string) => {
 };
 
 export default api;
-

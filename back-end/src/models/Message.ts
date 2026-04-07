@@ -12,7 +12,7 @@ export interface IMessage extends Document {
 const MessageSchema: Schema<IMessage> = new Schema({
     sender: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     receiver: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    content: { type: String, required: true, trim: true },
+    content: { type: String, required: true, trim: true, maxlength: 5000 },
     read: { type: Boolean, default: false },
 }, {
     timestamps: true

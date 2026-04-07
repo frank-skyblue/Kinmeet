@@ -1,0 +1,36 @@
+---
+description: Frontend architecture conventions
+globs: front-end/src/**/*.{ts,tsx}
+alwaysApply: true
+---
+
+# Frontend Architecture
+
+## Structure
+
+- **`types/`** — all shared interfaces. Never define domain types inline.
+- **`utils/`** — shared helpers (e.g. `getErrorMessage`).
+- **`constants/`** — static data and validation. Must not import from components.
+- **`services/`** — API client with typed payloads. No `any`.
+- **`contexts/`** — Auth and Socket providers.
+- **`components/`** — feature-organized (`auth/`, `chat/`, `profile/`, `common/`, etc.).
+
+## Conventions
+
+- `catch (err: unknown)` + `getErrorMessage(err)` — never `catch (err: any)`.
+- Functional state updates in async handlers: `setState(prev => ...)` to avoid stale closures.
+- Split components over ~300 lines into sub-components with a thin orchestrator.
+- Reuse `DynamicListField`, `LookingForCheckboxes`, `validatePhotoFile()` — don't reinvent.
+- Protected routes: `<ProtectedRoute />` wraps `<Layout />` via nested `<Route element>`.
+- No `any` — type all payloads, catch blocks, and context values.
+- Use Tailwind for all styling — no inline styles or CSS files.
+- Prefix event handlers with `handle` (e.g. `handleClick`, `handleSubmit`).
+- Add accessibility attrs: `aria-label`, `tabIndex`, `role` where appropriate.
+- Don't use unnecessary `useCallback` and `useMemo`.
+
+## New Feature Checklist
+
+1. Types in `types/index.ts`
+2. API functions in `services/api.ts`
+3. Components in the appropriate `components/` subdirectory
+4. Route in `App.tsx` inside the correct layout group

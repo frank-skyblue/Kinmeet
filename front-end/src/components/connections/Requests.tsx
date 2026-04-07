@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { connectionsAPI, getPhotoUrl } from '../../services/api';
+import { getErrorMessage } from '../../utils/error';
 
 interface ConnectionRequest {
   _id: string;
@@ -33,7 +34,7 @@ const Requests: React.FC = () => {
       if (response.success) {
         setRequests(response.requests);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError('Failed to load connection requests');
       console.error(err);
     } finally {
@@ -44,18 +45,18 @@ const Requests: React.FC = () => {
   const handleAccept = async (requestId: string) => {
     try {
       await connectionsAPI.acceptRequest(requestId);
-      setRequests(requests.filter(req => req._id !== requestId));
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to accept request');
+      setRequests(prev => prev.filter(req => req._id !== requestId));
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, 'Failed to accept request'));
     }
   };
 
   const handleIgnore = async (requestId: string) => {
     try {
       await connectionsAPI.ignoreRequest(requestId);
-      setRequests(requests.filter(req => req._id !== requestId));
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to ignore request');
+      setRequests(prev => prev.filter(req => req._id !== requestId));
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, 'Failed to ignore request'));
     }
   };
 

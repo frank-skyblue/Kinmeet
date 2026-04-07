@@ -1,309 +1,38 @@
-import { Request, Response } from 'express';
-import mongoose from 'mongoose';
-import multer from 'multer';
-import { v2 as cloudinary } from 'cloudinary';
-import { User } from '../models/User';
-import { Connection } from '../models/Connection';
-import { ConnectionRequest } from '../models/ConnectionRequest';
-import { Message } from '../models/Message';
+import { Response } from 'express';
+import { AuthRequest } from '../middleware/authMiddleware';
+import { AppError, asyncHandler } from '../middleware/errorHandler';
+import * as profileService from '../services/profileService';
 
-cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
+export { avatarUpload } from '../services/profileService';
+
+export const getProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const user = await profileService.getProfile(req.user!.id);
+    return res.status(200).json({ success: true, user });
 });
 
-const CLOUDINARY_FOLDER = process.env.NODE_ENV === 'production'
-    ? 'kinmeet/avatars'
-    : 'kinmeet-dev/avatars';
-
-const fileFilter = (_req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-    if (allowed.includes(file.mimetype)) {
-        cb(null, true);
-    } else {
-        cb(new Error('Only JPEG, PNG, WebP, and GIF images are allowed'));
-    }
-};
-
-export const avatarUpload = multer({
-    storage: multer.memoryStorage(),
-    fileFilter,
-    limits: { fileSize: 5 * 1024 * 1024 },
+export const getUserProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { userId: targetUserId } = req.params;
+    const result = await profileService.getUserProfile(req.user!.id, targetUserId);
+    return res.status(200).json({ success: true, ...result });
 });
 
-export const getProfile = async (req: Request, res: Response) => {
-    try {
-        const userId = (req as any).user.id;
+export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const user = await profileService.updateProfile(req.user!.id, req.body);
+    return res.status(200).json({ success: true, message: 'Profile updated successfully', user });
+});
 
-        const user = await User.findById(userId).select('-password');
+export const deleteProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
+    await profileService.deleteProfile(req.user!.id);
+    return res.status(200).json({ success: true, message: 'Account deleted successfully' });
+});
 
-        if (!user) {
-            return res.status(404).json({
-                success: false,
-                message: 'User not found'
-            });
-        }
+export const uploadPhoto = asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!req.file) throw new AppError(400, 'No image file provided');
+    const photo = await profileService.uploadPhoto(req.user!.id, req.file.buffer);
+    return res.status(200).json({ success: true, message: 'Photo uploaded successfully', photo });
+});
 
-        return res.status(200).json({
-            success: true,
-            user
-        });
-    } catch (error) {
-        console.error('Get profile error:', error);
-        return res.status(500).json({
-            success: false,
-            message: 'Internal server error'
-        });
-    }
-};
-
-export const getUserProfile = async (req: Request, res: Response) => {
-    try {
-        const userId = (req as any).user.id;
-        const { userId: targetUserId } = req.params;
-
-        // Check if users are connected
-        const connection = await Connection.findOne({
-            $or: [
-                { user1: userId, user2: targetUserId },
-                { user1: targetUserId, user2: userId }
-            ]
-        });
-
-        // Select fields based on connection status
-        const selectFields = connection
-            ? '-password -blockedUsers'  // Show full name if connected
-            : '-password -lastName -blockedUsers';  // Hide last name if not connected
-
-        const user = await User.findById(targetUserId).select(selectFields);
-
-        if (!user) {
-            return res.status(404).json({
-                success: false,
-                message: 'User not found'
-            });
-        }
-
-        return res.status(200).json({
-            success: true,
-            user,
-            isConnected: !!connection
-        });
-    } catch (error) {
-        console.error('Get user profile error:', error);
-        return res.status(500).json({
-            success: false,
-            message: 'Internal server error'
-        });
-    }
-};
-
-export const updateProfile = async (req: Request, res: Response) => {
-    try {
-        const userId = (req as any).user.id;
-        const updates = { ...req.body };
-
-        const forbiddenFields = ['email', 'password', '_id', 'blockedUsers'];
-        for (const field of forbiddenFields) {
-            delete updates[field];
-        }
-
-        const clearableFields = ['about', 'jobTitle', 'company', 'institution', 'graduationYear'];
-        const fieldsToSet: Record<string, unknown> = {};
-        const fieldsToUnset: Record<string, 1> = {};
-
-        for (const [key, value] of Object.entries(updates)) {
-            if (clearableFields.includes(key) && (value === null || value === '')) {
-                fieldsToUnset[key] = 1;
-            } else {
-                fieldsToSet[key] = value;
-            }
-        }
-
-        fieldsToSet.profileComplete = true;
-
-        const updateQuery: Record<string, unknown> = { $set: fieldsToSet };
-        if (Object.keys(fieldsToUnset).length > 0) {
-            updateQuery.$unset = fieldsToUnset;
-        }
-
-        const user = await User.findByIdAndUpdate(
-            userId,
-            updateQuery,
-            { new: true, runValidators: true }
-        ).select('-password');
-
-        if (!user) {
-            return res.status(404).json({
-                success: false,
-                message: 'User not found'
-            });
-        }
-
-        return res.status(200).json({
-            success: true,
-            message: 'Profile updated successfully',
-            user
-        });
-    } catch (error) {
-        console.error('Update profile error:', error);
-        return res.status(500).json({
-            success: false,
-            message: 'Internal server error'
-        });
-    }
-};
-
-export const deleteProfile = async (req: Request, res: Response) => {
-    try {
-        const userId = (req as any).user.id;
-        const userObjectId = new mongoose.Types.ObjectId(userId);
-
-        const userToDelete = await User.findById(userId);
-        if (userToDelete?.photo) {
-            await destroyCloudinaryAvatar(userToDelete.photo);
-        }
-
-        await Promise.all([
-            Connection.deleteMany({
-                $or: [{ user1: userObjectId }, { user2: userObjectId }]
-            }),
-            ConnectionRequest.deleteMany({
-                $or: [{ sender: userObjectId }, { receiver: userObjectId }]
-            }),
-            Message.deleteMany({
-                $or: [{ sender: userObjectId }, { receiver: userObjectId }]
-            }),
-            User.updateMany(
-                { blockedUsers: userObjectId },
-                { $pull: { blockedUsers: userObjectId } }
-            )
-        ]);
-
-        const user = await User.findByIdAndDelete(userId);
-
-        if (!user) {
-            return res.status(404).json({
-                success: false,
-                message: 'User not found'
-            });
-        }
-
-        return res.status(200).json({
-            success: true,
-            message: 'Account deleted successfully'
-        });
-    } catch (error) {
-        console.error('Delete profile error:', error);
-        return res.status(500).json({
-            success: false,
-            message: 'Internal server error'
-        });
-    }
-};
-
-const getCloudinaryPublicId = (url: string): string | null => {
-    try {
-        const folderPattern = CLOUDINARY_FOLDER.replace(/\//g, '\\/');
-        const match = url.match(new RegExp(`\\/${folderPattern}\\/([^/.]+)`));
-        return match ? `${CLOUDINARY_FOLDER}/${match[1]}` : null;
-    } catch {
-        return null;
-    }
-};
-
-const destroyCloudinaryAvatar = async (photoUrl: string) => {
-    const publicId = getCloudinaryPublicId(photoUrl);
-    if (publicId) {
-        try {
-            await cloudinary.uploader.destroy(publicId);
-        } catch {
-            // non-critical — old image may already be gone
-        }
-    }
-};
-
-export const uploadPhoto = async (req: Request, res: Response) => {
-    try {
-        const userId = (req as any).user.id;
-
-        if (!req.file) {
-            return res.status(400).json({
-                success: false,
-                message: 'No image file provided',
-            });
-        }
-
-        const user = await User.findById(userId);
-        if (!user) {
-            return res.status(404).json({ success: false, message: 'User not found' });
-        }
-
-        if (user.photo) {
-            await destroyCloudinaryAvatar(user.photo);
-        }
-
-        const result = await new Promise<{ secure_url: string }>((resolve, reject) => {
-            const stream = cloudinary.uploader.upload_stream(
-                {
-                    folder: CLOUDINARY_FOLDER,
-                    public_id: `${userId}-${Date.now()}`,
-                    transformation: [
-                        { width: 500, height: 500, crop: 'fill', gravity: 'face' },
-                        { quality: 'auto', fetch_format: 'auto' },
-                    ],
-                },
-                (error, result) => {
-                    if (error || !result) return reject(error);
-                    resolve(result);
-                },
-            );
-            stream.end(req.file!.buffer);
-        });
-
-        user.photo = result.secure_url;
-        await user.save();
-
-        return res.status(200).json({
-            success: true,
-            message: 'Photo uploaded successfully',
-            photo: result.secure_url,
-        });
-    } catch (error) {
-        console.error('Upload photo error:', error);
-        return res.status(500).json({
-            success: false,
-            message: 'Internal server error',
-        });
-    }
-};
-
-export const deletePhoto = async (req: Request, res: Response) => {
-    try {
-        const userId = (req as any).user.id;
-
-        const user = await User.findById(userId);
-        if (!user) {
-            return res.status(404).json({ success: false, message: 'User not found' });
-        }
-
-        if (user.photo) {
-            await destroyCloudinaryAvatar(user.photo);
-        }
-
-        user.photo = undefined;
-        await user.save();
-
-        return res.status(200).json({
-            success: true,
-            message: 'Photo removed successfully',
-        });
-    } catch (error) {
-        console.error('Delete photo error:', error);
-        return res.status(500).json({
-            success: false,
-            message: 'Internal server error',
-        });
-    }
-};
+export const deletePhoto = asyncHandler(async (req: AuthRequest, res: Response) => {
+    await profileService.deletePhoto(req.user!.id);
+    return res.status(200).json({ success: true, message: 'Photo removed successfully' });
+});

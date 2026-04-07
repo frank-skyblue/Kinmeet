@@ -1,5 +1,7 @@
 import express from 'express';
 import { authenticateJWT } from '../middleware/authMiddleware';
+import { validate } from '../middleware/validate';
+import { sendMessageSchema, markAsReadSchema, userIdParams } from '../middleware/schemas';
 import {
     sendMessage,
     getConversation,
@@ -9,13 +11,11 @@ import {
 
 const router = express.Router();
 
-// All chat routes require authentication
 router.use(authenticateJWT);
 
 router.get('/conversations', getConversations);
-router.get('/conversations/:userId', getConversation);
-router.post('/messages', sendMessage);
-router.post('/messages/read', markAsRead);
+router.get('/conversations/:userId', validate(userIdParams, 'params'), getConversation);
+router.post('/messages', validate(sendMessageSchema), sendMessage);
+router.post('/messages/read', validate(markAsReadSchema), markAsRead);
 
 export default router;
-

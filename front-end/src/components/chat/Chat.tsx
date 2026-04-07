@@ -3,41 +3,16 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { chatAPI, profileAPI, getPhotoUrl } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSocket } from '../../contexts/SocketContext';
-
-interface Message {
-  _id: string;
-  sender: {
-    _id: string;
-    firstName: string;
-    lastName: string;
-  };
-  receiver: {
-    _id: string;
-    firstName: string;
-    lastName: string;
-  };
-  content: string;
-  read: boolean;
-  createdAt: string;
-}
-
-interface UserProfile {
-  _id: string;
-  firstName: string;
-  lastName: string;
-  photo?: string;
-  currentProvince: string;
-  currentCountry: string;
-}
+import type { ChatMessage, UserProfile } from '../../types';
 
 const Chat: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
   const { user } = useAuth();
   const { socket, isConnected } = useSocket();
   const navigate = useNavigate();
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
-  const [otherUser, setOtherUser] = useState<UserProfile | null>(null);
+  const [otherUser, setOtherUser] = useState<Pick<UserProfile, '_id' | 'firstName' | 'lastName' | 'photo' | 'currentProvince' | 'currentCountry'> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
@@ -56,7 +31,7 @@ const Chat: React.FC = () => {
   useEffect(() => {
     if (!socket || !userId) return;
 
-    const handleNewMessage = (message: Message) => {
+    const handleNewMessage = (message: ChatMessage) => {
       // Only add message if it's from the current conversation
       if (message.sender._id === userId || message.receiver._id === userId) {
         setMessages(prev => {
@@ -115,7 +90,7 @@ const Chat: React.FC = () => {
         setMessages(response.messages);
       }
       setIsLoading(false);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError('Failed to load conversation');
       console.error(err);
       setIsLoading(false);
@@ -129,7 +104,7 @@ const Chat: React.FC = () => {
       if (response.success) {
         setOtherUser(response.user);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to load user profile:', err);
     }
   };
@@ -147,7 +122,7 @@ const Chat: React.FC = () => {
     const tempId = `temp-${Date.now()}`;
     
     // Create optimistic message with current user's data
-    const optimisticMessage: Message = {
+    const optimisticMessage: ChatMessage = {
       _id: tempId,
       sender: {
         _id: user.id,
@@ -177,7 +152,7 @@ const Chat: React.FC = () => {
       socket.emit(
         'chat:send_message',
         { receiverId: userId, content: messageContent },
-        (response: { success: boolean; message?: Message; error?: string }) => {
+        (response: { success: boolean; message?: ChatMessage; error?: string }) => {
           if (response.success && response.message) {
             // Replace optimistic message with real message from backend
             setMessages(prevMessages =>
@@ -196,13 +171,12 @@ const Chat: React.FC = () => {
           setIsSending(false);
         }
       );
-    } catch (err: any) {
-      // Remove optimistic message on error
+    } catch {
       setMessages(prevMessages =>
         prevMessages.filter(msg => msg._id !== tempId)
       );
       setError('Failed to send message');
-      setNewMessage(messageContent); // Restore message text
+      setNewMessage(messageContent);
       setIsSending(false);
     }
   };

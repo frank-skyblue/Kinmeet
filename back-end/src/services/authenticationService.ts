@@ -1,5 +1,6 @@
 import { User } from '../models/User';
 import jwt from 'jsonwebtoken';
+import { JWT_SECRET } from '../config/env';
 
 const isPasswordSecure = (password: string) => {
     // At least 8 chars, one uppercase, one lowercase, one number (special chars optional)
@@ -78,10 +79,9 @@ export const authenticationService = {
                 };
             }
 
-            // Generate JWT token (replace 'your_jwt_secret' with your actual secret)
             const token = jwt.sign(
                 { id: user._id.toString(), email: user.email, firstName: user.firstName },
-                process.env.JWT_SECRET || 'your_jwt_secret',
+                JWT_SECRET,
                 { expiresIn: '7d' }
             );
 
@@ -194,10 +194,9 @@ export const authenticationService = {
             
             await newUser.save();
 
-            // Generate JWT token
             const token = jwt.sign(
                 { id: newUser._id.toString(), email: newUser.email, firstName: newUser.firstName },
-                process.env.JWT_SECRET || 'your_jwt_secret',
+                JWT_SECRET,
                 { expiresIn: '7d' }
             );
 

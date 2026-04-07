@@ -1,6 +1,6 @@
 import { Country, State } from 'country-state-city';
 import ISO6391 from 'iso-639-1';
-import type { SearchableSelectOption } from '../components/common/SearchableSelect';
+import type { SearchableSelectOption } from '../types';
 
 export const LOOKING_FOR_OPTIONS = ['Friendship', 'Networking', 'Support'];
 

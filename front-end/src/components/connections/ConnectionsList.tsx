@@ -32,7 +32,7 @@ const ConnectionsList: React.FC = () => {
       if (response.success) {
         setConnections(response.connections);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError('Failed to load connections');
       console.error(err);
     } finally {
