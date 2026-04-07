@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { getErrorMessage } from '../../utils/error';
 import Logo from '../common/Logo';
 
 const Login: React.FC = () => {
@@ -19,8 +20,8 @@ const Login: React.FC = () => {
     try {
       await login(email, password);
       navigate('/discover');
-    } catch (err: any) {
-      setError(err.message || 'Login failed. Please try again.');
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, 'Login failed. Please try again.'));
     } finally {
       setIsLoading(false);
     }

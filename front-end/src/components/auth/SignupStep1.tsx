@@ -1,0 +1,120 @@
+import React from "react";
+
+interface SignupStep1Props {
+  email: string;
+  setEmail: React.Dispatch<React.SetStateAction<string>>;
+  password: string;
+  setPassword: React.Dispatch<React.SetStateAction<string>>;
+  confirmPassword: string;
+  setConfirmPassword: React.Dispatch<React.SetStateAction<string>>;
+  onNext: () => void;
+  setError: React.Dispatch<React.SetStateAction<string>>;
+}
+
+const SignupStep1: React.FC<SignupStep1Props> = ({
+  email,
+  setEmail,
+  password,
+  setPassword,
+  confirmPassword,
+  setConfirmPassword,
+  onNext,
+  setError,
+}) => {
+  const validate = (): boolean => {
+    if (!email || !password || !confirmPassword) {
+      setError("All fields are required");
+      return false;
+    }
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return false;
+    }
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters long");
+      return false;
+    }
+    return true;
+  };
+
+  const handleNext = () => {
+    setError("");
+    if (validate()) onNext();
+  };
+
+  return (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold font-montserrat text-kin-navy mb-4">
+        Create Account
+      </h2>
+
+      <div>
+        <label
+          htmlFor="email"
+          className="block text-sm font-medium font-inter text-kin-navy mb-2"
+        >
+          Email
+        </label>
+        <input
+          type="email"
+          id="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
+          placeholder="you@example.com"
+          required
+        />
+      </div>
+
+      <div>
+        <label
+          htmlFor="password"
+          className="block text-sm font-medium font-inter text-kin-navy mb-2"
+        >
+          Password
+        </label>
+        <input
+          type="password"
+          id="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
+          placeholder="••••••••"
+          required
+        />
+        <p className="text-xs text-kin-teal font-inter mt-1">
+          Must be at least 8 characters with uppercase, lowercase, and
+          number
+        </p>
+      </div>
+
+      <div>
+        <label
+          htmlFor="confirmPassword"
+          className="block text-sm font-medium font-inter text-kin-navy mb-2"
+        >
+          Confirm Password
+        </label>
+        <input
+          type="password"
+          id="confirmPassword"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
+          placeholder="••••••••"
+          required
+        />
+      </div>
+
+      <button
+        type="button"
+        onClick={handleNext}
+        className="w-full bg-kin-coral text-white py-4 px-6 rounded-kin-sm font-bold font-montserrat text-lg hover:bg-kin-coral-600 focus:ring-4 focus:ring-kin-coral-300 shadow-kin-medium hover:shadow-kin-strong transition-all duration-200 mt-4"
+      >
+        Next
+      </button>
+    </div>
+  );
+};
+
+export default SignupStep1;

@@ -1,0 +1,34 @@
+---
+description: Backend architecture conventions
+globs: back-end/src/**/*.ts
+alwaysApply: true
+---
+
+# Backend Architecture
+
+## Layers
+
+- **Routes** → middleware (auth, validation) + HTTP verb → controller
+- **Controllers** → thin wrappers: extract request data, call service, return `res.json()`. No business logic.
+- **Services** → all business logic and DB queries. Throw `AppError(statusCode, msg)` for expected errors. Never touch `req`/`res`.
+- **Config** → env validation (`env.ts`), CORS (`cors.ts`)
+- **`cloudinaryService`** → image upload/delete via `uploadImage(buffer, opts)` and `destroyImage(url, subfolder)`. Use this for all image handling — don't configure Cloudinary elsewhere.
+
+## Conventions
+
+- Wrap controllers with `asyncHandler` — no manual try/catch.
+- Validate with zod schemas (`middleware/schemas.ts`) applied via `validate()` in routes.
+- Use `AuthRequest` (not `Request`) and access user as `req.user!.id`.
+- Import env vars from `config/env.ts` — never use raw `process.env` with fallback strings.
+- All responses follow `{ success: boolean, message?: string, ...data }`.
+- No `any` — type everything. Use `unknown` + narrowing when the type is uncertain.
+- Custom error types go in `middleware/errorHandler.ts` with a matching `instanceof` branch.
+
+## New Feature Checklist
+
+1. Model in `models/`
+2. Service in `services/` (throws `AppError`)
+3. Controller in `controllers/` (uses `asyncHandler`)
+4. Zod schema in `middleware/schemas.ts`
+5. Route in `routes/` with `authenticateJWT` + `validate()`
+6. Register route in `app.ts`

@@ -1,41 +1,18 @@
 import 'dotenv/config';
+import './config/env';
 import express, { Express } from 'express';
 import { createServer } from 'http';
 import cors from 'cors';
 import { connectToDatabase } from './services/mongooseService';
 import { initializeSocket } from './socket/socketServer';
+import { errorHandler } from './middleware/errorHandler';
+import { corsConfig } from './config/cors';
 import authRoutes from './routes/authRoutes';
 import profileRoutes from './routes/profileRoutes';
 import matchingRoutes from './routes/matchingRoutes';
 import connectionsRoutes from './routes/connectionsRoutes';
 import chatRoutes from './routes/chatRoutes';
 import blockRoutes from './routes/blockRoutes';
-
-// Build CORS origins array
-const corsOrigins: string[] = [
-    'http://localhost:3000', // React development server
-    'http://localhost:3001', // Alternative React port
-    'http://localhost:5173', // Vite default port
-    'http://localhost:5174', // Vite alternative port
-];
-
-// Add Vercel frontend URL
-if (process.env.VERCEL_URL) {
-    const vercelUrl = process.env.VERCEL_URL.startsWith('http') 
-        ? process.env.VERCEL_URL 
-        : `https://${process.env.VERCEL_URL}`;
-    corsOrigins.push(vercelUrl);
-}
-
-// Add custom frontend URL (for Vercel or other deployments)
-if (process.env.REACT_FRONTEND_URL) {
-    corsOrigins.push(process.env.REACT_FRONTEND_URL);
-}
-
-const corsConfig = {
-    origin: corsOrigins,
-    credentials: true
-}
 
 const app: Express = express()
 const httpServer = createServer(app) // Wrap Express with HTTP server for Socket.io
@@ -89,6 +66,8 @@ app.use('/api/matching', matchingRoutes);
 app.use('/api/connections', connectionsRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/block', blockRoutes);
+
+app.use(errorHandler);
 
 const start = async () => {
     try {

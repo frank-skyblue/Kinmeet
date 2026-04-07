@@ -1,5 +1,7 @@
 import { Socket } from 'socket.io';
 import jwt from 'jsonwebtoken';
+import { JWT_SECRET } from '../config/env';
+import type { JwtPayload } from '../middleware/authMiddleware';
 
 export const socketAuthMiddleware = (socket: Socket, next: (err?: Error) => void) => {
   const token = socket.handshake.auth.token;
@@ -9,7 +11,7 @@ export const socketAuthMiddleware = (socket: Socket, next: (err?: Error) => void
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_jwt_secret') as any;
+    const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
     socket.data.userId = decoded.id;
     socket.data.email = decoded.email;
     next();

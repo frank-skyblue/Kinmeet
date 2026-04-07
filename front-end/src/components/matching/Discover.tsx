@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { matchingAPI, getPhotoUrl } from '../../services/api';
+import { getErrorMessage } from '../../utils/error';
 
 interface Match {
   _id: string;
@@ -35,7 +36,7 @@ const Discover: React.FC = () => {
       if (response.success) {
         setMatches(response.matches);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError('Failed to load matches');
       console.error(err);
     } finally {
@@ -48,8 +49,8 @@ const Discover: React.FC = () => {
     try {
       await matchingAPI.sendMeetRequest(currentMatch._id);
       moveToNext();
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to send Meet request');
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, 'Failed to send Meet request'));
     }
   };
 
@@ -57,9 +58,8 @@ const Discover: React.FC = () => {
     try {
       await matchingAPI.passUser();
       moveToNext();
-    } catch (err: any) {
-      console.error('Pass error:', err);
-      moveToNext();
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, 'Failed to pass'));
     }
   };
 

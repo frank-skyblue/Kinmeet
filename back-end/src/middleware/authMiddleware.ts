@@ -1,8 +1,15 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { JWT_SECRET } from '../config/env';
+
+export interface JwtPayload {
+    id: string;
+    email: string;
+    firstName: string;
+}
 
 export interface AuthRequest extends Request {
-    user?: { id: string; email: string; name?: string; role: string };
+    user?: JwtPayload;
 }
 
 export const authenticateJWT = (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -12,8 +19,8 @@ export const authenticateJWT = (req: AuthRequest, res: Response, next: NextFunct
     }
     const token = authHeader.split(' ')[1];
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_jwt_secret');
-        req.user = decoded as any;
+        const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
+        req.user = decoded;
         next();
     } catch (err) {
         return res.status(401).json({ success: false, message: 'Invalid token' });

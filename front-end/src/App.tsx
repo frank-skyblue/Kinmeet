@@ -22,58 +22,22 @@ const App = () => {
             <Route path="/signup" element={<Signup />} />
 
             {/* Protected Routes */}
-            <Route
-              path="/discover"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <Discover />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/requests"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <Requests />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/connections"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <ConnectionsList />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/chat/:userId"
-              element={
-                <ProtectedRoute>
-                  <Chat />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/profile"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <Profile />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
+            <Route element={<ProtectedRoute />}>
+              {/* Routes with dashboard Layout */}
+              <Route element={<Layout />}>
+                <Route path="/discover" element={<Discover />} />
+                <Route path="/requests" element={<Requests />} />
+                <Route path="/connections" element={<ConnectionsList />} />
+                <Route path="/profile" element={<Profile />} />
+              </Route>
+
+              {/* Full-screen routes (no Layout) */}
+              <Route path="/chat/:userId" element={<Chat />} />
+            </Route>
 
             {/* Redirect root to discover */}
             <Route path="/" element={<Navigate to="/discover" replace />} />
-            
+
             {/* Catch all - redirect to discover */}
             <Route path="*" element={<Navigate to="/discover" replace />} />
           </Routes>

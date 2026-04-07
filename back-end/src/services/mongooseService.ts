@@ -1,12 +1,8 @@
 import mongoose from 'mongoose';
-
-const MONGODB_URI = process.env.MONGODB_URI || process.env.MONGO_URL || 'mongodb://localhost:27017/kinmeet';
+import { MONGODB_URI } from '../config/env';
 
 export const connectToDatabase = async () => {
     try {
-        if (!MONGODB_URI) {
-            throw new Error('MONGODB_URI or MONGO_URL environment variable is not set');
-        }
         
         // Railway MongoDB works better without database name in URI
         // Specify database name in connection options instead

@@ -1,5 +1,7 @@
 import express from 'express';
 import { authenticateJWT } from '../middleware/authMiddleware';
+import { validate } from '../middleware/validate';
+import { requestIdParams } from '../middleware/schemas';
 import {
     getConnectionRequests,
     acceptConnectionRequest,
@@ -9,13 +11,11 @@ import {
 
 const router = express.Router();
 
-// All connection routes require authentication
 router.use(authenticateJWT);
 
 router.get('/', getConnections);
 router.get('/requests', getConnectionRequests);
-router.post('/requests/:requestId/accept', acceptConnectionRequest);
-router.post('/requests/:requestId/ignore', ignoreConnectionRequest);
+router.post('/requests/:requestId/accept', validate(requestIdParams, 'params'), acceptConnectionRequest);
+router.post('/requests/:requestId/ignore', validate(requestIdParams, 'params'), ignoreConnectionRequest);
 
 export default router;
-

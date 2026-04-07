@@ -1,9 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-
-type SearchableSelectOption = {
-  value: string;
-  label: string;
-};
+import type { SearchableSelectOption } from "../../types";
 
 type SearchableSelectProps = {
   id: string;
@@ -239,4 +235,3 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
 };
 
 export default SearchableSelect;
-export type { SearchableSelectOption };
