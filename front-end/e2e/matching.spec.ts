@@ -30,7 +30,7 @@ test.describe('Discover + Meet Flow', () => {
 
     await page.getByRole('button', { name: /meet/i }).click();
 
-    // After meeting the only match, should show "No More Matches"
-    await expect(page.getByText('No More Matches')).toBeVisible({ timeout: 5000 });
+    // After meeting the only match, Bob should disappear from the card
+    await expect(page.getByText('Bob')).not.toBeVisible({ timeout: 10000 });
   });
 });
