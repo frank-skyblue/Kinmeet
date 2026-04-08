@@ -36,7 +36,7 @@ vi.mock('../../common/Logo', () => ({
 }));
 
 vi.mock('../SignupStep1', () => ({
-  default: ({ onNext, setError }: { onNext: () => void; setError: (s: string) => void }) => (
+  default: ({ onNext }: { onNext: () => void; setError: (s: string) => void }) => (
     <div data-testid="step-1">
       <button onClick={onNext}>Next Step 1</button>
     </div>

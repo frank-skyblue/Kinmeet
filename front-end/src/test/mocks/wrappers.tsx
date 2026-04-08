@@ -43,9 +43,10 @@ const defaultSocket: MockSocketValue = {
 };
 
 import { vi } from 'vitest';
+import * as authContextModule from '../../contexts/AuthContext';
+import * as socketContextModule from '../../contexts/SocketContext';
 
 vi.mock('../../contexts/AuthContext', async () => {
-  const React = await import('react');
   let authValue = { ...defaultAuth };
   return {
     useAuth: () => authValue,
@@ -60,7 +61,6 @@ vi.mock('../../contexts/AuthContext', async () => {
 });
 
 vi.mock('../../contexts/SocketContext', async () => {
-  const React = await import('react');
   let socketValue = { ...defaultSocket };
   return {
     useSocket: () => socketValue,
@@ -80,18 +80,21 @@ interface RenderOptions {
   socket?: Partial<MockSocketValue>;
 }
 
+type AuthMockHelpers = {
+  __setMockAuth: (v: Partial<MockAuthValue>) => void;
+  __resetMockAuth: () => void;
+};
+
+type SocketMockHelpers = {
+  __setMockSocket: (v: Partial<MockSocketValue>) => void;
+  __resetMockSocket: () => void;
+};
+
 export const renderWithProviders = (ui: React.ReactElement, options: RenderOptions = {}) => {
   const { route = '/', auth, socket } = options;
 
-  const authModule = require('../../contexts/AuthContext') as {
-    __setMockAuth: (v: Partial<MockAuthValue>) => void;
-    __resetMockAuth: () => void;
-  };
-
-  const socketModule = require('../../contexts/SocketContext') as {
-    __setMockSocket: (v: Partial<MockSocketValue>) => void;
-    __resetMockSocket: () => void;
-  };
+  const authModule = authContextModule as typeof authContextModule & AuthMockHelpers;
+  const socketModule = socketContextModule as typeof socketContextModule & SocketMockHelpers;
 
   authModule.__resetMockAuth();
   socketModule.__resetMockSocket();
