@@ -1,69 +1,46 @@
-# React + TypeScript + Vite
+# KinMeet front-end
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React SPA for KinMeet. Repository overview, full stack setup, and contributor workflow live in the **[root README](../README.md)** and **[onboard.md](../onboard.md)**.
 
-Currently, two official plugins are available:
+## Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+React 19, TypeScript, Vite, React Router, Tailwind CSS v4 (PostCSS), Axios, Socket.io client, Vitest + Testing Library, Playwright (E2E).
 
-## Expanding the ESLint configuration
+## Scripts
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+| Command                 | Description                                                                               |
+| ----------------------- | ----------------------------------------------------------------------------------------- |
+| `npm run dev`           | Vite dev server (default `http://localhost:5173`)                                         |
+| `npm run build`         | Typecheck and production build                                                            |
+| `npm test`              | Vitest (single run)                                                                       |
+| `npm run test:watch`    | Vitest watch mode                                                                         |
+| `npm run test:coverage` | Vitest with coverage                                                                      |
+| `npm run lint`          | ESLint                                                                                    |
+| `npx playwright test`   | E2E tests (starts API + app via `playwright.config.ts`; local MongoDB on `27017` for E2E) |
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+First-time Playwright browsers:
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npx playwright install --with-deps chromium
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Environment
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Optional `front-end/.env`:
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```env
+VITE_API_URL=http://localhost:8080/api
 ```
+
+Match this to your running back-end (see root README).
+
+## Layout
+
+- `src/components/` — feature UI (auth, chat, connections, matching, profile, common, dashboard)
+- `src/contexts/` — Auth, Socket
+- `src/services/` — API client and socket helpers
+- `src/types/`, `src/constants/`, `src/utils/`
+- `src/**/__tests__/` — component and context tests
+- `e2e/` — Playwright specs
+
+Config: `vite.config.ts`, `postcss.config.js` (Tailwind), `playwright.config.ts`.
