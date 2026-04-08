@@ -2,9 +2,9 @@ name: E2E
 
 on:
   push:
-    branches:
-      - main
-      - FE-003--CICD-+-Testing
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
   e2e-tests:
