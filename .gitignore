@@ -139,6 +139,10 @@ docker-compose.override.yml
 *.sqlite3
 *.db
 
+# Playwright
+playwright-report/
+test-results/
+
 # Misc
 .vercel
 .turbo
