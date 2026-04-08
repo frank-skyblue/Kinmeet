@@ -12,19 +12,6 @@ test.describe('Auth Flow', () => {
   });
 
   test('login with valid credentials redirects to discover', async ({ page }) => {
-    const { user } = await seedTestUser({
-      email: `auth-e2e-${Date.now()}@test.com`,
-      password: 'TestPass1',
-      firstName: 'AuthTest',
-      lastName: 'User',
-    });
-
-    await loginAs(page, `auth-e2e-${Date.now()}@test.com`.replace(Date.now().toString(), user.id.slice(-8)), 'TestPass1');
-
-    // Since we used a dynamic email, let's do a cleaner approach:
-  });
-
-  test('login with seeded user lands on discover page', async ({ page }) => {
     const email = `auth-${Date.now()}@test.com`;
     await seedTestUser({
       email,
