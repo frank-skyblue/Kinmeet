@@ -25,7 +25,7 @@ test.describe('Discover + Meet Flow', () => {
 
     await loginAs(page, `match-a-${ts}@test.com`, 'TestPass1');
 
-    await expect(page.getByText('Discover')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('heading', { name: 'Discover' })).toBeVisible({ timeout: 10000 });
     await expect(page.getByText('Bob')).toBeVisible({ timeout: 10000 });
 
     await page.getByRole('button', { name: /meet/i }).click();
