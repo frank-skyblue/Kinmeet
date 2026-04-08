@@ -49,102 +49,143 @@ KinMeet is a social networking application that connects people from the same ho
 
 ## 📋 Prerequisites
 
-- Node.js (v16 or higher)
-- npm or yarn
-- MongoDB (local installation or MongoDB Atlas account)
+- **Node.js 22** (managed via `.nvmrc` — see below)
+- **npm** (ships with Node)
+- **MongoDB** (local installation or MongoDB Atlas account)
+- **nvm** ([Node Version Manager](https://github.com/nvm-sh/nvm)) — recommended for managing Node versions
 
 ## 🚀 Getting Started
 
 ### 1. Clone the Repository
 
 ```bash
-cd /home/frank/Documents/project/Kinmeet
+git clone <repo-url>
+cd Kinmeet
 ```
 
-### 2. Set Up the Back-end
+### 2. Set the Correct Node Version
+
+The repo includes an `.nvmrc` file pinned to Node 22. Run:
+
+```bash
+nvm install   # first time only — installs the version from .nvmrc
+nvm use        # switches to the correct version
+```
+
+Verify with `node -v` — it should show `v22.x.x`.
+
+### 3. Set Up the Back-end
 
 ```bash
 cd back-end
-
-# Install dependencies
 npm install
-
-# Create a .env file
-touch .env
 ```
 
-Add the following to your `.env` file:
+Create a `back-end/.env` file:
 
 ```env
-# MongoDB Connection
-MONGODB_URI=mongodb://localhost:27017/kinmeet
-# Or use MongoDB Atlas:
-# MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/kinmeet
-
-# JWT Secret (use a strong, random string in production)
-JWT_SECRET=your_super_secret_jwt_key_change_this_in_production
-
-# Port
 PORT=8080
-
-# Frontend URL (for CORS)
+MONGODB_URI=mongodb://localhost:27017/kinmeet
+JWT_SECRET=your_super_secret_jwt_key_change_this_in_production
 REACT_FRONTEND_URL=http://localhost:5173
+
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
 ```
 
-### 3. Set Up the Front-end
+> For MongoDB Atlas, replace `MONGODB_URI` with your Atlas connection string.
+
+### 4. Set Up the Front-end
 
 ```bash
 cd ../front-end
-
-# Install dependencies
 npm install
-
-# Create a .env file (optional)
-touch .env
 ```
 
-Add the following to your `.env` file (optional):
+Create a `front-end/.env` file (optional):
 
 ```env
 VITE_API_URL=http://localhost:8080/api
 ```
 
-### 4. Start MongoDB
+### 5. Start MongoDB
 
-If using local MongoDB:
+If using a local installation:
 
 ```bash
-# Start MongoDB service
-sudo systemctl start mongodb
-# or
-mongod
+sudo systemctl start mongod
 ```
 
-If using MongoDB Atlas, ensure your connection string is correct in the back-end `.env` file.
+If using MongoDB Atlas, ensure your connection string is set in `back-end/.env`.
 
-### 5. Run the Application
+### 6. Run the Application
 
-**Terminal 1 - Back-end:**
+Open two terminals (both from the repo root):
+
+**Terminal 1 — Back-end:**
 
 ```bash
 cd back-end
 npm run dev
 ```
 
-The back-end will start on `http://localhost:8080`
+Runs on `http://localhost:8080`
 
-**Terminal 2 - Front-end:**
+**Terminal 2 — Front-end:**
 
 ```bash
 cd front-end
 npm run dev
 ```
 
-The front-end will start on `http://localhost:5173`
+Runs on `http://localhost:5173`
 
-### 6. Access the Application
+### 7. Open the App
 
-Open your browser and navigate to `http://localhost:5173`
+Navigate to `http://localhost:5173` in your browser.
+
+## 🧪 Testing
+
+### Back-end Tests (Vitest + Supertest)
+
+```bash
+cd back-end
+npm test              # single run
+npm run test:watch    # watch mode
+npm run test:coverage # with coverage report
+```
+
+Uses an in-memory MongoDB instance — no running database required.
+
+### Front-end Tests (Vitest + React Testing Library)
+
+```bash
+cd front-end
+npm test              # single run
+npm run test:watch    # watch mode
+npm run test:coverage # with coverage report
+```
+
+### E2E Tests (Playwright)
+
+Requires a running MongoDB instance on `localhost:27017`.
+
+```bash
+cd front-end
+npx playwright install --with-deps chromium   # first time only
+npx playwright test                            # headless
+npx playwright test --ui                       # interactive UI mode
+```
+
+Playwright starts both the back-end and front-end servers automatically via `playwright.config.ts`.
+
+### CI/CD
+
+Tests run automatically via GitHub Actions:
+
+- **CI workflow** (`ci.yml`) — runs back-end and front-end unit/integration tests on every push and PR to `main`
+- **E2E workflow** (`e2e.yml`) — runs Playwright end-to-end tests on pushes to `main` only
 
 ## 📱 Usage
 
@@ -269,9 +310,6 @@ Kinmeet/
 
 ## 🚧 Future Enhancements
 
-- Real-time messaging with WebSockets
-- Profile photo upload
-- Advanced filtering and search
 - Group conversations
 - Events and meetups
 - Email notifications
