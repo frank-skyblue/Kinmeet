@@ -38,14 +38,18 @@ KinMeet is a social networking application that connects people from the same ho
 - **TypeScript**
 - **MongoDB** with **Mongoose**
 - **JWT** for authentication
-- **bcrypt** for password hashing
+- **bcryptjs** for password hashing
+- **Zod** for request validation
+- **Socket.io** for real-time chat
+- **Cloudinary** for profile images
 
 ### Front-end
 - **React 19** with **TypeScript**
 - **Vite** for build tooling
 - **React Router** for navigation
-- **TailwindCSS** for styling
+- **Tailwind CSS** (v4 via PostCSS) for styling
 - **Axios** for API calls
+- **Socket.io** client for real-time updates
 
 ## 📋 Prerequisites
 
@@ -55,6 +59,8 @@ KinMeet is a social networking application that connects people from the same ho
 - **nvm** ([Node Version Manager](https://github.com/nvm-sh/nvm)) — recommended for managing Node versions
 
 ## 🚀 Getting Started
+
+New contributors should read **[Contributor onboarding](onboard.md)** for team workflow, CI expectations, and **`npm ci` vs `npm install`**.
 
 ### 1. Clone the Repository
 
@@ -78,8 +84,10 @@ Verify with `node -v` — it should show `v22.x.x`.
 
 ```bash
 cd back-end
-npm install
+npm ci
 ```
+
+(Use `npm install` when you are adding or changing dependencies; see [onboard.md](onboard.md).)
 
 Create a `back-end/.env` file:
 
@@ -100,8 +108,10 @@ CLOUDINARY_API_SECRET=your_api_secret
 
 ```bash
 cd ../front-end
-npm install
+npm ci
 ```
+
+(Use `npm install` when you are adding or changing dependencies; see [onboard.md](onboard.md).)
 
 Create a `front-end/.env` file (optional):
 
@@ -116,6 +126,8 @@ If using a local installation:
 ```bash
 sudo systemctl start mongod
 ```
+
+To run MongoDB in **Docker** instead, see [onboard.md](onboard.md) (Local MongoDB with Docker).
 
 If using MongoDB Atlas, ensure your connection string is set in `back-end/.env`.
 
@@ -184,8 +196,8 @@ Playwright starts both the back-end and front-end servers automatically via `pla
 
 Tests run automatically via GitHub Actions:
 
-- **CI workflow** (`ci.yml`) — runs back-end and front-end unit/integration tests on every push and PR to `main`
-- **E2E workflow** (`e2e.yml`) — runs Playwright end-to-end tests on pushes to `main` only
+- **CI workflow** (`.github/workflows/ci.yml`) — on pushes to `main` and on pull requests targeting `main`: TypeScript check (`tsc --noEmit`), unit tests, and a production **front-end build**
+- **E2E workflow** (`.github/workflows/e2e.yml`) — Playwright tests with a MongoDB service container: on **pull requests targeting `main`** (so you can require **E2E / e2e-tests** before merge), on **push to `main`** (post-merge), and on pushes to any extra branch listed in that file.
 
 ## 📱 Usage
 
@@ -227,34 +239,38 @@ Tests run automatically via GitHub Actions:
 
 ```
 Kinmeet/
+├── .github/workflows/   # CI (ci.yml) and E2E (e2e.yml)
 ├── back-end/
 │   ├── src/
-│   │   ├── controllers/      # Request handlers
-│   │   ├── models/           # MongoDB schemas
-│   │   ├── routes/           # API routes
-│   │   ├── services/         # Business logic
-│   │   ├── middleware/       # Auth middleware
-│   │   └── app.ts           # Express app setup
+│   │   ├── __tests__/        # Vitest tests (routes, services, socket)
+│   │   ├── config/           # env, CORS
+│   │   ├── controllers/
+│   │   ├── middleware/
+│   │   ├── models/
+│   │   ├── routes/
+│   │   ├── services/
+│   │   ├── socket/           # Socket.io server
+│   │   └── app.ts            # Express + HTTP server entry
 │   ├── package.json
 │   └── tsconfig.json
 │
 ├── front-end/
+│   ├── e2e/                  # Playwright specs
 │   ├── src/
-│   │   ├── components/       # React components
-│   │   │   ├── auth/        # Login, Signup
-│   │   │   ├── matching/    # Discover page
-│   │   │   ├── connections/ # Requests, Connections list
-│   │   │   ├── chat/        # Chat interface
-│   │   │   ├── profile/     # Profile page
-│   │   │   └── dashboard/   # Layout, Navigation
-│   │   ├── contexts/        # React contexts (Auth)
-│   │   ├── services/        # API service layer
-│   │   ├── App.tsx          # Main app with routing
-│   │   └── main.tsx         # Entry point
+│   │   ├── components/       # auth, chat, common, connections, matching, profile, dashboard
+│   │   ├── contexts/         # Auth, Socket
+│   │   ├── constants/
+│   │   ├── services/         # API + socket client
+│   │   ├── types/
+│   │   ├── utils/
+│   │   ├── App.tsx
+│   │   └── main.tsx
 │   ├── package.json
-│   ├── tailwind.config.js
+│   ├── postcss.config.js     # Tailwind v4 (@tailwindcss/postcss)
+│   ├── playwright.config.ts
 │   └── vite.config.ts
 │
+├── onboard.md           # Contributor onboarding
 └── README.md
 ```
 
@@ -269,6 +285,9 @@ Kinmeet/
 - `GET /api/profile/me` - Get current user's profile
 - `GET /api/profile/:userId` - Get user profile by ID
 - `PUT /api/profile/me` - Update current user's profile
+- `DELETE /api/profile/me` - Delete current user's account
+- `POST /api/profile/photo` - Upload profile photo (multipart)
+- `DELETE /api/profile/photo` - Remove profile photo
 
 ### Matching
 - `GET /api/matching` - Get potential matches
@@ -295,7 +314,7 @@ Kinmeet/
 
 ## 🔒 Security Features
 
-- Password hashing with bcrypt
+- Password hashing with bcryptjs
 - JWT-based authentication
 - Protected API routes
 - CORS configuration
@@ -322,7 +341,7 @@ This project is licensed under the ISC License.
 
 ## 🤝 Contributing
 
-Contributions, issues, and feature requests are welcome!
+Contributions, issues, and feature requests are welcome. Start with **[onboard.md](onboard.md)** for branching, reviews, CI, and testing expectations.
 
 ## 👥 Support
 
