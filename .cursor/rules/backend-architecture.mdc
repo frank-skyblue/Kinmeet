@@ -32,3 +32,9 @@ alwaysApply: true
 4. Zod schema in `middleware/schemas.ts`
 5. Route in `routes/` with `authenticateJWT` + `validate()`
 6. Register route in `app.ts`
+
+## Testing
+
+- Always write tests for new features.
+- Always rewrite existing tests if the feature is changed.
+- Think of any integration with other services and discuss

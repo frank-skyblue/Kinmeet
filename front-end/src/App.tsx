@@ -1,5 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { ChatInboxProvider } from './contexts/ChatInboxProvider';
+import { ConnectionRequestsProvider } from './contexts/ConnectionRequestsProvider';
 import { SocketProvider } from './contexts/SocketContext';
 import Login from './components/auth/Login';
 import Signup from './components/auth/Signup';
@@ -15,33 +17,32 @@ const App = () => {
   return (
     <AuthProvider>
       <SocketProvider>
-        <Router>
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
+        <ChatInboxProvider>
+          <ConnectionRequestsProvider>
+            <Router>
+              <Routes>
+                {/* Public Routes */}
+                <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<Signup />} />
 
-            {/* Protected Routes */}
-            <Route element={<ProtectedRoute />}>
-              {/* Routes with dashboard Layout */}
-              <Route element={<Layout />}>
-                <Route path="/discover" element={<Discover />} />
-                <Route path="/requests" element={<Requests />} />
-                <Route path="/connections" element={<ConnectionsList />} />
-                <Route path="/profile" element={<Profile />} />
-              </Route>
+                {/* Protected Routes */}
+                <Route element={<ProtectedRoute />}>
+                  <Route element={<Layout />}>
+                    <Route path="/discover" element={<Discover />} />
+                    <Route path="/requests" element={<Requests />} />
+                    <Route path="/connections" element={<ConnectionsList />} />
+                    <Route path="/profile" element={<Profile />} />
+                    <Route path="/chat" element={<Chat />} />
+                    <Route path="/chat/:userId" element={<Chat />} />
+                  </Route>
+                </Route>
 
-              {/* Full-screen routes (no Layout) */}
-              <Route path="/chat/:userId" element={<Chat />} />
-            </Route>
-
-            {/* Redirect root to discover */}
-            <Route path="/" element={<Navigate to="/discover" replace />} />
-
-            {/* Catch all - redirect to discover */}
-            <Route path="*" element={<Navigate to="/discover" replace />} />
-          </Routes>
-        </Router>
+                <Route path="/" element={<Navigate to="/discover" replace />} />
+                <Route path="*" element={<Navigate to="/discover" replace />} />
+              </Routes>
+            </Router>
+          </ConnectionRequestsProvider>
+        </ChatInboxProvider>
       </SocketProvider>
     </AuthProvider>
   );

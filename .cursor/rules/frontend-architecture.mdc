@@ -6,6 +6,8 @@ alwaysApply: true
 
 # Frontend Architecture
 
+**System map:** When you change routing, the provider tree, global contexts, or how `services/api.ts` is organized, also update **`front-end/docs/ARCHITECTURE.md`** (see **`frontend-architecture-doc.mdc`**).
+
 ## Structure
 
 - **`types/`** — all shared interfaces. Never define domain types inline.
@@ -34,3 +36,8 @@ alwaysApply: true
 2. API functions in `services/api.ts`
 3. Components in the appropriate `components/` subdirectory
 4. Route in `App.tsx` inside the correct layout group
+
+## Testing
+
+- Always write tests for new features.
+- Always rewrite existing tests if the feature is changed.

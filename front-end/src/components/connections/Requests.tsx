@@ -1,25 +1,12 @@
 import React, { useEffect, useState } from 'react';
+import { useConnectionRequests } from '../../contexts/connectionRequestsContext';
 import { connectionsAPI, getPhotoUrl } from '../../services/api';
 import { getErrorMessage } from '../../utils/error';
-
-interface ConnectionRequest {
-  _id: string;
-  sender: {
-    _id: string;
-    firstName: string;
-    homeCountry: string;
-    currentProvince: string;
-    currentCountry: string;
-    languages: string[];
-    interests: string[];
-    lookingFor: string[];
-    photo?: string;
-  };
-  createdAt: string;
-}
+import type { ConnectionRequestItem } from '../../types';
 
 const Requests: React.FC = () => {
-  const [requests, setRequests] = useState<ConnectionRequest[]>([]);
+  const { refetchConnectionRequests } = useConnectionRequests();
+  const [requests, setRequests] = useState<ConnectionRequestItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -45,7 +32,8 @@ const Requests: React.FC = () => {
   const handleAccept = async (requestId: string) => {
     try {
       await connectionsAPI.acceptRequest(requestId);
-      setRequests(prev => prev.filter(req => req._id !== requestId));
+      setRequests((prev) => prev.filter((req) => req._id !== requestId));
+      void refetchConnectionRequests();
     } catch (err: unknown) {
       setError(getErrorMessage(err, 'Failed to accept request'));
     }
@@ -54,7 +42,8 @@ const Requests: React.FC = () => {
   const handleIgnore = async (requestId: string) => {
     try {
       await connectionsAPI.ignoreRequest(requestId);
-      setRequests(prev => prev.filter(req => req._id !== requestId));
+      setRequests((prev) => prev.filter((req) => req._id !== requestId));
+      void refetchConnectionRequests();
     } catch (err: unknown) {
       setError(getErrorMessage(err, 'Failed to ignore request'));
     }

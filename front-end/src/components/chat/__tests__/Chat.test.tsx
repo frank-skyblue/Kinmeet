@@ -1,7 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { render } from '@testing-library/react';
 import Chat from '../Chat';
+import { ChatInboxProvider } from '../../../contexts/ChatInboxProvider';
 
 const mockMessages = [
   {
@@ -30,9 +33,28 @@ const mockUserProfile = {
   currentCountry: 'Canada',
 };
 
+const mockInboxResponse = {
+  success: true as const,
+  conversations: [
+    {
+      user: {
+        _id: 'other-1',
+        firstName: 'Marie',
+        lastName: 'Dupont',
+        currentProvince: 'Ontario',
+        currentCountry: 'Canada',
+      },
+      lastMessage: mockMessages[1],
+      unreadCount: 0,
+    },
+  ],
+  unreadConversationCount: 0,
+};
+
 vi.mock('../../../services/api', () => ({
   chatAPI: {
     getConversation: vi.fn(),
+    getConversations: vi.fn(),
     sendMessage: vi.fn(),
     markAsRead: vi.fn(),
   },
@@ -41,15 +63,6 @@ vi.mock('../../../services/api', () => ({
   },
   getPhotoUrl: (p: string) => p,
 }));
-
-vi.mock('react-router-dom', async () => {
-  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
-  return {
-    ...actual,
-    useParams: () => ({ userId: 'other-1' }),
-    useNavigate: () => vi.fn(),
-  };
-});
 
 const mockSocket = {
   on: vi.fn(),
@@ -61,6 +74,7 @@ const mockSocket = {
 vi.mock('../../../contexts/AuthContext', () => ({
   useAuth: () => ({
     user: { id: 'user-1', firstName: 'Test', lastName: 'User' },
+    isLoading: false,
   }),
 }));
 
@@ -72,13 +86,20 @@ vi.mock('../../../contexts/SocketContext', () => ({
 }));
 
 import { chatAPI, profileAPI } from '../../../services/api';
-import { render } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
 
 const renderChat = () =>
   render(
     <MemoryRouter initialEntries={['/chat/other-1']}>
-      <Chat />
+      <Routes>
+        <Route
+          path="/chat/:userId"
+          element={
+            <ChatInboxProvider>
+              <Chat />
+            </ChatInboxProvider>
+          }
+        />
+      </Routes>
     </MemoryRouter>,
   );
 
@@ -88,6 +109,7 @@ describe('Chat', () => {
       success: true,
       messages: mockMessages,
     });
+    vi.mocked(chatAPI.getConversations).mockResolvedValue(mockInboxResponse);
     vi.mocked(profileAPI.getUserProfile).mockResolvedValue({
       success: true,
       user: mockUserProfile,
@@ -101,14 +123,17 @@ describe('Chat', () => {
     renderChat();
     await waitFor(() => {
       expect(screen.getByText('Hello Marie!')).toBeInTheDocument();
-      expect(screen.getByText('Hi there!')).toBeInTheDocument();
     });
+    // "Hi there!" appears in the inbox sidebar preview and in the thread; allow multiple.
+    expect(screen.getAllByText('Hi there!').length).toBeGreaterThanOrEqual(1);
   });
 
   it('displays other user name and location', async () => {
     renderChat();
     await waitFor(() => {
-      expect(screen.getByText('Marie Dupont')).toBeInTheDocument();
+      expect(
+        screen.getByRole('heading', { level: 2, name: /Marie Dupont/i }),
+      ).toBeInTheDocument();
       expect(screen.getByText('Ontario, Canada')).toBeInTheDocument();
     });
   });

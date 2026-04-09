@@ -1,29 +1,84 @@
-import React, { useState } from 'react';
-import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import { getPhotoUrl } from '../../services/api';
-import Logo from '../common/Logo';
+import React, { useState } from "react";
+import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
+import { useChatInbox } from "../../contexts/chatInboxContext";
+import { useConnectionRequests } from "../../contexts/connectionRequestsContext";
+import { getPhotoUrl } from "../../services/api";
+import Logo from "../common/Logo";
+
+type NavItem = {
+  path: string;
+  label: string;
+  icon: string;
+  match?: "exact" | "prefix";
+};
+
+const CHAT_ICON_PATH =
+  "M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z";
+
+const navBadgeForItem = (
+  item: NavItem,
+  pendingRequestCount: number,
+): { label: string; ariaDetail: string } | null => {
+  if (item.path === "/requests" && pendingRequestCount > 0) {
+    return {
+      label: pendingRequestCount > 99 ? "99+" : String(pendingRequestCount),
+      ariaDetail: `${pendingRequestCount} pending connection requests`,
+    };
+  }
+  return null;
+};
 
 const Layout: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { unreadConversationCount } = useChatInbox();
+  const { pendingRequestCount } = useConnectionRequests();
   const [showMenu, setShowMenu] = useState(false);
 
   const handleLogout = async () => {
     await logout();
-    navigate('/login');
+    navigate("/login");
   };
 
-  const isActive = (path: string) => {
-    return location.pathname === path;
+  const isNavActive = (item: NavItem) => {
+    if (item.match === "prefix") {
+      return (
+        location.pathname === item.path ||
+        location.pathname.startsWith(`${item.path}/`)
+      );
+    }
+    return location.pathname === item.path;
   };
 
-  const navItems = [
-    { path: '/discover', label: 'Discover', icon: 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z' },
-    { path: '/requests', label: 'Requests', icon: 'M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9' },
-    { path: '/connections', label: 'Connections', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' },
+  const navItems: NavItem[] = [
+    {
+      path: "/discover",
+      label: "Discover",
+      icon: "M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z",
+    },
+    {
+      path: "/requests",
+      label: "Requests",
+      icon: "M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9",
+    },
+    {
+      path: "/connections",
+      label: "Connections",
+      icon: "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z",
+    },
   ];
+
+  const chatBadgeLabel =
+    unreadConversationCount > 99 ? "99+" : String(unreadConversationCount);
+  const chatAriaLabel =
+    unreadConversationCount > 0
+      ? `Messages, ${unreadConversationCount} unread conversations`
+      : "Messages";
+
+  const isChatRoute =
+    location.pathname === "/chat" || location.pathname.startsWith("/chat/");
 
   return (
     <div className="h-screen flex flex-col bg-kin-beige overflow-hidden">
@@ -34,36 +89,97 @@ const Layout: React.FC = () => {
             <div className="flex items-center">
               <Link to="/discover" className="flex items-center gap-2">
                 <Logo size="md" />
-                <span className="text-2xl font-bold font-montserrat text-kin-navy">KinMeet</span>
+                <span className="text-2xl font-bold font-montserrat text-kin-navy">
+                  KinMeet
+                </span>
               </Link>
-              
+
               {/* Desktop Navigation */}
               <div className="hidden md:ml-10 md:flex md:space-x-4">
-                {navItems.map((item) => (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className={`inline-flex items-center px-4 py-2 text-sm font-medium font-inter rounded-kin-sm transition ${
-                      isActive(item.path)
-                        ? 'text-kin-coral bg-kin-coral-50 shadow-kin-soft'
-                        : 'text-kin-navy hover:text-kin-coral hover:bg-kin-beige'
-                    }`}
-                  >
-                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
-                    </svg>
-                    {item.label}
-                  </Link>
-                ))}
+                {navItems.map((item) => {
+                  const badge = navBadgeForItem(item, pendingRequestCount);
+                  return (
+                    <Link
+                      key={item.path}
+                      to={item.path}
+                      className={`relative inline-flex items-center px-4 py-2 text-sm font-medium font-inter rounded-kin-sm transition ${
+                        isNavActive(item)
+                          ? "text-kin-coral bg-kin-coral-50 shadow-kin-soft"
+                          : "text-kin-navy hover:text-kin-coral hover:bg-kin-beige"
+                      }`}
+                      aria-label={
+                        badge
+                          ? `${item.label}, ${badge.ariaDetail}`
+                          : item.label
+                      }
+                    >
+                      <span className="relative mr-2 inline-flex">
+                        <svg
+                          className="h-5 w-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d={item.icon}
+                          />
+                        </svg>
+                        {badge && (
+                          <span className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-kin-coral px-1 text-[10px] font-bold text-white font-inter">
+                            {badge.label}
+                          </span>
+                        )}
+                      </span>
+                      {item.label}
+                    </Link>
+                  );
+                })}
               </div>
             </div>
 
-            {/* User Menu */}
-            <div className="flex items-center">
-              <div className="relative">
+            {/* Messages + User Menu */}
+            <div className="flex items-center gap-1 sm:gap-2">
+              <Link
+                to="/chat"
+                className={`inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-kin-sm transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral ${
+                  isChatRoute
+                    ? "text-kin-coral bg-kin-coral-50 shadow-kin-soft"
+                    : "text-kin-navy hover:bg-kin-beige hover:text-kin-coral"
+                }`}
+                aria-label={chatAriaLabel}
+                aria-current={isChatRoute ? "page" : undefined}
+              >
+                <span className="relative inline-flex h-6 w-6 items-center justify-center">
+                  <svg
+                    className="h-6 w-6 shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d={CHAT_ICON_PATH}
+                    />
+                  </svg>
+                  {unreadConversationCount > 0 && (
+                    <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-kin-coral px-0.5 text-[9px] font-bold text-white font-inter sm:h-5 sm:min-w-5 sm:px-1 sm:text-[10px]">
+                      {chatBadgeLabel}
+                    </span>
+                  )}
+                </span>
+              </Link>
+
+              <div className="relative flex items-center">
                 <button
+                  type="button"
                   onClick={() => setShowMenu(!showMenu)}
-                  className="flex items-center gap-2 px-3 py-2 rounded-kin-sm hover:bg-kin-beige transition"
+                  className="flex h-12 items-center gap-2 px-3 rounded-kin-sm hover:bg-kin-beige transition"
                   aria-label="User menu"
                   aria-expanded={showMenu}
                 >
@@ -81,14 +197,24 @@ const Layout: React.FC = () => {
                   <span className="hidden md:block text-sm font-medium font-inter text-kin-navy">
                     {user?.firstName}
                   </span>
-                  <svg className="w-4 h-4 text-kin-navy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  <svg
+                    className="w-4 h-4 text-kin-navy"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
                   </svg>
                 </button>
 
                 {/* Dropdown Menu */}
                 {showMenu && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-kin shadow-kin-medium py-1 z-10 border border-kin-stone-200">
+                  <div className="absolute right-0 top-full z-50 mt-2 w-48 bg-white rounded-kin shadow-kin-medium py-1 border border-kin-stone-200">
                     <Link
                       to="/profile"
                       onClick={() => setShowMenu(false)}
@@ -113,28 +239,56 @@ const Layout: React.FC = () => {
       {/* Mobile Bottom Navigation */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-kin-stone-200 shadow-kin-medium z-50">
         <div className="flex justify-around">
-          {navItems.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`flex flex-col items-center py-3 px-4 flex-1 transition ${
-                isActive(item.path)
-                  ? 'text-kin-coral'
-                  : 'text-kin-navy hover:text-kin-coral'
-              }`}
-              aria-label={item.label}
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
-              </svg>
-              <span className="text-xs mt-1 font-medium font-inter">{item.label}</span>
-            </Link>
-          ))}
+          {navItems.map((item) => {
+            const badge = navBadgeForItem(item, pendingRequestCount);
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`relative flex flex-1 flex-col items-center px-4 py-3 transition ${
+                  isNavActive(item)
+                    ? "text-kin-coral"
+                    : "text-kin-navy hover:text-kin-coral"
+                }`}
+                aria-label={
+                  badge ? `${item.label}, ${badge.ariaDetail}` : item.label
+                }
+              >
+                <span className="relative inline-flex">
+                  <svg
+                    className="h-6 w-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d={item.icon}
+                    />
+                  </svg>
+                  {badge && (
+                    <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-kin-coral px-0.5 text-[9px] font-bold text-white font-inter">
+                      {badge.label}
+                    </span>
+                  )}
+                </span>
+                <span className="mt-1 text-xs font-medium font-inter">
+                  {item.label}
+                </span>
+              </Link>
+            );
+          })}
         </div>
       </div>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto pb-16 md:pb-0">
+      <main
+        className={`flex min-h-0 flex-1 flex-col pb-16 md:pb-0 ${
+          isChatRoute ? "overflow-hidden" : "overflow-y-auto"
+        }`}
+      >
         <Outlet />
       </main>
     </div>
@@ -142,4 +296,3 @@ const Layout: React.FC = () => {
 };
 
 export default Layout;
-

@@ -3,6 +3,17 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Requests from '../Requests';
 
+const { mockRefetchConnectionRequests } = vi.hoisted(() => ({
+  mockRefetchConnectionRequests: vi.fn(),
+}));
+
+vi.mock('../../../contexts/connectionRequestsContext', () => ({
+  useConnectionRequests: () => ({
+    pendingRequestCount: 0,
+    refetchConnectionRequests: mockRefetchConnectionRequests,
+  }),
+}));
+
 const mockRequests = [
   {
     _id: 'req-1',
@@ -42,6 +53,7 @@ const renderRequests = () =>
 
 describe('Requests', () => {
   beforeEach(() => {
+    mockRefetchConnectionRequests.mockClear();
     vi.mocked(connectionsAPI.getConnectionRequests).mockResolvedValue({
       success: true,
       requests: mockRequests,
@@ -80,6 +92,7 @@ describe('Requests', () => {
       expect(screen.queryByText('Marie')).not.toBeInTheDocument();
     });
     expect(connectionsAPI.acceptRequest).toHaveBeenCalledWith('req-1');
+    expect(mockRefetchConnectionRequests).toHaveBeenCalled();
   });
 
   it('removes request from list on Ignore', async () => {
@@ -93,5 +106,6 @@ describe('Requests', () => {
       expect(screen.queryByText('Marie')).not.toBeInTheDocument();
     });
     expect(connectionsAPI.ignoreRequest).toHaveBeenCalledWith('req-1');
+    expect(mockRefetchConnectionRequests).toHaveBeenCalled();
   });
 });

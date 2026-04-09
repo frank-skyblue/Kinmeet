@@ -1,0 +1,20 @@
+---
+description: How to generate commit messages from the working tree (use when asked for a commit note)
+alwaysApply: false
+---
+
+# Commit notes
+
+When the user asks for a **commit message**, **commit note**, or **PR / changelog summary** from current work:
+
+1. **Inspect the tree** — Run `git status --short` and, if needed, `git diff --stat` and targeted `git diff` for unclear areas. Base the message only on what is actually changed; do not invent files or behavior.
+
+2. **Scope** — If unrelated changes are mixed (e.g. docs + feature), say so and offer **two commit messages** (split by concern) or one combined message, whichever fits the user’s likely intent.
+
+3. **Format** — Prefer [Conventional Commits](https://www.conventionalcommits.org/): `type(scope): subject`  
+   Common types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `build`, `ci`.  
+   **Subject:** imperative mood (“add”, not “added”), ~50–72 characters, no trailing period, no vague “updates” unless unavoidable.
+
+4. **Body** — Optional second paragraph (or bullet list) for non-obvious **why**, breaking changes, or areas touched (`front-end`, `back-end`, `.cursor/rules`, etc.). Keep it readable; avoid dumping raw file lists unless the change is tiny.
+
+5. **Tone** — Complete sentences in the body; match project preference for clear, technical prose without filler.

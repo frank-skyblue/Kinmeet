@@ -1,0 +1,22 @@
+---
+description: Keep front-end/docs/ARCHITECTURE.md in sync when app shell or boundaries change
+globs: front-end/src/App.tsx,front-end/src/main.tsx,front-end/src/contexts/**/*.{ts,tsx},front-end/src/services/**/*.{ts,tsx},front-end/src/components/dashboard/Layout.tsx,front-end/docs/ARCHITECTURE.md
+alwaysApply: false
+---
+
+# Front-end architecture document
+
+The canonical structural overview is **`front-end/docs/ARCHITECTURE.md`**.
+
+When your edits affect **any** of the following, **update that file in the same change** (or immediately after in the same task):
+
+- Provider order or composition in `App.tsx` / `main.tsx`
+- New, removed, or renamed global context providers under `contexts/`
+- Routing: public vs protected layout, new top-level routes, or `Layout` responsibilities
+- New or reorganized API surface in `services/api.ts` (or a new service module pattern)
+- Socket connection contract or how features subscribe (document-level change only if behavior or ownership shifts)
+- New top-level `src/` directories with a defined architectural role
+
+If the change is purely local to one component with no boundary impact, no doc update is required.
+
+Do not duplicate the full coding-style checklist here; keep **`frontend-architecture.mdc`** as the convention source and **`ARCHITECTURE.md`** as the map of the system.

@@ -24,9 +24,9 @@ export const getConversation = asyncHandler(async (req: AuthRequest, res: Respon
 export const getConversations = asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user!.id;
 
-    const conversations = await chatService.getConversations(userId);
+    const { conversations, unreadConversationCount } = await chatService.getConversations(userId);
 
-    return res.status(200).json({ success: true, conversations });
+    return res.status(200).json({ success: true, conversations, unreadConversationCount });
 });
 
 export const markAsRead = asyncHandler(async (req: AuthRequest, res: Response) => {
