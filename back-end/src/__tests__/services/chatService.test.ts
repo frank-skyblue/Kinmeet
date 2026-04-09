@@ -83,22 +83,90 @@ describe('chatService', () => {
   });
 
   describe('getConversations', () => {
-    it('returns conversation list with last message and unread count', async () => {
+    it('returns conversation list with last message, unread count, and unreadConversationCount', async () => {
       const { userA, userB } = await connectUsers();
       await chatService.sendMessage(userB._id.toString(), userA._id.toString(), 'Hey');
 
-      const conversations = await chatService.getConversations(userA._id.toString());
+      const { conversations, unreadConversationCount } = await chatService.getConversations(
+        userA._id.toString(),
+      );
 
       expect(conversations).toHaveLength(1);
       expect(conversations[0].lastMessage?.content).toBe('Hey');
       expect(conversations[0].unreadCount).toBe(1);
       expect(conversations[0].user?.firstName).toBe('Bob');
+      expect(unreadConversationCount).toBe(1);
     });
 
     it('returns empty for user with no connections', async () => {
       const user = await createTestUser({ email: 'alone@test.com' });
-      const conversations = await chatService.getConversations(user._id.toString());
+      const { conversations, unreadConversationCount } = await chatService.getConversations(
+        user._id.toString(),
+      );
       expect(conversations).toHaveLength(0);
+      expect(unreadConversationCount).toBe(0);
+    });
+
+    it('within unread conversations, sorts by most recent last message', async () => {
+      const userA = await createTestUser({ email: 'alice3@test.com', firstName: 'Alice' });
+      const userB = await createTestUser({ email: 'bob3@test.com', firstName: 'Bob' });
+      const userC = await createTestUser({ email: 'carol3@test.com', firstName: 'Carol' });
+      await Connection.create({ user1: userA._id, user2: userB._id });
+      await Connection.create({ user1: userA._id, user2: userC._id });
+
+      await chatService.sendMessage(userC._id.toString(), userA._id.toString(), 'From Carol');
+      await chatService.sendMessage(userB._id.toString(), userA._id.toString(), 'From Bob');
+
+      const { conversations, unreadConversationCount } = await chatService.getConversations(
+        userA._id.toString(),
+      );
+
+      expect(unreadConversationCount).toBe(2);
+      expect(conversations[0].user?.firstName).toBe('Bob');
+      expect(conversations[1].user?.firstName).toBe('Carol');
+    });
+
+    it('lists conversations with inbound unread before those with no inbound unread', async () => {
+      const userA = await createTestUser({ email: 'alice5@test.com', firstName: 'Alice' });
+      const userB = await createTestUser({ email: 'bob5@test.com', firstName: 'Bob' });
+      const userC = await createTestUser({ email: 'carol5@test.com', firstName: 'Carol' });
+      await Connection.create({ user1: userA._id, user2: userB._id });
+      await Connection.create({ user1: userA._id, user2: userC._id });
+
+      await chatService.sendMessage(userC._id.toString(), userA._id.toString(), 'From Carol');
+      await chatService.sendMessage(userB._id.toString(), userA._id.toString(), 'From Bob');
+
+      await chatService.getConversation(userA._id.toString(), userC._id.toString());
+
+      const { conversations, unreadConversationCount } = await chatService.getConversations(
+        userA._id.toString(),
+      );
+
+      expect(unreadConversationCount).toBe(1);
+      expect(conversations[0].user?.firstName).toBe('Bob');
+      expect(conversations[0].unreadCount).toBeGreaterThan(0);
+      expect(conversations[1].user?.firstName).toBe('Carol');
+      expect(conversations[1].unreadCount).toBe(0);
+    });
+
+    it('within read conversations, sorts by most recent last message', async () => {
+      const userA = await createTestUser({ email: 'alice4@test.com', firstName: 'Alice' });
+      const userB = await createTestUser({ email: 'bob4@test.com', firstName: 'Bob' });
+      const userC = await createTestUser({ email: 'carol4@test.com', firstName: 'Carol' });
+      await Connection.create({ user1: userA._id, user2: userB._id });
+      await Connection.create({ user1: userA._id, user2: userC._id });
+
+      await chatService.sendMessage(userA._id.toString(), userB._id.toString(), 'To Bob first');
+      await chatService.sendMessage(userA._id.toString(), userC._id.toString(), 'To Carol later');
+
+      const { conversations, unreadConversationCount } = await chatService.getConversations(
+        userA._id.toString(),
+      );
+
+      expect(unreadConversationCount).toBe(0);
+      expect(conversations).toHaveLength(2);
+      expect(conversations[0].user?.firstName).toBe('Carol');
+      expect(conversations[1].user?.firstName).toBe('Bob');
     });
   });
 

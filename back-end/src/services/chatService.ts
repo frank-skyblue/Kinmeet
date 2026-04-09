@@ -97,13 +97,25 @@ export const chatService = {
             }),
         );
 
+        const unreadConversationCount = conversations.filter((c) => c.unreadCount > 0).length;
+
+        const lastMessageTime = (createdAt: Date | string | undefined): number => {
+            if (!createdAt) return 0;
+            return new Date(createdAt).getTime();
+        };
+
         conversations.sort((a, b) => {
-            const timeA = a.lastMessage?.createdAt || 0;
-            const timeB = b.lastMessage?.createdAt || 0;
-            return new Date(timeB as any).getTime() - new Date(timeA as any).getTime();
+            const unreadA = a.unreadCount > 0 ? 1 : 0;
+            const unreadB = b.unreadCount > 0 ? 1 : 0;
+            if (unreadB !== unreadA) {
+                return unreadB - unreadA;
+            }
+            const timeA = lastMessageTime(a.lastMessage?.createdAt);
+            const timeB = lastMessageTime(b.lastMessage?.createdAt);
+            return timeB - timeA;
         });
 
-        return conversations;
+        return { conversations, unreadConversationCount };
     },
 
     markAsRead: async (userId: string, senderId: string) => {

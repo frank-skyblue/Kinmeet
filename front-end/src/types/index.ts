@@ -49,6 +49,50 @@ export interface ChatMessage {
     createdAt: string;
 }
 
+export interface ChatConversationUser {
+    _id: string;
+    firstName: string;
+    lastName: string;
+    photo?: string;
+    currentProvince: string;
+    currentCountry: string;
+}
+
+export interface ChatConversationSummary {
+    user: ChatConversationUser | null;
+    lastMessage: ChatMessage | null;
+    unreadCount: number;
+}
+
+export interface GetConversationsResponse {
+    success: boolean;
+    conversations: ChatConversationSummary[];
+    unreadConversationCount: number;
+}
+
+export interface ConnectionRequestSender {
+    _id: string;
+    firstName: string;
+    homeCountry: string;
+    currentProvince: string;
+    currentCountry: string;
+    languages: string[];
+    interests: string[];
+    lookingFor: string[];
+    photo?: string;
+}
+
+export interface ConnectionRequestItem {
+    _id: string;
+    sender: ConnectionRequestSender;
+    createdAt: string;
+}
+
+export interface GetConnectionRequestsResponse {
+    success: boolean;
+    requests: ConnectionRequestItem[];
+}
+
 export interface RegisterPayload {
     email: string;
     password: string;

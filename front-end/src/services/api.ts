@@ -1,5 +1,10 @@
 import axios from 'axios';
-import type { RegisterPayload, UpdateProfilePayload } from '../types';
+import type {
+  GetConnectionRequestsResponse,
+  GetConversationsResponse,
+  RegisterPayload,
+  UpdateProfilePayload,
+} from '../types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
 const API_BASE = API_URL.replace(/\/api$/, '');
@@ -95,8 +100,8 @@ export const connectionsAPI = {
     return response.data;
   },
 
-  getConnectionRequests: async () => {
-    const response = await api.get('/connections/requests');
+  getConnectionRequests: async (): Promise<GetConnectionRequestsResponse> => {
+    const response = await api.get<GetConnectionRequestsResponse>('/connections/requests');
     return response.data;
   },
 
@@ -112,8 +117,8 @@ export const connectionsAPI = {
 };
 
 export const chatAPI = {
-  getConversations: async () => {
-    const response = await api.get('/chat/conversations');
+  getConversations: async (): Promise<GetConversationsResponse> => {
+    const response = await api.get<GetConversationsResponse>('/chat/conversations');
     return response.data;
   },
 

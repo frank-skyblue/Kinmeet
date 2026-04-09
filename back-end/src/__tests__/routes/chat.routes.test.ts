@@ -44,8 +44,8 @@ describe('Chat Routes', () => {
   });
 
   describe('GET /api/chat/conversations', () => {
-    it('returns conversation list', async () => {
-      const { userA, userB, tokenA } = await connectAndGetTokens();
+    it('returns conversation list and unreadConversationCount when user only sent messages', async () => {
+      const { userB, tokenA } = await connectAndGetTokens();
       await request(app)
         .post('/api/chat/messages')
         .set('Authorization', `Bearer ${tokenA}`)
@@ -57,6 +57,23 @@ describe('Chat Routes', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.conversations).toHaveLength(1);
+      expect(res.body.unreadConversationCount).toBe(0);
+    });
+
+    it('returns unreadConversationCount when peer sent unread messages', async () => {
+      const { userA, userB, tokenA, tokenB } = await connectAndGetTokens();
+      await request(app)
+        .post('/api/chat/messages')
+        .set('Authorization', `Bearer ${tokenB}`)
+        .send({ receiverId: userA._id.toString(), content: 'Unread from Bob' });
+
+      const res = await request(app)
+        .get('/api/chat/conversations')
+        .set('Authorization', `Bearer ${tokenA}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.conversations).toHaveLength(1);
+      expect(res.body.unreadConversationCount).toBe(1);
     });
   });
 

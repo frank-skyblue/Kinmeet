@@ -34,6 +34,10 @@ VITE_API_URL=http://localhost:8080/api
 
 Match this to your running back-end (see root README).
 
+## Architecture
+
+- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — provider tree, routing, contexts, services, and when to update the doc
+
 ## Layout
 
 - `src/components/` — feature UI (auth, chat, connections, matching, profile, common, dashboard)
