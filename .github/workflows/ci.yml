@@ -13,11 +13,10 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
-          node-version: 22
+          # Pin to match local nvm (bundled npm 10.9.x — avoids npm 11 stricter `npm ci` vs this lockfile)
+          node-version: '22.22.2'
           cache: npm
           cache-dependency-path: back-end/package-lock.json
-      - name: Use npm 10 for lockfile compatibility
-        run: npm install -g npm@10.8.2
       - run: npm ci
         working-directory: back-end
       - run: npx tsc --noEmit
@@ -37,7 +36,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
-          node-version: 22
+          node-version: '22.22.2'
           cache: npm
           cache-dependency-path: front-end/package-lock.json
       - run: npm ci
