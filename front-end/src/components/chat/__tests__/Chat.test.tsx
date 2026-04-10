@@ -71,14 +71,14 @@ const mockSocket = {
   connected: true,
 };
 
-vi.mock('../../../contexts/AuthContext', () => ({
+vi.mock('../../../contexts/useAuth', () => ({
   useAuth: () => ({
     user: { id: 'user-1', firstName: 'Test', lastName: 'User' },
     isLoading: false,
   }),
 }));
 
-vi.mock('../../../contexts/SocketContext', () => ({
+vi.mock('../../../contexts/useSocket', () => ({
   useSocket: () => ({
     socket: mockSocket,
     isConnected: true,

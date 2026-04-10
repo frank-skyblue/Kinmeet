@@ -2,7 +2,7 @@ import React, { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getCountryCode } from "../../constants/profileOptions";
 import { validatePhotoFile } from "../../constants/validation";
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuth } from '../../contexts/useAuth';
 import { profileAPI } from "../../services/api";
 import Logo from "../common/Logo";
 import SignupStep1 from "./SignupStep1";

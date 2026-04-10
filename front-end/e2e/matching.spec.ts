@@ -5,7 +5,7 @@ test.describe('Discover + Meet Flow', () => {
   test('user sees matches and can send a Meet request', async ({ page }) => {
     const ts = Date.now();
 
-    const userA = await seedTestUser({
+    await seedTestUser({
       email: `match-a-${ts}@test.com`,
       password: 'TestPass1',
       firstName: 'Alice',

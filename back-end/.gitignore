@@ -6,3 +6,5 @@
 /temp
 /cache
 .env
+# Downloaded service account JSON (referenced by FIREBASE_SERVICE_ACCOUNT_PATH in .env)
+firebase-adminsdk-local.json

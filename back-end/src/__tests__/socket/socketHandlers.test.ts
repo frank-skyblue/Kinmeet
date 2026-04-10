@@ -1,4 +1,11 @@
-import { describe, it, expect, afterAll, beforeAll } from 'vitest';
+import { describe, it, expect, afterAll, beforeAll, beforeEach, vi } from 'vitest';
+
+vi.mock('../../services/notificationService', () => ({
+    notificationService: {
+        notifyChatMessage: vi.fn().mockResolvedValue(undefined),
+    },
+}));
+
 import { createServer, Server as HTTPServer } from 'http';
 import { AddressInfo } from 'net';
 import { io as ioClient, Socket as ClientSocket } from 'socket.io-client';
@@ -6,6 +13,7 @@ import { initializeSocket } from '../../socket/socketServer';
 import { createTestUser, getAuthToken } from '../helpers';
 import { Connection } from '../../models/Connection';
 import { Message } from '../../models/Message';
+import { notificationService } from '../../services/notificationService';
 
 let httpServer: HTTPServer;
 let port: number;
@@ -45,6 +53,10 @@ afterAll(async () => {
   await new Promise<void>((resolve) => {
     httpServer.close(() => resolve());
   });
+});
+
+beforeEach(() => {
+  vi.mocked(notificationService.notifyChatMessage).mockClear();
 });
 
 describe('Socket.IO Handlers', () => {
@@ -102,9 +114,41 @@ describe('Socket.IO Handlers', () => {
 
       const saved = await Message.findOne({ content: 'Hello via socket!' });
       expect(saved).not.toBeNull();
+
+      expect(notificationService.notifyChatMessage).not.toHaveBeenCalled();
     } finally {
       clientA.disconnect();
       clientB.disconnect();
+    }
+  });
+
+  it('schedules push notification when receiver has no active socket', async () => {
+    const userA = await createTestUser({ email: 'pusha@test.com', firstName: 'PushA' });
+    const userB = await createTestUser({ email: 'pushb@test.com', firstName: 'PushB' });
+    await Connection.create({ user1: userA._id, user2: userB._id });
+
+    const clientA = await connectClient(getAuthToken(userA));
+
+    try {
+      const ack = await new Promise<{ success: boolean }>((resolve) => {
+        clientA.emit(
+          'chat:send_message',
+          { receiverId: userB._id.toString(), content: 'Offline push test' },
+          resolve,
+        );
+      });
+
+      expect(ack.success).toBe(true);
+      expect(notificationService.notifyChatMessage).toHaveBeenCalledTimes(1);
+      expect(notificationService.notifyChatMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          receiverUserId: userB._id.toString(),
+          senderUserId: userA._id.toString(),
+          senderDisplayName: 'PushA User',
+        }),
+      );
+    } finally {
+      clientA.disconnect();
     }
   });
 

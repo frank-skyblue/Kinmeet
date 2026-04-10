@@ -1,22 +1,8 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { Socket } from 'socket.io-client';
+import React, { useEffect, useState } from 'react';
+import type { Socket } from 'socket.io-client';
 import { socketService } from '../services/socketService';
-import { useAuth } from './AuthContext';
-
-interface SocketContextType {
-  socket: Socket | null;
-  isConnected: boolean;
-}
-
-const SocketContext = createContext<SocketContextType | undefined>(undefined);
-
-export const useSocket = () => {
-  const context = useContext(SocketContext);
-  if (context === undefined) {
-    throw new Error('useSocket must be used within a SocketProvider');
-  }
-  return context;
-};
+import { useAuth } from './useAuth';
+import { SocketContext } from './socket-context';
 
 interface SocketProviderProps {
   children: React.ReactNode;
@@ -28,7 +14,6 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    // Don't attempt to connect while auth is still loading
     if (isLoading) return;
 
     if (user) {
@@ -43,7 +28,6 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         socketInstance.on('connect', handleConnect);
         socketInstance.on('disconnect', handleDisconnect);
 
-        // Set initial state
         setIsConnected(socketInstance.connected);
 
         return () => {
@@ -65,8 +49,6 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   );
 };
 
-// Accept HMR updates for this module
 if (import.meta.hot) {
   import.meta.hot.accept();
 }
-

@@ -3,8 +3,8 @@ import { chatAPI } from '../services/api';
 import { getErrorMessage } from '../utils/error';
 import type { ChatConversationSummary, ChatMessage } from '../types';
 import { ChatInboxContext } from './chatInboxContext';
-import { useAuth } from './AuthContext';
-import { useSocket } from './SocketContext';
+import { useAuth } from './useAuth';
+import { useSocket } from './useSocket';
 
 interface ChatInboxProviderProps {
   children: React.ReactNode;

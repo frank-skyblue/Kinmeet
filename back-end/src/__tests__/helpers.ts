@@ -11,6 +11,7 @@ import matchingRoutes from '../routes/matchingRoutes';
 import connectionsRoutes from '../routes/connectionsRoutes';
 import chatRoutes from '../routes/chatRoutes';
 import blockRoutes from '../routes/blockRoutes';
+import notificationsRoutes from '../routes/notificationsRoutes';
 
 export const createTestApp = () => {
   const app = express();
@@ -23,6 +24,7 @@ export const createTestApp = () => {
   app.use('/api/connections', connectionsRoutes);
   app.use('/api/chat', chatRoutes);
   app.use('/api/block', blockRoutes);
+  app.use('/api/notifications', notificationsRoutes);
 
   app.use(errorHandler);
   return app;

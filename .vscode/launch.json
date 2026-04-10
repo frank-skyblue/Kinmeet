@@ -48,6 +48,8 @@
                 "<node_internals>/**",
                 "node_modules/**"
             ],
+            // Load secrets from back-end/.env only — avoid putting FIREBASE_* JSON in the "env" block
+            // (the debugger may print the full launch command, including env values).
             "envFile": "${workspaceFolder}/back-end/.env",
             "env": {
                 "NODE_ENV": "development"

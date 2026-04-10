@@ -1,28 +1,13 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { authAPI, profileAPI } from '../services/api';
+import {
+  registerWebPushForCurrentUser,
+  unregisterWebPushForCurrentUser,
+} from '../services/pushNotifications';
 import type { User, RegisterPayload } from '../types';
 import { getErrorMessage } from '../utils/error';
-
-interface AuthContextType {
-  user: User | null;
-  token: string | null;
-  isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (data: RegisterPayload) => Promise<void>;
-  logout: () => Promise<void>;
-  refreshUser: () => Promise<void>;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
+import { AuthContext } from './auth-context';
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -52,6 +37,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
     setIsLoading(false);
   }, []);
+
+  useEffect(() => {
+    if (!user || !token) return;
+    void Promise.resolve(registerWebPushForCurrentUser()).catch((err) => {
+      console.error('Web push registration failed:', err);
+    });
+  }, [user, token]);
 
   const login = async (email: string, password: string) => {
     try {
@@ -90,6 +82,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const logout = async () => {
+    try {
+      await unregisterWebPushForCurrentUser();
+    } catch (error) {
+      console.error('Push unregister failed:', error);
+    }
     try {
       await authAPI.logout();
     } catch (error) {

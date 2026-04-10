@@ -4,6 +4,7 @@ import type {
   GetConversationsResponse,
   RegisterPayload,
   UpdateProfilePayload,
+  RegisterNotificationDevicePayload,
 } from '../types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
@@ -134,6 +135,18 @@ export const chatAPI = {
 
   markAsRead: async (senderId: string) => {
     const response = await api.post('/chat/messages/read', { senderId });
+    return response.data;
+  },
+};
+
+export const notificationsAPI = {
+  registerDevice: async (payload: RegisterNotificationDevicePayload) => {
+    const response = await api.post('/notifications/devices', payload);
+    return response.data;
+  },
+
+  unregisterDevice: async (payload: RegisterNotificationDevicePayload) => {
+    const response = await api.delete('/notifications/devices', { data: payload });
     return response.data;
   },
 };
