@@ -16,6 +16,8 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: back-end/package-lock.json
+      - name: Use npm 10 for lockfile compatibility
+        run: npm install -g npm@10.8.2
       - run: npm ci
         working-directory: back-end
       - run: npx tsc --noEmit

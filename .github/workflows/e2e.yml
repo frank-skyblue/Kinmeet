@@ -19,6 +19,8 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: 22
+      - name: Use npm 10 for lockfile compatibility
+        run: npm install -g npm@10.8.2
       - run: npm ci
         working-directory: back-end
       - run: npm ci
