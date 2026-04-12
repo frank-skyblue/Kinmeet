@@ -3,7 +3,7 @@ import { screen } from '@testing-library/react';
 import { Routes, Route } from 'react-router-dom';
 import ProtectedRoute from '../ProtectedRoute';
 
-vi.mock('../../../contexts/AuthContext', () => {
+vi.mock('../../../contexts/useAuth', () => {
   let mockAuth = {
     user: null as { id: string } | null,
     isLoading: false,
@@ -19,7 +19,9 @@ vi.mock('../../../contexts/AuthContext', () => {
 import { render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 
-const authModule = await import('../../../contexts/AuthContext') as any;
+const authModule = (await import('../../../contexts/useAuth')) as typeof import('../../../contexts/useAuth') & {
+  __setAuth: (v: Partial<{ user: { id: string } | null; isLoading: boolean }>) => void;
+};
 
 const renderRoute = (initialRoute = '/protected') => {
   return render(

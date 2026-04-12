@@ -16,11 +16,12 @@ vi.mock('../../services/socketService', () => ({
 }));
 
 let mockAuthValue = { user: null as { id: string } | null, isLoading: false };
-vi.mock('../AuthContext', () => ({
+vi.mock('../useAuth', () => ({
   useAuth: () => mockAuthValue,
 }));
 
-import { SocketProvider, useSocket } from '../SocketContext';
+import { SocketProvider } from '../SocketContext';
+import { useSocket } from '../useSocket';
 
 const TestConsumer = () => {
   const { socket, isConnected } = useSocket();

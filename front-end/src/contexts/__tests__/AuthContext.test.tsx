@@ -17,8 +17,14 @@ vi.mock('../../utils/error', () => ({
   getErrorMessage: (err: unknown) => err instanceof Error ? err.message : 'Unknown error',
 }));
 
+vi.mock('../../services/pushNotifications', () => ({
+  registerWebPushForCurrentUser: vi.fn(() => Promise.resolve()),
+  unregisterWebPushForCurrentUser: vi.fn(() => Promise.resolve()),
+}));
+
 import { authAPI, profileAPI } from '../../services/api';
-import { AuthProvider, useAuth } from '../AuthContext';
+import { AuthProvider } from '../AuthContext';
+import { useAuth } from '../useAuth';
 
 const TestConsumer = () => {
   const { user, token, isLoading, login, logout, refreshUser } = useAuth();

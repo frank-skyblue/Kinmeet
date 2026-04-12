@@ -135,3 +135,10 @@ export interface ApiResponse<T = unknown> {
     message?: string;
     data?: T;
 }
+
+export type NotificationDeviceChannel = 'web_push';
+
+export interface RegisterNotificationDevicePayload {
+    channel: NotificationDeviceChannel;
+    token: string;
+}

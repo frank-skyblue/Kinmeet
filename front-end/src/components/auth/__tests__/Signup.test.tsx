@@ -20,7 +20,7 @@ vi.mock('../../../constants/validation', () => ({
 const mockRegister = vi.fn().mockResolvedValue(undefined);
 const mockNavigate = vi.fn();
 
-vi.mock('../../../contexts/AuthContext', () => ({
+vi.mock('../../../contexts/useAuth', () => ({
   useAuth: () => ({
     register: mockRegister,
   }),

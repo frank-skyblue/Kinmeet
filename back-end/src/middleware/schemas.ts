@@ -30,3 +30,12 @@ export const sendMeetRequestSchema = z.object({
 
 export const userIdParams = objectIdParam('userId');
 export const requestIdParams = objectIdParam('requestId');
+
+const notificationDeviceChannel = z.enum(['web_push']);
+
+export const registerNotificationDeviceSchema = z.object({
+    channel: notificationDeviceChannel,
+    token: z.string().trim().min(1, 'Token is required'),
+});
+
+export const unregisterNotificationDeviceSchema = registerNotificationDeviceSchema;

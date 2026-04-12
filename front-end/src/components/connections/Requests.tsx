@@ -61,8 +61,8 @@ const Requests: React.FC = () => {
   }
 
   return (
-    <div className="bg-kin-beige py-8 px-4">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-w-0 bg-kin-beige px-4 py-8">
+      <div className="mx-auto max-w-4xl min-w-0">
         <div className="mb-8">
           <h1 className="text-3xl font-bold font-montserrat text-kin-navy mb-2">Connection Requests</h1>
           <p className="text-kin-teal font-inter">
@@ -89,11 +89,11 @@ const Requests: React.FC = () => {
             {requests.map((request) => (
               <div
                 key={request._id}
-                className="bg-white rounded-kin-lg shadow-kin-medium p-6 hover:shadow-kin-strong transition"
+                className="min-w-0 bg-white rounded-kin-lg shadow-kin-medium p-4 sm:p-6 hover:shadow-kin-strong transition"
               >
-                <div className="flex items-start gap-4">
+                <div className="flex min-w-0 items-start gap-3 sm:gap-4">
                   {/* Avatar */}
-                  <div className="flex-shrink-0">
+                  <div className="shrink-0">
                     {request.sender.photo ? (
                       <img
                         src={getPhotoUrl(request.sender.photo)}
@@ -108,15 +108,15 @@ const Requests: React.FC = () => {
                   </div>
 
                   {/* Info */}
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h3 className="text-xl font-bold font-montserrat text-kin-navy">
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-2 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                      <h3 className="wrap-break-word text-xl font-bold font-montserrat text-kin-navy">
                         {request.sender.firstName}
                       </h3>
                       <span className="text-sm text-kin-teal font-inter">sent you a Meet request</span>
                     </div>
 
-                    <div className="space-y-2 mb-4">
+                    <div className="mb-4 space-y-2 wrap-break-word">
                       <p className="text-kin-navy text-sm font-inter">
                         <span className="font-semibold">Home Country:</span> {request.sender.homeCountry}
                       </p>
@@ -124,9 +124,9 @@ const Requests: React.FC = () => {
                         <span className="font-semibold">Living in:</span>{' '}
                         {request.sender.currentProvince}, {request.sender.currentCountry}
                       </p>
-                      <div className="flex items-center gap-2">
-                        <span className="text-kin-navy text-sm font-semibold font-inter">Speaks:</span>
-                        <div className="flex flex-wrap gap-1">
+                      <div className="flex min-w-0 flex-col gap-1 sm:flex-row sm:items-start sm:gap-2">
+                        <span className="shrink-0 text-kin-navy text-sm font-semibold font-inter">Speaks:</span>
+                        <div className="flex min-w-0 flex-wrap gap-1">
                           {request.sender.languages.map((lang, index) => (
                             <span
                               key={index}
@@ -137,9 +137,11 @@ const Requests: React.FC = () => {
                           ))}
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-kin-navy text-sm font-semibold font-inter">Looking For:</span>
-                        <div className="flex flex-wrap gap-1">
+                      <div className="flex min-w-0 flex-col gap-1 sm:flex-row sm:items-start sm:gap-2">
+                        <span className="shrink-0 text-kin-navy text-sm font-semibold font-inter">
+                          Looking For:
+                        </span>
+                        <div className="flex min-w-0 flex-wrap gap-1">
                           {request.sender.lookingFor.map((item, index) => (
                             <span
                               key={index}
@@ -153,10 +155,10 @@ const Requests: React.FC = () => {
                     </div>
 
                     {/* Actions */}
-                    <div className="flex gap-3">
+                    <div className="flex w-full min-w-0 flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap">
                       <button
                         onClick={() => handleAccept(request._id)}
-                        className="bg-kin-coral text-white px-6 py-2 rounded-kin-sm font-semibold font-montserrat hover:bg-kin-coral-600 shadow-kin-soft hover:shadow-kin-medium transition flex items-center"
+                        className="flex w-full items-center justify-center bg-kin-coral px-6 py-2 font-semibold font-montserrat text-white shadow-kin-soft transition hover:bg-kin-coral-600 hover:shadow-kin-medium sm:w-auto rounded-kin-sm"
                         aria-label="Accept connection request"
                       >
                         <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -166,7 +168,7 @@ const Requests: React.FC = () => {
                       </button>
                       <button
                         onClick={() => handleIgnore(request._id)}
-                        className="bg-kin-stone-200 text-kin-navy px-6 py-2 rounded-kin-sm font-semibold font-montserrat hover:bg-kin-stone-300 shadow-kin-soft transition flex items-center"
+                        className="flex w-full items-center justify-center bg-kin-stone-200 px-6 py-2 font-semibold font-montserrat text-kin-navy shadow-kin-soft transition hover:bg-kin-stone-300 sm:w-auto rounded-kin-sm"
                         aria-label="Ignore connection request"
                       >
                         <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

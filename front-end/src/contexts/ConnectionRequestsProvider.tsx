@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { connectionsAPI } from '../services/api';
 import { ConnectionRequestsContext } from './connectionRequestsContext';
-import { useAuth } from './AuthContext';
+import { useAuth } from './useAuth';
 
 interface ConnectionRequestsProviderProps {
   children: React.ReactNode;

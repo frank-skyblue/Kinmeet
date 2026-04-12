@@ -51,14 +51,13 @@ const UserSchema: Schema<IUser> = new Schema({
     timestamps: true
 });
 
-UserSchema.pre('save', async function (next) {
-    if (!this.isModified('password')) return next();
+UserSchema.pre('save', async function () {
+    if (!this.isModified('password')) return;
     try {
         const salt = await bcrypt.genSalt(10);
         this.password = await bcrypt.hash(this.password, salt);
-        next();
     } catch (err) {
-        next(err instanceof Error ? err : new Error(String(err)));
+        throw err instanceof Error ? err : new Error(String(err));
     }
 });
 

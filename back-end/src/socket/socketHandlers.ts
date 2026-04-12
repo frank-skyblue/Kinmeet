@@ -1,5 +1,28 @@
 import { Server, Socket } from 'socket.io';
 import { chatService } from '../services/chatService';
+import { notificationService } from '../services/notificationService';
+
+type PopulatedUserRef = { _id: { toString(): string }; firstName: string; lastName: string };
+
+type PopulatedChatMessage = {
+  _id: { toString(): string };
+  sender: PopulatedUserRef;
+  receiver: PopulatedUserRef;
+};
+
+const schedulePushIfReceiverOffline = (io: Server, receiverId: string, message: unknown) => {
+  const room = io.sockets.adapter.rooms.get(`user:${receiverId}`);
+  const receiverOnline = (room?.size ?? 0) > 0;
+  if (receiverOnline) return;
+
+  const m = message as PopulatedChatMessage;
+  void notificationService.notifyChatMessage({
+    receiverUserId: receiverId,
+    senderUserId: m.sender._id.toString(),
+    messageId: m._id.toString(),
+    senderDisplayName: `${m.sender.firstName} ${m.sender.lastName}`.trim(),
+  });
+};
 
 export const registerChatHandlers = (io: Server, socket: Socket) => {
   const userId = socket.data.userId;
@@ -11,6 +34,8 @@ export const registerChatHandlers = (io: Server, socket: Socket) => {
       const message = await chatService.sendMessage(userId, receiverId, content);
 
       io.to(`user:${receiverId}`).emit('chat:new_message', message);
+
+      schedulePushIfReceiverOffline(io, receiverId, message);
 
       callback({ success: true, message });
     } catch (error) {

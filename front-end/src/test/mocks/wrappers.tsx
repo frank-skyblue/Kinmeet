@@ -43,14 +43,13 @@ const defaultSocket: MockSocketValue = {
 };
 
 import { vi } from 'vitest';
-import * as authContextModule from '../../contexts/AuthContext';
-import * as socketContextModule from '../../contexts/SocketContext';
+import * as useAuthModule from '../../contexts/useAuth';
+import * as useSocketModule from '../../contexts/useSocket';
 
-vi.mock('../../contexts/AuthContext', async () => {
+vi.mock('../../contexts/useAuth', async () => {
   let authValue = { ...defaultAuth };
   return {
     useAuth: () => authValue,
-    AuthProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
     __setMockAuth: (value: Partial<MockAuthValue>) => {
       authValue = { ...defaultAuth, ...value };
     },
@@ -60,11 +59,14 @@ vi.mock('../../contexts/AuthContext', async () => {
   };
 });
 
-vi.mock('../../contexts/SocketContext', async () => {
+vi.mock('../../contexts/AuthContext', () => ({
+  AuthProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
+}));
+
+vi.mock('../../contexts/useSocket', async () => {
   let socketValue = { ...defaultSocket };
   return {
     useSocket: () => socketValue,
-    SocketProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
     __setMockSocket: (value: Partial<MockSocketValue>) => {
       socketValue = { ...defaultSocket, ...value };
     },
@@ -73,6 +75,10 @@ vi.mock('../../contexts/SocketContext', async () => {
     },
   };
 });
+
+vi.mock('../../contexts/SocketContext', () => ({
+  SocketProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
+}));
 
 interface RenderOptions {
   route?: string;
@@ -93,8 +99,8 @@ type SocketMockHelpers = {
 export const renderWithProviders = (ui: React.ReactElement, options: RenderOptions = {}) => {
   const { route = '/', auth, socket } = options;
 
-  const authModule = authContextModule as typeof authContextModule & AuthMockHelpers;
-  const socketModule = socketContextModule as typeof socketContextModule & SocketMockHelpers;
+  const authModule = useAuthModule as typeof useAuthModule & AuthMockHelpers;
+  const socketModule = useSocketModule as typeof useSocketModule & SocketMockHelpers;
 
   authModule.__resetMockAuth();
   socketModule.__resetMockSocket();

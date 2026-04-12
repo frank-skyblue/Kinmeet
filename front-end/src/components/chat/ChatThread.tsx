@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { chatAPI, profileAPI, getPhotoUrl } from '../../services/api';
-import { useAuth } from '../../contexts/AuthContext';
-import { useSocket } from '../../contexts/SocketContext';
+import { useAuth } from '../../contexts/useAuth';
+import { useSocket } from '../../contexts/useSocket';
 import { useChatInbox } from '../../contexts/chatInboxContext';
 import type { ChatMessage, UserProfile } from '../../types';
 

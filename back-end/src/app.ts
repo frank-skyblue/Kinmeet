@@ -13,6 +13,7 @@ import matchingRoutes from './routes/matchingRoutes';
 import connectionsRoutes from './routes/connectionsRoutes';
 import chatRoutes from './routes/chatRoutes';
 import blockRoutes from './routes/blockRoutes';
+import notificationsRoutes from './routes/notificationsRoutes';
 
 const app: Express = express()
 const httpServer = createServer(app) // Wrap Express with HTTP server for Socket.io
@@ -66,6 +67,7 @@ app.use('/api/matching', matchingRoutes);
 app.use('/api/connections', connectionsRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/block', blockRoutes);
+app.use('/api/notifications', notificationsRoutes);
 
 app.use(errorHandler);
 

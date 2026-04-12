@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { profileAPI, getPhotoUrl } from '../../services/api';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/useAuth';
 import SearchableSelect from '../common/SearchableSelect';
 import DynamicListField from '../common/DynamicListField';
 import LookingForCheckboxes from '../common/LookingForCheckboxes';

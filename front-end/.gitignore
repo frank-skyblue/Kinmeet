@@ -23,3 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 .vercel
+
+# Regenerated from VITE_FIREBASE_* on dev/build (plugins/firebaseMessagingSw.ts); do not commit real config.
+public/firebase-messaging-sw.js

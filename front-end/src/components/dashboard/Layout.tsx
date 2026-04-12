@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuth } from "../../contexts/useAuth";
 import { useChatInbox } from "../../contexts/chatInboxContext";
 import { useConnectionRequests } from "../../contexts/connectionRequestsContext";
 import { getPhotoUrl } from "../../services/api";
