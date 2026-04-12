@@ -81,11 +81,18 @@ describe('Profile Routes', () => {
       const res = await request(app)
         .put('/api/profile/me')
         .set('Authorization', `Bearer ${token}`)
-        .send({ firstName: 'Updated', about: 'New bio' });
+        .send({
+          firstName: 'Updated',
+          about: 'New bio',
+          gender: 'female',
+          dateOfBirth: '1990-06-15',
+        });
 
       expect(res.status).toBe(200);
       expect(res.body.user.firstName).toBe('Updated');
       expect(res.body.user.about).toBe('New bio');
+      expect(res.body.user.gender).toBe('female');
+      expect(String(res.body.user.dateOfBirth)).toContain('1990-06-15');
     });
   });
 

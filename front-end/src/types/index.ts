@@ -30,6 +30,8 @@ export interface UserProfile {
     lookingFor: string[];
     photo?: string;
     profileComplete?: boolean;
+    gender?: string;
+    dateOfBirth?: string;
 }
 
 export interface ChatMessage {
@@ -130,6 +132,8 @@ export interface UpdateProfilePayload {
     languages?: string[];
     interests?: string[];
     lookingFor?: string[];
+    gender?: string;
+    dateOfBirth?: string;
 }
 
 export interface ApiResponse<T = unknown> {
