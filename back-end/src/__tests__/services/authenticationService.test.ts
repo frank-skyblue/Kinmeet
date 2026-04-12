@@ -17,6 +17,8 @@ describe('authenticationService', () => {
       languages: ['English'],
       interests: ['Hiking'],
       lookingFor: ['Friendship'],
+      dateOfBirth: '1990-06-15',
+      gender: 'female',
     };
 
     it('registers a new user and returns a token', async () => {
@@ -29,6 +31,10 @@ describe('authenticationService', () => {
 
       const decoded = jwt.verify(result.token!, process.env.JWT_SECRET!) as Record<string, unknown>;
       expect(decoded.email).toBe('new@example.com');
+
+      const user = await User.findOne({ email: 'new@example.com' });
+      expect(user?.gender).toBe('female');
+      expect(user?.dateOfBirth).toBeDefined();
     });
 
     it('hashes the password before saving', async () => {
@@ -83,6 +89,17 @@ describe('authenticationService', () => {
 
       expect(result.success).toBe(false);
       expect(result.message).toContain('Password must be');
+    });
+
+    it('rejects invalid gender', async () => {
+      const result = await authenticationService.register({
+        ...validData,
+        email: 'bad-gender@example.com',
+        gender: 'Alien',
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.message).toBe('Invalid gender selection');
     });
   });
 

@@ -4,6 +4,7 @@ import {
   HOME_COUNTRY_OPTIONS,
   COUNTRY_OPTIONS,
   getProvinceOptions,
+  SIGNUP_GENDER_OPTIONS,
 } from "../../constants/profileOptions";
 
 interface SignupStep2Props {
@@ -24,6 +25,10 @@ interface SignupStep2Props {
   onCurrentCountryChange: (countryName: string) => void;
   onPhotoSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onRemovePhoto: () => void;
+  dateOfBirth: string;
+  setDateOfBirth: React.Dispatch<React.SetStateAction<string>>;
+  gender: string;
+  setGender: React.Dispatch<React.SetStateAction<string>>;
   onNext: () => void;
   onBack: () => void;
   setError: React.Dispatch<React.SetStateAction<string>>;
@@ -47,6 +52,10 @@ const SignupStep2: React.FC<SignupStep2Props> = ({
   onCurrentCountryChange,
   onPhotoSelect,
   onRemovePhoto,
+  dateOfBirth,
+  setDateOfBirth,
+  gender,
+  setGender,
   onNext,
   onBack,
   setError,
@@ -57,7 +66,9 @@ const SignupStep2: React.FC<SignupStep2Props> = ({
       !lastName ||
       !homeCountry ||
       !currentCountry ||
-      !currentProvince
+      !currentProvince ||
+      !dateOfBirth.trim() ||
+      !gender.trim()
     ) {
       setError("Please fill in all required fields");
       return false;
@@ -180,7 +191,7 @@ const SignupStep2: React.FC<SignupStep2Props> = ({
             required
           />
           <p className="text-xs text-kin-teal font-inter mt-1">
-            Hidden until connection is accepted
+            Hidden until kin request is accepted
           </p>
         </div>
       </div>
@@ -241,6 +252,35 @@ const SignupStep2: React.FC<SignupStep2Props> = ({
         required
         searchable="typeahead"
         helperText="Your current province/state of residence abroad"
+      />
+
+      <div>
+        <label
+          htmlFor="dateOfBirth"
+          className="block text-sm font-medium font-inter text-kin-navy mb-2"
+        >
+          Date of Birth
+          <span className="text-kin-coral ml-1">*</span>
+        </label>
+        <input
+          type="date"
+          id="dateOfBirth"
+          value={dateOfBirth}
+          onChange={(e) => setDateOfBirth(e.target.value)}
+          className="w-full min-h-[48px] px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
+          required
+          aria-label="Date of birth"
+        />
+      </div>
+
+      <SearchableSelect
+        id="gender"
+        label="Gender"
+        options={SIGNUP_GENDER_OPTIONS}
+        value={gender}
+        onChange={setGender}
+        placeholder="Select gender"
+        required
       />
 
       <div className="flex gap-4 mt-4">

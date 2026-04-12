@@ -32,6 +32,8 @@ export const seedTestUser = async (opts: SeedUserOptions): Promise<SeedResult> =
     languages: opts.languages ?? ['English'],
     interests: ['Hiking'],
     lookingFor: opts.lookingFor ?? ['Friendship'],
+    dateOfBirth: '1990-01-15',
+    gender: 'female',
   };
 
   const res = await axios.post(`${API_URL}/auth/register`, payload);

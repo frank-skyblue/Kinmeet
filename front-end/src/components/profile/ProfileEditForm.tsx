@@ -275,7 +275,7 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
                   className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
                   required
                 />
-                <p className="text-xs text-kin-teal font-inter mt-1">Hidden until connection is accepted</p>
+                <p className="text-xs text-kin-teal font-inter mt-1">Hidden until kin request is accepted</p>
               </div>
             </div>
 

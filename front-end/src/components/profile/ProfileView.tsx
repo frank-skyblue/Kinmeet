@@ -150,7 +150,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ profile, onEdit, onOpenDelete
             <p>• Celebrate cultural diversity and inclusivity</p>
             <p>• Be mindful of cultural sensitivities</p>
             <p>• Report inappropriate behavior or content</p>
-            <p>• Last names are only visible to accepted connections</p>
+            <p>• Last names are only visible to accepted kins</p>
             <p>• City-level details are not shared for privacy</p>
           </div>
         </div>

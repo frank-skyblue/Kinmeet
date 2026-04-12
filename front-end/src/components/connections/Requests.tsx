@@ -22,7 +22,7 @@ const Requests: React.FC = () => {
         setRequests(response.requests);
       }
     } catch (err: unknown) {
-      setError('Failed to load connection requests');
+      setError('Failed to load kin requests');
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -64,7 +64,7 @@ const Requests: React.FC = () => {
     <div className="min-w-0 bg-kin-beige px-4 py-8">
       <div className="mx-auto max-w-4xl min-w-0">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold font-montserrat text-kin-navy mb-2">Connection Requests</h1>
+          <h1 className="text-3xl font-bold font-montserrat text-kin-navy mb-2">Kin Requests</h1>
           <p className="text-kin-teal font-inter">
             {requests.length} pending request{requests.length !== 1 ? 's' : ''}
           </p>
@@ -158,8 +158,8 @@ const Requests: React.FC = () => {
                     <div className="flex w-full min-w-0 flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap">
                       <button
                         onClick={() => handleAccept(request._id)}
-                        className="flex w-full items-center justify-center bg-kin-coral px-6 py-2 font-semibold font-montserrat text-white shadow-kin-soft transition hover:bg-kin-coral-600 hover:shadow-kin-medium sm:w-auto rounded-kin-sm"
-                        aria-label="Accept connection request"
+                        className="flex w-full items-center justify-center rounded-kin-sm bg-kin-coral px-6 py-2 font-montserrat font-semibold text-white shadow-kin-soft transition hover:bg-kin-coral-600 hover:shadow-kin-medium sm:w-auto"
+                        aria-label="Accept kin request"
                       >
                         <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -168,8 +168,8 @@ const Requests: React.FC = () => {
                       </button>
                       <button
                         onClick={() => handleIgnore(request._id)}
-                        className="flex w-full items-center justify-center bg-kin-stone-200 px-6 py-2 font-semibold font-montserrat text-kin-navy shadow-kin-soft transition hover:bg-kin-stone-300 sm:w-auto rounded-kin-sm"
-                        aria-label="Ignore connection request"
+                        className="flex w-full items-center justify-center rounded-kin-sm bg-kin-stone-200 px-6 py-2 font-montserrat font-semibold text-kin-navy shadow-kin-soft transition hover:bg-kin-stone-300 sm:w-auto"
+                        aria-label="Ignore kin request"
                       >
                         <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

@@ -2,6 +2,8 @@ import { User } from '../models/User';
 import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../config/env';
 
+const REGISTER_GENDER_VALUES = ['female', 'male'] as const;
+
 const isPasswordSecure = (password: string) => {
     // At least 8 chars, one uppercase, one lowercase, one number (special chars optional)
     return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$/.test(password);
@@ -33,6 +35,8 @@ export interface RegisterData {
     interests: string[];
     lookingFor: string[];
     photo?: string;
+    dateOfBirth: string;
+    gender: string;
 }
 
 export interface LoginResponse {
@@ -125,7 +129,9 @@ export const authenticationService = {
                 languages,
                 interests,
                 lookingFor,
-                photo 
+                photo,
+                dateOfBirth,
+                gender,
             } = data;
 
             // Handle both currentLocation object and separate fields
@@ -133,7 +139,17 @@ export const authenticationService = {
             const country = currentLocation?.country || currentCountry;
 
             // Validate required fields
-            if (!email || !password || !firstName || !lastName || !homeCountry || !province || !country) {
+            if (
+                !email ||
+                !password ||
+                !firstName ||
+                !lastName ||
+                !homeCountry ||
+                !province ||
+                !country ||
+                !dateOfBirth ||
+                !gender
+            ) {
                 return {
                     success: false,
                     message: "All required fields must be provided"
@@ -171,12 +187,53 @@ export const authenticationService = {
                 };
             }
 
+            const dobMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateOfBirth);
+            if (!dobMatch) {
+                return {
+                    success: false,
+                    message: "Date of birth must be YYYY-MM-DD"
+                };
+            }
+            const dobY = Number(dobMatch[1]);
+            const dobMo = Number(dobMatch[2]);
+            const dobD = Number(dobMatch[3]);
+            const parsedDateOfBirth = new Date(Date.UTC(dobY, dobMo - 1, dobD, 12, 0, 0, 0));
+            if (
+                parsedDateOfBirth.getUTCFullYear() !== dobY ||
+                parsedDateOfBirth.getUTCMonth() !== dobMo - 1 ||
+                parsedDateOfBirth.getUTCDate() !== dobD
+            ) {
+                return {
+                    success: false,
+                    message: "Invalid date of birth"
+                };
+            }
+            const today = new Date();
+            const maxDob = new Date(Date.UTC(
+                today.getUTCFullYear() - 120,
+                today.getUTCMonth(),
+                today.getUTCDate(),
+                12, 0, 0, 0,
+            ));
+            if (parsedDateOfBirth < maxDob) {
+                return {
+                    success: false,
+                    message: "Invalid date of birth"
+                };
+            }
+
+            if (!REGISTER_GENDER_VALUES.includes(gender as (typeof REGISTER_GENDER_VALUES)[number])) {
+                return { success: false, message: 'Invalid gender selection' };
+            }
+
             // Create new user with profile
             const newUser = new User({ 
                 email, 
                 password, 
                 firstName,
                 lastName,
+                dateOfBirth: parsedDateOfBirth,
+                gender,
                 about: about || undefined,
                 jobTitle: jobTitle || undefined,
                 company: company || undefined,

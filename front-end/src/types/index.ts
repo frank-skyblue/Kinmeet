@@ -112,6 +112,8 @@ export interface RegisterPayload {
     interests: string[];
     lookingFor: string[];
     profilePhoto?: string;
+    dateOfBirth: string;
+    gender: string;
 }
 
 export interface UpdateProfilePayload {

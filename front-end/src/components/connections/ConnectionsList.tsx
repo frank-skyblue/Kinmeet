@@ -33,7 +33,7 @@ const ConnectionsList: React.FC = () => {
         setConnections(response.connections);
       }
     } catch (err: unknown) {
-      setError('Failed to load connections');
+      setError('Failed to load kins');
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -49,7 +49,7 @@ const ConnectionsList: React.FC = () => {
       <div className="h-full flex items-center justify-center bg-kin-beige">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-kin-coral mx-auto mb-4"></div>
-          <p className="text-kin-navy font-inter">Loading connections...</p>
+          <p className="text-kin-navy font-inter">Loading kins...</p>
         </div>
       </div>
     );
@@ -59,9 +59,9 @@ const ConnectionsList: React.FC = () => {
     <div className="bg-kin-beige py-8 px-4">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold font-montserrat text-kin-navy mb-2">My Connections</h1>
+          <h1 className="text-3xl font-bold font-montserrat text-kin-navy mb-2">My Kins</h1>
           <p className="text-kin-teal font-inter">
-            {connections.length} connection{connections.length !== 1 ? 's' : ''}
+            {connections.length} {connections.length === 1 ? 'kin' : 'kins'}
           </p>
         </div>
 
@@ -74,7 +74,7 @@ const ConnectionsList: React.FC = () => {
         {connections.length === 0 ? (
           <div className="text-center py-16">
             <div className="text-6xl mb-4">🤝</div>
-            <h2 className="text-2xl font-bold font-montserrat text-kin-navy mb-2">No Connections Yet</h2>
+            <h2 className="text-2xl font-bold font-montserrat text-kin-navy mb-2">No Kins Yet</h2>
             <p className="text-kin-teal font-inter mb-6">
               Start discovering people from your homeland and send Meet requests!
             </p>

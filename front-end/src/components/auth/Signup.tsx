@@ -41,6 +41,8 @@ const Signup: React.FC = () => {
   const [languages, setLanguages] = useState<string[]>([""]);
   const [interests, setInterests] = useState<string[]>([""]);
   const [lookingFor, setLookingFor] = useState<string[]>([]);
+  const [dateOfBirth, setDateOfBirth] = useState("");
+  const [gender, setGender] = useState("");
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -127,6 +129,8 @@ const Signup: React.FC = () => {
         languages: validLanguages,
         interests: validInterests,
         lookingFor,
+        dateOfBirth: dateOfBirth.trim(),
+        gender: gender.trim(),
       });
 
       if (photoFile) {
@@ -223,6 +227,10 @@ const Signup: React.FC = () => {
             onCurrentCountryChange={handleCurrentCountryChange}
             onPhotoSelect={handlePhotoSelect}
             onRemovePhoto={handleRemovePhoto}
+            dateOfBirth={dateOfBirth}
+            setDateOfBirth={setDateOfBirth}
+            gender={gender}
+            setGender={setGender}
             onNext={() => setStep(3)}
             onBack={() => setStep(1)}
             setError={setError}

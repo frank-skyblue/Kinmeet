@@ -15,6 +15,8 @@ const validRegister = {
   languages: ['English'],
   interests: ['Hiking'],
   lookingFor: ['Friendship'],
+  dateOfBirth: '1990-06-15',
+  gender: 'female',
 };
 
 describe('Auth Routes', () => {
