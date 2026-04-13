@@ -19,6 +19,7 @@ export const COUNTRY_OPTIONS: SearchableSelectOption[] = Country.getAllCountries
 export const SIGNUP_GENDER_OPTIONS: { value: string; label: string }[] = [
   { value: 'female', label: 'Female' },
   { value: 'male', label: 'Male' },
+  { value: 'other', label: 'Other' },
 ];
 
 export const INTEREST_OPTIONS: SearchableSelectOption[] = [

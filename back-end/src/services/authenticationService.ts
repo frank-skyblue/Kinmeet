@@ -2,7 +2,7 @@ import { User } from '../models/User';
 import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../config/env';
 
-const REGISTER_GENDER_VALUES = ['female', 'male'] as const;
+const REGISTER_GENDER_VALUES = ['female', 'male', 'other'] as const;
 
 const isPasswordSecure = (password: string) => {
     // At least 8 chars, one uppercase, one lowercase, one number (special chars optional)

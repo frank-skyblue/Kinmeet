@@ -5,6 +5,7 @@ import type { UserProfile } from '../../types';
 const genderLabel = (value: string | undefined) => {
   if (value === 'female') return 'Female';
   if (value === 'male') return 'Male';
+  if (value === 'other') return 'Other';
   return null;
 };
 

@@ -50,7 +50,7 @@ const UserSchema: Schema<IUser> = new Schema({
     dateOfBirth: { type: Date },
     gender: {
         type: String,
-        enum: ['female', 'male'],
+        enum: ['female', 'male', 'other'],
     },
     profileComplete: { type: Boolean, default: false },
     blockedUsers: [{ type: Schema.Types.ObjectId, ref: 'User' }],
