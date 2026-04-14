@@ -101,6 +101,58 @@ describe('authenticationService', () => {
       expect(result.success).toBe(false);
       expect(result.message).toBe('Invalid gender selection');
     });
+
+    it('rejects future date of birth', async () => {
+      const result = await authenticationService.register({
+        ...validData,
+        email: 'future-dob@example.com',
+        dateOfBirth: '3000-01-01',
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.message).toBe('Invalid date of birth');
+    });
+
+    it('allows date of birth today', async () => {
+      const t = new Date();
+      const todayStr = `${t.getUTCFullYear()}-${String(t.getUTCMonth() + 1).padStart(2, '0')}-${String(t.getUTCDate()).padStart(2, '0')}`;
+      const result = await authenticationService.register({
+        ...validData,
+        email: 'today-dob@example.com',
+        dateOfBirth: todayStr,
+      });
+
+      expect(result.success).toBe(true);
+    });
+
+    it('rejects date of birth more than 120 years ago', async () => {
+      const t = new Date();
+      const y = t.getUTCFullYear() - 121;
+      const tooOldStr = `${y}-06-15`;
+      const result = await authenticationService.register({
+        ...validData,
+        email: 'too-old-dob@example.com',
+        dateOfBirth: tooOldStr,
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.message).toBe('Invalid date of birth');
+    });
+
+    it('allows date of birth on earliest allowed day (120 years ago, UTC)', async () => {
+      const t = new Date();
+      const maxDob = new Date(
+        Date.UTC(t.getUTCFullYear() - 120, t.getUTCMonth(), t.getUTCDate(), 12, 0, 0, 0),
+      );
+      const minStr = `${maxDob.getUTCFullYear()}-${String(maxDob.getUTCMonth() + 1).padStart(2, '0')}-${String(maxDob.getUTCDate()).padStart(2, '0')}`;
+      const result = await authenticationService.register({
+        ...validData,
+        email: 'min-age-bound@example.com',
+        dateOfBirth: minStr,
+      });
+
+      expect(result.success).toBe(true);
+    });
   });
 
   describe('login', () => {

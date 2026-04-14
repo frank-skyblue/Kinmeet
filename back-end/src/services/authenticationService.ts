@@ -209,6 +209,13 @@ export const authenticationService = {
                 };
             }
             const today = new Date();
+            const todayUtcStr = `${today.getUTCFullYear()}-${String(today.getUTCMonth() + 1).padStart(2, '0')}-${String(today.getUTCDate()).padStart(2, '0')}`;
+            if (dateOfBirth > todayUtcStr) {
+                return {
+                    success: false,
+                    message: "Invalid date of birth"
+                };
+            }
             const maxDob = new Date(Date.UTC(
                 today.getUTCFullYear() - 120,
                 today.getUTCMonth(),

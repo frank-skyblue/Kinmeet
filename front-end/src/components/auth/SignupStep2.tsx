@@ -60,6 +60,13 @@ const SignupStep2: React.FC<SignupStep2Props> = ({
   onBack,
   setError,
 }) => {
+  const now = new Date();
+  const todayIsoUtc = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}`;
+  const maxDobUtc = new Date(
+    Date.UTC(now.getUTCFullYear() - 120, now.getUTCMonth(), now.getUTCDate(), 12, 0, 0, 0),
+  );
+  const minIsoUtc = `${maxDobUtc.getUTCFullYear()}-${String(maxDobUtc.getUTCMonth() + 1).padStart(2, '0')}-${String(maxDobUtc.getUTCDate()).padStart(2, '0')}`;
+
   const validate = (): boolean => {
     if (
       !firstName ||
@@ -71,6 +78,14 @@ const SignupStep2: React.FC<SignupStep2Props> = ({
       !gender.trim()
     ) {
       setError("Please fill in all required fields");
+      return false;
+    }
+    const dob = dateOfBirth.trim();
+    if (
+      /^\d{4}-\d{2}-\d{2}$/.test(dob) &&
+      (dob > todayIsoUtc || dob < minIsoUtc)
+    ) {
+      setError("Invalid date of birth");
       return false;
     }
     if (about && about.length > 500) {
@@ -266,6 +281,8 @@ const SignupStep2: React.FC<SignupStep2Props> = ({
           type="date"
           id="dateOfBirth"
           value={dateOfBirth}
+          min={minIsoUtc}
+          max={todayIsoUtc}
           onChange={(e) => setDateOfBirth(e.target.value)}
           className="w-full min-h-[48px] px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
           required
