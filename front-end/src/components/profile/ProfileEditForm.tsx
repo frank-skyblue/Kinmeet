@@ -10,6 +10,7 @@ import {
   LANGUAGE_OPTIONS,
   COUNTRY_OPTIONS,
   INTEREST_OPTIONS,
+  SIGNUP_GENDER_OPTIONS,
   getProvinceOptions,
   getCountryCode,
 } from '../../constants/profileOptions';
@@ -23,6 +24,13 @@ interface ProfileEditFormProps {
 
 const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCancel }) => {
   const { refreshUser } = useAuth();
+
+  const now = new Date();
+  const todayIsoUtc = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}`;
+  const maxDobUtc = new Date(
+    Date.UTC(now.getUTCFullYear() - 120, now.getUTCMonth(), now.getUTCDate(), 12, 0, 0, 0),
+  );
+  const minIsoUtc = `${maxDobUtc.getUTCFullYear()}-${String(maxDobUtc.getUTCMonth() + 1).padStart(2, '0')}-${String(maxDobUtc.getUTCDate()).padStart(2, '0')}`;
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -38,6 +46,8 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
   const [languages, setLanguages] = useState<string[]>(['']);
   const [interests, setInterests] = useState<string[]>(['']);
   const [lookingFor, setLookingFor] = useState<string[]>([]);
+  const [gender, setGender] = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState('');
 
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -60,6 +70,11 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
     setLanguages(profile.languages.length > 0 ? profile.languages : ['']);
     setInterests(profile.interests.length > 0 ? profile.interests : ['']);
     setLookingFor(profile.lookingFor);
+    setGender(profile.gender ?? '');
+    const dob = profile.dateOfBirth;
+    setDateOfBirth(
+      typeof dob === 'string' && dob.length >= 10 ? dob.slice(0, 10) : '',
+    );
   }, [profile]);
 
   const handleCurrentCountryChange = (countryName: string) => {
@@ -119,6 +134,22 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
       setError('First name and last name are required');
       return false;
     }
+    if (!gender.trim()) {
+      setError('Gender is required');
+      return false;
+    }
+    if (!dateOfBirth.trim()) {
+      setError('Birthday is required');
+      return false;
+    }
+    const dob = dateOfBirth.trim();
+    if (
+      /^\d{4}-\d{2}-\d{2}$/.test(dob) &&
+      (dob > todayIsoUtc || dob < minIsoUtc)
+    ) {
+      setError('Invalid date of birth');
+      return false;
+    }
     if (about && about.length > 500) {
       setError('About section must be 500 characters or fewer');
       return false;
@@ -171,6 +202,8 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
         languages: validLanguages,
         interests: validInterests,
         lookingFor,
+        gender: gender.trim(),
+        dateOfBirth: dateOfBirth.trim(),
       });
 
       if (response.success) {
@@ -275,9 +308,39 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
                   className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
                   required
                 />
-                <p className="text-xs text-kin-teal font-inter mt-1">Hidden until connection is accepted</p>
+                <p className="text-xs text-kin-teal font-inter mt-1">Hidden until kin request is accepted</p>
               </div>
             </div>
+
+            <div>
+              <label
+                htmlFor="dateOfBirth"
+                className="block text-sm font-medium font-inter text-kin-navy mb-2"
+              >
+                Birthday
+              </label>
+              <input
+                type="date"
+                id="dateOfBirth"
+                value={dateOfBirth}
+                min={minIsoUtc}
+                max={todayIsoUtc}
+                onChange={(e) => setDateOfBirth(e.target.value)}
+                className="w-full min-h-[48px] px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
+                required
+                aria-label="Birthday"
+              />
+            </div>
+
+            <SearchableSelect
+              id="gender"
+              label="Gender"
+              options={SIGNUP_GENDER_OPTIONS}
+              value={gender}
+              onChange={setGender}
+              placeholder="Select gender"
+              required
+            />
 
             <div>
               <label htmlFor="about" className="block text-sm font-medium font-inter text-kin-navy mb-2">

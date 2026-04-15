@@ -13,8 +13,14 @@ export const HOME_COUNTRY_OPTIONS: SearchableSelectOption[] = Country.getAllCoun
   .sort((a, b) => a.label.localeCompare(b.label));
 
 export const COUNTRY_OPTIONS: SearchableSelectOption[] = Country.getAllCountries()
-  .filter((c) => c.isoCode === 'CA' || c.isoCode === 'US')
-  .map((c) => ({ value: c.name, label: c.name }));
+  .map((c) => ({ value: c.name, label: c.name }))
+  .sort((a, b) => a.label.localeCompare(b.label));
+
+export const SIGNUP_GENDER_OPTIONS: { value: string; label: string }[] = [
+  { value: 'female', label: 'Female' },
+  { value: 'male', label: 'Male' },
+  { value: 'other', label: 'Other' },
+];
 
 export const INTEREST_OPTIONS: SearchableSelectOption[] = [
   'Arts & Culture', 'Baking', 'Bird Watching', 'Blogging', 'Board Games',

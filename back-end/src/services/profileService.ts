@@ -55,6 +55,38 @@ export const updateProfile = async (userId: string, updates: Record<string, unkn
     delete updates._id;
     delete updates.blockedUsers;
 
+    if (updates.dateOfBirth !== undefined && typeof updates.dateOfBirth === 'string') {
+        const d = updates.dateOfBirth.trim();
+        const dobMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d);
+        if (dobMatch) {
+            const dobY = Number(dobMatch[1]);
+            const dobMo = Number(dobMatch[2]);
+            const dobD = Number(dobMatch[3]);
+            const parsedDateOfBirth = new Date(Date.UTC(dobY, dobMo - 1, dobD, 12, 0, 0, 0));
+            if (
+                parsedDateOfBirth.getUTCFullYear() !== dobY ||
+                parsedDateOfBirth.getUTCMonth() !== dobMo - 1 ||
+                parsedDateOfBirth.getUTCDate() !== dobD
+            ) {
+                throw new AppError(400, 'Invalid date of birth');
+            }
+            const now = new Date();
+            const todayUtcStr = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}`;
+            if (d > todayUtcStr) {
+                throw new AppError(400, 'Invalid date of birth');
+            }
+            const maxDob = new Date(Date.UTC(
+                now.getUTCFullYear() - 120,
+                now.getUTCMonth(),
+                now.getUTCDate(),
+                12, 0, 0, 0,
+            ));
+            if (parsedDateOfBirth < maxDob) {
+                throw new AppError(400, 'Invalid date of birth');
+            }
+        }
+    }
+
     const user = await User.findByIdAndUpdate(
         userId,
         { ...updates, profileComplete: true },

@@ -2,6 +2,28 @@ import React from 'react';
 import { getPhotoUrl } from '../../services/api';
 import type { UserProfile } from '../../types';
 
+const genderLabel = (value: string | undefined) => {
+  if (value === 'female') return 'Female';
+  if (value === 'male') return 'Male';
+  if (value === 'other') return 'Other';
+  return null;
+};
+
+const birthdayDisplay = (value: string | undefined) => {
+  if (!value) return null;
+  const d = value.slice(0, 10);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
+  try {
+    const parsed = new Date(value);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed.toISOString().slice(0, 10);
+    }
+  } catch {
+    /* ignore */
+  }
+  return null;
+};
+
 interface ProfileViewProps {
   profile: UserProfile;
   onEdit: () => void;
@@ -35,6 +57,21 @@ const ProfileView: React.FC<ProfileViewProps> = ({ profile, onEdit, onOpenDelete
                 {profile.firstName} {profile.lastName}
               </h1>
               <p className="text-kin-teal font-inter">{profile.email}</p>
+            </div>
+
+            <div className="space-y-6 mb-6">
+              <div>
+                <h3 className="text-sm font-semibold font-inter text-kin-navy mb-2">Gender</h3>
+                <p className="text-lg text-kin-navy font-montserrat">
+                  {genderLabel(profile.gender) ?? '—'}
+                </p>
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold font-inter text-kin-navy mb-2">Birthday</h3>
+                <p className="text-lg text-kin-navy font-montserrat">
+                  {birthdayDisplay(profile.dateOfBirth) ?? '—'}
+                </p>
+              </div>
             </div>
 
             <div className="space-y-6">
@@ -150,7 +187,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ profile, onEdit, onOpenDelete
             <p>• Celebrate cultural diversity and inclusivity</p>
             <p>• Be mindful of cultural sensitivities</p>
             <p>• Report inappropriate behavior or content</p>
-            <p>• Last names are only visible to accepted connections</p>
+            <p>• Last names are only visible to accepted kins</p>
             <p>• City-level details are not shared for privacy</p>
           </div>
         </div>

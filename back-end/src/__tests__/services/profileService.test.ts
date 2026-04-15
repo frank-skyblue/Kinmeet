@@ -80,6 +80,57 @@ describe('profileService', () => {
       expect(updated.email).toBe('me@test.com');
       expect(updated.firstName).toBe('Safe');
     });
+
+    it('rejects future dateOfBirth', async () => {
+      const user = await createTestUser({ email: 'future-dob-profile@test.com' });
+
+      await expect(
+        profileService.updateProfile(user._id.toString(), { dateOfBirth: '3000-01-01' }),
+      ).rejects.toThrow('Invalid date of birth');
+    });
+
+    it('rejects dateOfBirth more than 120 years ago', async () => {
+      const user = await createTestUser({ email: 'too-old-dob-profile@test.com' });
+      const t = new Date();
+      const y = t.getUTCFullYear() - 121;
+      const tooOldStr = `${y}-06-15`;
+
+      await expect(
+        profileService.updateProfile(user._id.toString(), { dateOfBirth: tooOldStr }),
+      ).rejects.toThrow('Invalid date of birth');
+    });
+
+    it('allows dateOfBirth on earliest allowed day (120 years ago, UTC)', async () => {
+      const user = await createTestUser({ email: 'min-age-profile@test.com' });
+      const t = new Date();
+      const maxDob = new Date(
+        Date.UTC(t.getUTCFullYear() - 120, t.getUTCMonth(), t.getUTCDate(), 12, 0, 0, 0),
+      );
+      const minStr = `${maxDob.getUTCFullYear()}-${String(maxDob.getUTCMonth() + 1).padStart(2, '0')}-${String(maxDob.getUTCDate()).padStart(2, '0')}`;
+
+      const updated = await profileService.updateProfile(user._id.toString(), {
+        dateOfBirth: minStr,
+      });
+      expect(updated.dateOfBirth!.toISOString().slice(0, 10)).toBe(minStr);
+    });
+
+    it('allows dateOfBirth today and in the past (UTC calendar)', async () => {
+      const t = new Date();
+      const todayStr = `${t.getUTCFullYear()}-${String(t.getUTCMonth() + 1).padStart(2, '0')}-${String(t.getUTCDate()).padStart(2, '0')}`;
+
+      const userToday = await createTestUser({ email: 'dob-today@test.com' });
+      const updatedToday = await profileService.updateProfile(userToday._id.toString(), {
+        dateOfBirth: todayStr,
+      });
+      expect(updatedToday.dateOfBirth).toBeInstanceOf(Date);
+      expect(updatedToday.dateOfBirth!.toISOString().slice(0, 10)).toBe(todayStr);
+
+      const userPast = await createTestUser({ email: 'dob-past@test.com' });
+      const updatedPast = await profileService.updateProfile(userPast._id.toString(), {
+        dateOfBirth: '1990-06-15',
+      });
+      expect(updatedPast.dateOfBirth!.toISOString().slice(0, 10)).toBe('1990-06-15');
+    });
   });
 
   describe('deleteProfile', () => {

@@ -55,7 +55,7 @@ describe('ConnectionsList', () => {
     await waitFor(() => {
       expect(screen.getByText('Marie Dupont')).toBeInTheDocument();
     });
-    expect(screen.getByText('1 connection')).toBeInTheDocument();
+    expect(screen.getByText('1 kin')).toBeInTheDocument();
   });
 
   it('shows empty state when no connections', async () => {
@@ -65,7 +65,7 @@ describe('ConnectionsList', () => {
     });
     renderList();
     await waitFor(() => {
-      expect(screen.getByText('No Connections Yet')).toBeInTheDocument();
+      expect(screen.getByText('No Kins Yet')).toBeInTheDocument();
     });
   });
 

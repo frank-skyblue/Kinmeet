@@ -20,6 +20,8 @@ export interface IUser extends Document {
     interests: string[];
     lookingFor: LookingForType[];
     photo?: string;
+    dateOfBirth?: Date;
+    gender?: string;
     profileComplete: boolean;
     blockedUsers: Types.ObjectId[];
     _id: Types.ObjectId;
@@ -45,6 +47,11 @@ const UserSchema: Schema<IUser> = new Schema({
     interests: [{ type: String }],
     lookingFor: [{ type: String, enum: ['Friendship', 'Networking', 'Support'] }],
     photo: { type: String },
+    dateOfBirth: { type: Date },
+    gender: {
+        type: String,
+        enum: ['female', 'male', 'other'],
+    },
     profileComplete: { type: Boolean, default: false },
     blockedUsers: [{ type: Schema.Types.ObjectId, ref: 'User' }],
 }, {

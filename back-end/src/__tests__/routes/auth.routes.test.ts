@@ -15,6 +15,8 @@ const validRegister = {
   languages: ['English'],
   interests: ['Hiking'],
   lookingFor: ['Friendship'],
+  dateOfBirth: '1990-06-15',
+  gender: 'female',
 };
 
 describe('Auth Routes', () => {
@@ -43,6 +45,29 @@ describe('Auth Routes', () => {
 
       expect(res.status).toBe(400);
       expect(res.body.success).toBe(false);
+    });
+
+    it('returns 400 for future dateOfBirth', async () => {
+      const res = await request(app)
+        .post('/api/auth/register')
+        .send({ ...validRegister, email: 'future-dob-route@example.com', dateOfBirth: '3000-01-01' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toBe('Invalid date of birth');
+    });
+
+    it('returns 400 for dateOfBirth more than 120 years ago', async () => {
+      const t = new Date();
+      const y = t.getUTCFullYear() - 121;
+      const tooOldStr = `${y}-06-15`;
+      const res = await request(app)
+        .post('/api/auth/register')
+        .send({ ...validRegister, email: 'too-old-dob-route@example.com', dateOfBirth: tooOldStr });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toBe('Invalid date of birth');
     });
   });
 

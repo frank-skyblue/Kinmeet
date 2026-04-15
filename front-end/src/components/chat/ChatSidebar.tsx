@@ -48,7 +48,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ activeUserId }) => {
         <h1 className="font-montserrat text-lg font-bold text-kin-navy">
           Messages
         </h1>
-        <p className="font-inter text-xs text-kin-teal">Your connections</p>
+        <p className="font-inter text-xs text-kin-teal">Your kins</p>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto bg-white md:bg-transparent">

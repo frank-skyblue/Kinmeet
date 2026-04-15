@@ -47,7 +47,7 @@ const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({ isOpen, onClose
       <div className="bg-white rounded-kin-xl shadow-kin-strong max-w-md w-full p-6">
         <h2 className="text-xl font-bold font-montserrat text-kin-navy mb-2">Delete Account</h2>
         <p className="text-kin-navy font-inter mb-4">
-          This action cannot be undone. All your data, connections, and messages will be permanently deleted.
+          This action cannot be undone. All your data, kins, and messages will be permanently deleted.
         </p>
         <p className="text-kin-navy font-inter mb-2">
           Type <strong>delete</strong> to confirm:

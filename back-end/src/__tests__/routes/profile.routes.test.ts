@@ -81,11 +81,49 @@ describe('Profile Routes', () => {
       const res = await request(app)
         .put('/api/profile/me')
         .set('Authorization', `Bearer ${token}`)
-        .send({ firstName: 'Updated', about: 'New bio' });
+        .send({
+          firstName: 'Updated',
+          about: 'New bio',
+          gender: 'female',
+          dateOfBirth: '1990-06-15',
+        });
 
       expect(res.status).toBe(200);
       expect(res.body.user.firstName).toBe('Updated');
       expect(res.body.user.about).toBe('New bio');
+      expect(res.body.user.gender).toBe('female');
+      expect(String(res.body.user.dateOfBirth)).toContain('1990-06-15');
+    });
+
+    it('returns 400 when dateOfBirth is in the future', async () => {
+      const user = await createTestUser({ email: 'future-dob-route@test.com' });
+      const token = getAuthToken(user);
+
+      const res = await request(app)
+        .put('/api/profile/me')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ dateOfBirth: '3000-01-01' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toBe('Invalid date of birth');
+    });
+
+    it('returns 400 when dateOfBirth is more than 120 years ago', async () => {
+      const user = await createTestUser({ email: 'too-old-dob-route@test.com' });
+      const token = getAuthToken(user);
+      const t = new Date();
+      const y = t.getUTCFullYear() - 121;
+      const tooOldStr = `${y}-06-15`;
+
+      const res = await request(app)
+        .put('/api/profile/me')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ dateOfBirth: tooOldStr });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toBe('Invalid date of birth');
     });
   });
 
