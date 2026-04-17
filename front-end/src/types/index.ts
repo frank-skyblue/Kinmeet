@@ -148,3 +148,12 @@ export interface RegisterNotificationDevicePayload {
     channel: NotificationDeviceChannel;
     token: string;
 }
+
+export type {
+    ChatMarkReadPayload,
+    ChatMessagesReadPayload,
+    ChatSendMessageAck,
+    ChatSendMessagePayload,
+    ChatTypingPayload,
+    ChatUserTypingPayload,
+} from './chatSocket';

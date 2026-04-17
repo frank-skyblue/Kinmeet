@@ -4,9 +4,12 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { render } from '@testing-library/react';
 import Chat from '../Chat';
+import { CHAT_SOCKET_EVENTS } from '../../../constants/chatSocketEvents';
 import { ChatInboxProvider } from '../../../contexts/ChatInboxProvider';
+import type { ChatMessage, ChatSendMessagePayload, GetConversationsResponse, UserProfile } from '../../../types';
+import { CHAT_THREAD_INBOUND_EVENTS } from './chatSocketTestConstants';
 
-const mockMessages = [
+const mockMessages: ChatMessage[] = [
   {
     _id: 'msg-1',
     sender: { _id: 'user-1', firstName: 'Test', lastName: 'User' },
@@ -25,7 +28,10 @@ const mockMessages = [
   },
 ];
 
-const mockUserProfile = {
+const mockUserProfile: Pick<
+  UserProfile,
+  '_id' | 'firstName' | 'lastName' | 'currentProvince' | 'currentCountry'
+> = {
   _id: 'other-1',
   firstName: 'Marie',
   lastName: 'Dupont',
@@ -33,8 +39,8 @@ const mockUserProfile = {
   currentCountry: 'Canada',
 };
 
-const mockInboxResponse = {
-  success: true as const,
+const mockInboxResponse: GetConversationsResponse = {
+  success: true,
   conversations: [
     {
       user: {
@@ -55,7 +61,6 @@ vi.mock('../../../services/api', () => ({
   chatAPI: {
     getConversation: vi.fn(),
     getConversations: vi.fn(),
-    sendMessage: vi.fn(),
     markAsRead: vi.fn(),
   },
   profileAPI: {
@@ -159,9 +164,9 @@ describe('Chat', () => {
   it('registers socket event listeners', async () => {
     renderChat();
     await waitFor(() => {
-      expect(mockSocket.on).toHaveBeenCalledWith('chat:new_message', expect.any(Function));
-      expect(mockSocket.on).toHaveBeenCalledWith('chat:user_typing', expect.any(Function));
-      expect(mockSocket.on).toHaveBeenCalledWith('chat:messages_read', expect.any(Function));
+      for (const event of CHAT_THREAD_INBOUND_EVENTS) {
+        expect(mockSocket.on).toHaveBeenCalledWith(event, expect.any(Function));
+      }
     });
   });
 
@@ -174,9 +179,14 @@ describe('Chat', () => {
     await user.type(input, 'New message');
     await user.click(screen.getByRole('button', { name: /send message/i }));
 
+    const expectedSendPayload: ChatSendMessagePayload = {
+      receiverId: 'other-1',
+      content: 'New message',
+    };
+
     expect(mockSocket.emit).toHaveBeenCalledWith(
-      'chat:send_message',
-      { receiverId: 'other-1', content: 'New message' },
+      CHAT_SOCKET_EVENTS.SEND_MESSAGE,
+      expectedSendPayload,
       expect.any(Function),
     );
   });

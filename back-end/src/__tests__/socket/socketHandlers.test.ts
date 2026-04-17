@@ -9,6 +9,16 @@ vi.mock('../../services/notificationService', () => ({
 import { createServer, Server as HTTPServer } from 'http';
 import { AddressInfo } from 'net';
 import { io as ioClient, Socket as ClientSocket } from 'socket.io-client';
+import { CHAT_SOCKET_EVENTS, type ChatSocketEventName } from '../../socket/chatSocketEvents';
+import type {
+  ChatMarkReadPayload,
+  ChatMessageFromSend,
+  ChatMessagesReadPayload,
+  ChatSendMessageAck,
+  ChatSendMessagePayload,
+  ChatTypingPayload,
+  ChatUserTypingPayload,
+} from '../../socket/chatSocketTypes';
 import { initializeSocket } from '../../socket/socketServer';
 import { createTestUser, getAuthToken } from '../helpers';
 import { Connection } from '../../models/Connection';
@@ -30,7 +40,7 @@ const connectClient = (token: string): Promise<ClientSocket> => {
   });
 };
 
-const waitForEvent = <T>(socket: ClientSocket, event: string, timeoutMs = 5000): Promise<T> => {
+const waitForEvent = <T>(socket: ClientSocket, event: ChatSocketEventName, timeoutMs = 5000): Promise<T> => {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error(`Timed out waiting for "${event}"`)), timeoutMs);
     socket.once(event, (data: T) => {
@@ -97,14 +107,15 @@ describe('Socket.IO Handlers', () => {
     const clientB = await connectClient(getAuthToken(userB));
 
     try {
-      const messagePromise = waitForEvent<any>(clientB, 'chat:new_message');
+      const messagePromise = waitForEvent<ChatMessageFromSend>(clientB, CHAT_SOCKET_EVENTS.NEW_MESSAGE);
 
-      const ack = await new Promise<any>((resolve) => {
-        clientA.emit(
-          'chat:send_message',
-          { receiverId: userB._id.toString(), content: 'Hello via socket!' },
-          resolve,
-        );
+      const sendPayload: ChatSendMessagePayload = {
+        receiverId: userB._id.toString(),
+        content: 'Hello via socket!',
+      };
+
+      const ack = await new Promise<ChatSendMessageAck>((resolve) => {
+        clientA.emit(CHAT_SOCKET_EVENTS.SEND_MESSAGE, sendPayload, resolve);
       });
 
       expect(ack.success).toBe(true);
@@ -130,12 +141,13 @@ describe('Socket.IO Handlers', () => {
     const clientA = await connectClient(getAuthToken(userA));
 
     try {
-      const ack = await new Promise<{ success: boolean }>((resolve) => {
-        clientA.emit(
-          'chat:send_message',
-          { receiverId: userB._id.toString(), content: 'Offline push test' },
-          resolve,
-        );
+      const offlinePayload: ChatSendMessagePayload = {
+        receiverId: userB._id.toString(),
+        content: 'Offline push test',
+      };
+
+      const ack = await new Promise<ChatSendMessageAck>((resolve) => {
+        clientA.emit(CHAT_SOCKET_EVENTS.SEND_MESSAGE, offlinePayload, resolve);
       });
 
       expect(ack.success).toBe(true);
@@ -160,15 +172,17 @@ describe('Socket.IO Handlers', () => {
     const clientB = await connectClient(getAuthToken(userB));
 
     try {
-      const typingPromise = waitForEvent<any>(clientB, 'chat:user_typing');
-      clientA.emit('chat:typing_start', { receiverId: userB._id.toString() });
+      const typingPromise = waitForEvent<ChatUserTypingPayload>(clientB, CHAT_SOCKET_EVENTS.USER_TYPING);
+      const typingStartPayload: ChatTypingPayload = { receiverId: userB._id.toString() };
+      clientA.emit(CHAT_SOCKET_EVENTS.TYPING_START, typingStartPayload);
 
       const typing = await typingPromise;
       expect(typing.isTyping).toBe(true);
       expect(typing.userId).toBe(userA._id.toString());
 
-      const stopPromise = waitForEvent<any>(clientB, 'chat:user_typing');
-      clientA.emit('chat:typing_stop', { receiverId: userB._id.toString() });
+      const stopPromise = waitForEvent<ChatUserTypingPayload>(clientB, CHAT_SOCKET_EVENTS.USER_TYPING);
+      const typingStopPayload: ChatTypingPayload = { receiverId: userB._id.toString() };
+      clientA.emit(CHAT_SOCKET_EVENTS.TYPING_STOP, typingStopPayload);
 
       const stopped = await stopPromise;
       expect(stopped.isTyping).toBe(false);
@@ -193,8 +207,9 @@ describe('Socket.IO Handlers', () => {
     const clientB = await connectClient(getAuthToken(userB));
 
     try {
-      const readPromise = waitForEvent<any>(clientA, 'chat:messages_read');
-      clientB.emit('chat:mark_read', { senderId: userA._id.toString() });
+      const readPromise = waitForEvent<ChatMessagesReadPayload>(clientA, CHAT_SOCKET_EVENTS.MESSAGES_READ);
+      const markReadPayload: ChatMarkReadPayload = { senderId: userA._id.toString() };
+      clientB.emit(CHAT_SOCKET_EVENTS.MARK_READ, markReadPayload);
 
       const readEvent = await readPromise;
       expect(readEvent.readBy).toBe(userB._id.toString());
