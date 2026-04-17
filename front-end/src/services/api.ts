@@ -128,11 +128,6 @@ export const chatAPI = {
     return response.data;
   },
 
-  sendMessage: async (receiverId: string, content: string) => {
-    const response = await api.post('/chat/messages', { receiverId, content });
-    return response.data;
-  },
-
   markAsRead: async (senderId: string) => {
     const response = await api.post('/chat/messages/read', { senderId });
     return response.data;

@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { chatAPI } from '../services/api';
 import { getErrorMessage } from '../utils/error';
+import { CHAT_SOCKET_EVENTS } from '../constants/chatSocketEvents';
 import type { ChatConversationSummary, ChatMessage } from '../types';
 import { ChatInboxContext } from './chatInboxContext';
 import { useAuth } from './useAuth';
@@ -74,9 +75,9 @@ export const ChatInboxProvider: React.FC<ChatInboxProviderProps> = ({ children }
       }
     };
 
-    socket.on('chat:new_message', handleNewMessage);
+    socket.on(CHAT_SOCKET_EVENTS.NEW_MESSAGE, handleNewMessage);
     return () => {
-      socket.off('chat:new_message', handleNewMessage);
+      socket.off(CHAT_SOCKET_EVENTS.NEW_MESSAGE, handleNewMessage);
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   }, [socket, user, refetchInbox]);

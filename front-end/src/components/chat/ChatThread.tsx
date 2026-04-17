@@ -4,7 +4,17 @@ import { chatAPI, profileAPI, getPhotoUrl } from '../../services/api';
 import { useAuth } from '../../contexts/useAuth';
 import { useSocket } from '../../contexts/useSocket';
 import { useChatInbox } from '../../contexts/chatInboxContext';
-import type { ChatMessage, UserProfile } from '../../types';
+import { CHAT_SOCKET_EVENTS } from '../../constants/chatSocketEvents';
+import type {
+  ChatMarkReadPayload,
+  ChatMessage,
+  ChatMessagesReadPayload,
+  ChatSendMessageAck,
+  ChatSendMessagePayload,
+  ChatTypingPayload,
+  ChatUserTypingPayload,
+  UserProfile,
+} from '../../types';
 
 interface ChatThreadProps {
   userId: string;
@@ -45,13 +55,13 @@ const ChatThread: React.FC<ChatThreadProps> = ({ userId }) => {
       }
     };
 
-    const handleUserTyping = (data: { userId: string; isTyping: boolean }) => {
+    const handleUserTyping = (data: ChatUserTypingPayload) => {
       if (data.userId === userId) {
         setIsTyping(data.isTyping);
       }
     };
 
-    const handleMessagesRead = (data: { readBy: string }) => {
+    const handleMessagesRead = (data: ChatMessagesReadPayload) => {
       if (data.readBy === userId) {
         setMessages((prev) =>
           prev.map((msg) => (msg.receiver._id === userId ? { ...msg, read: true } : msg)),
@@ -59,18 +69,19 @@ const ChatThread: React.FC<ChatThreadProps> = ({ userId }) => {
       }
     };
 
-    socket.on('chat:new_message', handleNewMessage);
-    socket.on('chat:user_typing', handleUserTyping);
-    socket.on('chat:messages_read', handleMessagesRead);
+    socket.on(CHAT_SOCKET_EVENTS.NEW_MESSAGE, handleNewMessage);
+    socket.on(CHAT_SOCKET_EVENTS.USER_TYPING, handleUserTyping);
+    socket.on(CHAT_SOCKET_EVENTS.MESSAGES_READ, handleMessagesRead);
 
     if (socket.connected) {
-      socket.emit('chat:mark_read', { senderId: userId });
+      const markReadPayload: ChatMarkReadPayload = { senderId: userId };
+      socket.emit(CHAT_SOCKET_EVENTS.MARK_READ, markReadPayload);
     }
 
     return () => {
-      socket.off('chat:new_message', handleNewMessage);
-      socket.off('chat:user_typing', handleUserTyping);
-      socket.off('chat:messages_read', handleMessagesRead);
+      socket.off(CHAT_SOCKET_EVENTS.NEW_MESSAGE, handleNewMessage);
+      socket.off(CHAT_SOCKET_EVENTS.USER_TYPING, handleUserTyping);
+      socket.off(CHAT_SOCKET_EVENTS.MESSAGES_READ, handleMessagesRead);
     };
   }, [socket, userId]);
 
@@ -137,21 +148,23 @@ const ChatThread: React.FC<ChatThreadProps> = ({ userId }) => {
     setNewMessage('');
     setIsSending(true);
 
-    socket.emit('chat:typing_stop', { receiverId: userId });
+    const typingStopPayload: ChatTypingPayload = { receiverId: userId };
+    socket.emit(CHAT_SOCKET_EVENTS.TYPING_STOP, typingStopPayload);
 
     try {
+      const sendPayload: ChatSendMessagePayload = { receiverId: userId, content: messageContent };
       socket.emit(
-        'chat:send_message',
-        { receiverId: userId, content: messageContent },
-        (response: { success: boolean; message?: ChatMessage; error?: string }) => {
-          if (response.success && response.message) {
+        CHAT_SOCKET_EVENTS.SEND_MESSAGE,
+        sendPayload,
+        (response: ChatSendMessageAck) => {
+          if (response.success) {
             setMessages((prevMessages) =>
-              prevMessages.map((msg) => (msg._id === tempId ? response.message! : msg)),
+              prevMessages.map((msg) => (msg._id === tempId ? response.message : msg)),
             );
             void refetchInbox();
           } else {
             setMessages((prevMessages) => prevMessages.filter((msg) => msg._id !== tempId));
-            setError(response.error || 'Failed to send message');
+            setError(response.message);
             setNewMessage(messageContent);
           }
           setIsSending(false);
@@ -174,14 +187,16 @@ const ChatThread: React.FC<ChatThreadProps> = ({ userId }) => {
       clearTimeout(typingTimeoutRef.current);
     }
 
+    const typingPayload: ChatTypingPayload = { receiverId: userId };
+
     if (e.target.value.trim()) {
-      socket.emit('chat:typing_start', { receiverId: userId });
+      socket.emit(CHAT_SOCKET_EVENTS.TYPING_START, typingPayload);
 
       typingTimeoutRef.current = setTimeout(() => {
-        socket.emit('chat:typing_stop', { receiverId: userId });
+        socket.emit(CHAT_SOCKET_EVENTS.TYPING_STOP, typingPayload);
       }, 2000);
     } else {
-      socket.emit('chat:typing_stop', { receiverId: userId });
+      socket.emit(CHAT_SOCKET_EVENTS.TYPING_STOP, typingPayload);
     }
   };
 

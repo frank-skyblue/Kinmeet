@@ -1,6 +1,15 @@
 import { Server, Socket } from 'socket.io';
 import { chatService } from '../services/chatService';
 import { notificationService } from '../services/notificationService';
+import { CHAT_SOCKET_EVENTS } from './chatSocketEvents';
+import type {
+  ChatMarkReadPayload,
+  ChatMessagesReadPayload,
+  ChatSendMessageCallback,
+  ChatSendMessagePayload,
+  ChatTypingPayload,
+  ChatUserTypingPayload,
+} from './chatSocketTypes';
 
 type PopulatedUserRef = { _id: { toString(): string }; firstName: string; lastName: string };
 
@@ -27,13 +36,13 @@ const schedulePushIfReceiverOffline = (io: Server, receiverId: string, message: 
 export const registerChatHandlers = (io: Server, socket: Socket) => {
   const userId = socket.data.userId;
 
-  socket.on('chat:send_message', async (data: { receiverId: string; content: string }, callback) => {
+  socket.on(CHAT_SOCKET_EVENTS.SEND_MESSAGE, async (data: ChatSendMessagePayload, callback: ChatSendMessageCallback) => {
     try {
       const { receiverId, content } = data;
 
       const message = await chatService.sendMessage(userId, receiverId, content);
 
-      io.to(`user:${receiverId}`).emit('chat:new_message', message);
+      io.to(`user:${receiverId}`).emit(CHAT_SOCKET_EVENTS.NEW_MESSAGE, message);
 
       schedulePushIfReceiverOffline(io, receiverId, message);
 
@@ -44,29 +53,32 @@ export const registerChatHandlers = (io: Server, socket: Socket) => {
     }
   });
 
-  socket.on('chat:typing_start', (data: { receiverId: string }) => {
-    io.to(`user:${data.receiverId}`).emit('chat:user_typing', {
+  socket.on(CHAT_SOCKET_EVENTS.TYPING_START, (data: ChatTypingPayload) => {
+    const typingPayload: ChatUserTypingPayload = {
       userId,
       isTyping: true,
-    });
+    };
+    io.to(`user:${data.receiverId}`).emit(CHAT_SOCKET_EVENTS.USER_TYPING, typingPayload);
   });
 
-  socket.on('chat:typing_stop', (data: { receiverId: string }) => {
-    io.to(`user:${data.receiverId}`).emit('chat:user_typing', {
+  socket.on(CHAT_SOCKET_EVENTS.TYPING_STOP, (data: ChatTypingPayload) => {
+    const typingPayload: ChatUserTypingPayload = {
       userId,
       isTyping: false,
-    });
+    };
+    io.to(`user:${data.receiverId}`).emit(CHAT_SOCKET_EVENTS.USER_TYPING, typingPayload);
   });
 
-  socket.on('chat:mark_read', async (data: { senderId: string }) => {
+  socket.on(CHAT_SOCKET_EVENTS.MARK_READ, async (data: ChatMarkReadPayload) => {
     try {
       const modifiedCount = await chatService.markAsRead(userId, data.senderId);
 
       console.log(`Marked ${modifiedCount} messages as read`);
 
-      io.to(`user:${data.senderId}`).emit('chat:messages_read', {
+      const readPayload: ChatMessagesReadPayload = {
         readBy: userId,
-      });
+      };
+      io.to(`user:${data.senderId}`).emit(CHAT_SOCKET_EVENTS.MESSAGES_READ, readPayload);
     } catch (error) {
       console.error('Mark as read error:', error);
     }
