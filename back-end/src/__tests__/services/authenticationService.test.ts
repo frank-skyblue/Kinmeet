@@ -153,6 +153,60 @@ describe('authenticationService', () => {
 
       expect(result.success).toBe(true);
     });
+
+    it('auto-generates a username from first name and four digits when none provided', async () => {
+      const result = await authenticationService.register(validData);
+
+      expect(result.success).toBe(true);
+      expect(result.user?.username).toMatch(/^jane\d{4}$/);
+      expect(result.user?.username).not.toBe('janedoe');
+
+      const stored = await User.findOne({ email: 'new@example.com' });
+      expect(stored?.username).toBe(result.user?.username);
+    });
+
+    it('generates different usernames for users without a provided username', async () => {
+      await authenticationService.register(validData);
+      const second = await authenticationService.register({
+        ...validData,
+        email: 'second@example.com',
+      });
+
+      expect(second.success).toBe(true);
+      expect(second.user?.username).toMatch(/^jane\d{4}$/);
+    });
+
+    it('accepts a user-provided username and lowercases it', async () => {
+      const result = await authenticationService.register({
+        ...validData,
+        username: 'Custom_User1',
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.user?.username).toBe('custom_user1');
+    });
+
+    it('rejects an invalid username format', async () => {
+      const result = await authenticationService.register({
+        ...validData,
+        username: 'no spaces!',
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.message).toContain('Username');
+    });
+
+    it('rejects a duplicate username', async () => {
+      await authenticationService.register({ ...validData, username: 'taken_name' });
+      const result = await authenticationService.register({
+        ...validData,
+        email: 'second@example.com',
+        username: 'taken_name',
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.message).toBe('Username is already taken');
+    });
   });
 
   describe('login', () => {

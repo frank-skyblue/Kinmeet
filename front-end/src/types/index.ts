@@ -6,6 +6,7 @@ export type SearchableSelectOption = {
 export interface User {
     id: string;
     email: string;
+    username?: string;
     firstName: string;
     lastName: string;
     photo?: string;
@@ -15,6 +16,7 @@ export interface User {
 export interface UserProfile {
     _id: string;
     email?: string;
+    username?: string;
     firstName: string;
     lastName?: string;
     about?: string;
@@ -97,6 +99,7 @@ export interface GetConnectionRequestsResponse {
 
 export interface RegisterPayload {
     email: string;
+    username?: string;
     password: string;
     firstName: string;
     lastName: string;

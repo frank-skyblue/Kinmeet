@@ -4,9 +4,25 @@ import { JWT_SECRET } from '../config/env';
 
 const REGISTER_GENDER_VALUES = ['female', 'male', 'other'] as const;
 
+const USERNAME_REGEX = /^[a-z0-9_]{3,30}$/;
+
 const isPasswordSecure = (password: string) => {
     // At least 8 chars, one uppercase, one lowercase, one number (special chars optional)
     return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$/.test(password);
+};
+
+const slugForUsername = (value: string) =>
+    value.toLowerCase().normalize('NFKD').replace(/[^a-z0-9_]/g, '');
+
+const generateUniqueUsername = async (firstName: string) => {
+    const base = slugForUsername(firstName).slice(0, 26) || 'user';
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+        const suffix = String(Math.floor(1000 + Math.random() * 9000));
+        const candidate = `${base}${suffix}`;
+        if (!(await User.exists({ username: candidate }))) return candidate;
+    }
+
+    return `${base}${Date.now().toString().slice(-4)}`;
 };
 
 export interface LoginCredentials {
@@ -16,6 +32,7 @@ export interface LoginCredentials {
 
 export interface RegisterData {
     email: string;
+    username?: string;
     password: string;
     firstName: string;
     lastName: string;
@@ -46,6 +63,7 @@ export interface LoginResponse {
     user?: {
         id: string;
         email: string;
+        username?: string;
         firstName?: string;
         lastName?: string;
         photo?: string;
@@ -96,6 +114,7 @@ export const authenticationService = {
                 user: {
                     id: user._id.toString(),
                     email: user.email,
+                    username: user.username,
                     firstName: user.firstName,
                     lastName: user.lastName,
                     photo: user.photo,
@@ -114,6 +133,7 @@ export const authenticationService = {
         try {
             const { 
                 email, 
+                username,
                 password, 
                 firstName, 
                 lastName,
@@ -187,6 +207,27 @@ export const authenticationService = {
                 };
             }
 
+            let resolvedUsername: string;
+            if (typeof username === 'string' && username.trim() !== '') {
+                const normalizedUsername = username.trim().toLowerCase();
+                if (!USERNAME_REGEX.test(normalizedUsername)) {
+                    return {
+                        success: false,
+                        message: "Username must be 3-30 characters using lowercase letters, numbers, or underscores"
+                    };
+                }
+                const existingUsername = await User.findOne({ username: normalizedUsername });
+                if (existingUsername) {
+                    return {
+                        success: false,
+                        message: "Username is already taken"
+                    };
+                }
+                resolvedUsername = normalizedUsername;
+            } else {
+                resolvedUsername = await generateUniqueUsername(firstName);
+            }
+
             const dobMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateOfBirth);
             if (!dobMatch) {
                 return {
@@ -236,6 +277,7 @@ export const authenticationService = {
             // Create new user with profile
             const newUser = new User({ 
                 email, 
+                username: resolvedUsername,
                 password, 
                 firstName,
                 lastName,
@@ -271,6 +313,7 @@ export const authenticationService = {
                 user: {
                     id: newUser._id.toString(),
                     email: newUser.email,
+                    username: newUser.username,
                     firstName: newUser.firstName,
                     lastName: newUser.lastName,
                     photo: newUser.photo,

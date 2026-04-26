@@ -3,6 +3,8 @@ import React from "react";
 interface SignupStep1Props {
   email: string;
   setEmail: React.Dispatch<React.SetStateAction<string>>;
+  username: string;
+  setUsername: React.Dispatch<React.SetStateAction<string>>;
   password: string;
   setPassword: React.Dispatch<React.SetStateAction<string>>;
   confirmPassword: string;
@@ -11,9 +13,13 @@ interface SignupStep1Props {
   setError: React.Dispatch<React.SetStateAction<string>>;
 }
 
+const USERNAME_PATTERN = /^[a-z0-9_]{3,30}$/;
+
 const SignupStep1: React.FC<SignupStep1Props> = ({
   email,
   setEmail,
+  username,
+  setUsername,
   password,
   setPassword,
   confirmPassword,
@@ -24,6 +30,13 @@ const SignupStep1: React.FC<SignupStep1Props> = ({
   const validate = (): boolean => {
     if (!email || !password || !confirmPassword) {
       setError("All fields are required");
+      return false;
+    }
+    const trimmedUsername = username.trim();
+    if (trimmedUsername !== "" && !USERNAME_PATTERN.test(trimmedUsername.toLowerCase())) {
+      setError(
+        "Username must be 3-30 characters using lowercase letters, numbers, or underscores",
+      );
       return false;
     }
     if (password !== confirmPassword) {
@@ -64,6 +77,29 @@ const SignupStep1: React.FC<SignupStep1Props> = ({
           placeholder="you@example.com"
           required
         />
+      </div>
+
+      <div>
+        <label
+          htmlFor="username"
+          className="block text-sm font-medium font-inter text-kin-navy mb-2"
+        >
+          Username
+        </label>
+        <input
+          type="text"
+          id="username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
+          placeholder="e.g., jane_doe"
+          autoComplete="username"
+          maxLength={30}
+        />
+        <p className="text-xs text-kin-teal font-inter mt-1">
+          Optional. 3-30 lowercase letters, numbers, or underscores. We'll
+          create one for you if you leave this blank.
+        </p>
       </div>
 
       <div>
