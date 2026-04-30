@@ -25,6 +25,7 @@ export interface UserProfile {
     homeCountry: string;
     currentProvince: string;
     currentCountry: string;
+    currentCity?: string;
     languages: string[];
     interests: string[];
     lookingFor: string[];
@@ -109,6 +110,7 @@ export interface RegisterPayload {
     currentLocation: {
         province: string;
         country: string;
+        city?: string;
     };
     languages: string[];
     interests: string[];
@@ -129,6 +131,7 @@ export interface UpdateProfilePayload {
     homeCountry?: string;
     currentProvince?: string;
     currentCountry?: string;
+    currentCity?: string;
     languages?: string[];
     interests?: string[];
     lookingFor?: string[];

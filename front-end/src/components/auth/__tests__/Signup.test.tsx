@@ -11,6 +11,7 @@ vi.mock('../../../services/api', () => ({
 
 vi.mock('../../../constants/profileOptions', () => ({
   getCountryCode: () => 'CA',
+  parseProvinceComposite: () => null,
 }));
 
 vi.mock('../../../constants/validation', () => ({
@@ -118,6 +119,23 @@ describe('Signup', () => {
 
     await user.click(screen.getByText('Back Step 2'));
     expect(screen.getByTestId('step-1')).toBeInTheDocument();
+  });
+
+  it('navigates to step 1 via progress after visiting step 3', async () => {
+    const user = userEvent.setup();
+    renderSignup();
+
+    await user.click(screen.getByText('Next Step 1'));
+    await user.click(screen.getByText('Next Step 2'));
+    expect(screen.getByTestId('step-3')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /Go to signup step 1/i }));
+    expect(screen.getByTestId('step-1')).toBeInTheDocument();
+  });
+
+  it('disables progress for steps not yet reached', () => {
+    renderSignup();
+    expect(screen.getByRole('button', { name: /Go to signup step 3/i })).toBeDisabled();
   });
 
   it('calls register and navigates on submit', async () => {

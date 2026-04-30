@@ -16,6 +16,7 @@ export interface IUser extends Document {
     homeCountry: string;
     currentProvince: string;
     currentCountry: string;
+    currentCity?: string;
     languages: string[];
     interests: string[];
     lookingFor: LookingForType[];
@@ -43,6 +44,7 @@ const UserSchema: Schema<IUser> = new Schema({
     homeCountry: { type: String, required: true },
     currentProvince: { type: String, required: true },
     currentCountry: { type: String, required: true },
+    currentCity: { type: String, trim: true },
     languages: [{ type: String, required: true }],
     interests: [{ type: String }],
     lookingFor: [{ type: String, enum: ['Friendship', 'Networking', 'Support'] }],

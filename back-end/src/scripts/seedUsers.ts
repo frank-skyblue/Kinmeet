@@ -17,6 +17,7 @@ const seedUsers = [
     homeCountry: 'Argentina',
     currentProvince: 'Ontario',
     currentCountry: 'Canada',
+    currentCity: 'Toronto',
     languages: ['Spanish', 'English'],
     interests: ['Photography', 'Hiking', 'Cooking', 'Travel'],
     lookingFor: ['Friendship', 'Networking'] as ('Friendship' | 'Networking' | 'Support')[],
