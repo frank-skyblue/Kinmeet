@@ -1,11 +1,15 @@
 import React from "react";
 import SearchableSelect from "../common/SearchableSelect";
+import CitySearchInput from "../common/CitySearchInput";
 import {
   HOME_COUNTRY_OPTIONS,
   COUNTRY_OPTIONS,
+  getGlobalProvinceOptions,
   getProvinceOptions,
+  findProvinceCompositeValue,
   SIGNUP_GENDER_OPTIONS,
 } from "../../constants/profileOptions";
+import type { ResolvedCityLocation } from "../../utils/citySearch";
 
 interface SignupStep2Props {
   firstName: string;
@@ -20,6 +24,12 @@ interface SignupStep2Props {
   currentCountryCode: string;
   currentProvince: string;
   setCurrentProvince: React.Dispatch<React.SetStateAction<string>>;
+  currentCity: string;
+  setCurrentCity: React.Dispatch<React.SetStateAction<string>>;
+  manualCountryMode: boolean;
+  setManualCountryMode: React.Dispatch<React.SetStateAction<boolean>>;
+  onPickCityResolved: (resolved: ResolvedCityLocation) => void;
+  applyProvinceFromComposite: (composite: string) => void;
   photoPreview: string | null;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   onCurrentCountryChange: (countryName: string) => void;
@@ -47,6 +57,12 @@ const SignupStep2: React.FC<SignupStep2Props> = ({
   currentCountryCode,
   currentProvince,
   setCurrentProvince,
+  currentCity,
+  setCurrentCity,
+  manualCountryMode,
+  setManualCountryMode,
+  onPickCityResolved,
+  applyProvinceFromComposite,
   photoPreview,
   fileInputRef,
   onCurrentCountryChange,
@@ -66,6 +82,22 @@ const SignupStep2: React.FC<SignupStep2Props> = ({
     Date.UTC(now.getUTCFullYear() - 120, now.getUTCMonth(), now.getUTCDate(), 12, 0, 0, 0),
   );
   const minIsoUtc = `${maxDobUtc.getUTCFullYear()}-${String(maxDobUtc.getUTCMonth() + 1).padStart(2, '0')}-${String(maxDobUtc.getUTCDate()).padStart(2, '0')}`;
+
+  const provinceOptions = manualCountryMode
+    ? getProvinceOptions(currentCountryCode)
+    : getGlobalProvinceOptions();
+
+  const provinceSelectValue = manualCountryMode
+    ? currentProvince
+    : findProvinceCompositeValue(currentCountryCode, currentProvince);
+
+  const handleProvinceChange = (val: string) => {
+    if (manualCountryMode) {
+      setCurrentProvince(val);
+      return;
+    }
+    applyProvinceFromComposite(val);
+  };
 
   const validate = (): boolean => {
     if (
@@ -245,29 +277,81 @@ const SignupStep2: React.FC<SignupStep2Props> = ({
         helperText="The country where you were born or raised"
       />
 
-      <SearchableSelect
-        id="currentCountry"
-        label="Where You Live Now (Country)"
-        options={COUNTRY_OPTIONS}
-        value={currentCountry}
-        onChange={onCurrentCountryChange}
-        placeholder="e.g., Canada"
-        required
-        searchable="typeahead"
-      />
+      <div className="border-t border-kin-stone-200 pt-6 space-y-4">
+        <p className="text-sm font-semibold font-montserrat text-kin-navy">
+          Where you live now
+        </p>
 
-      <SearchableSelect
-        id="currentProvince"
-        label="Province/State"
-        options={getProvinceOptions(currentCountryCode)}
-        value={currentProvince}
-        onChange={setCurrentProvince}
-        placeholder="e.g., Ontario"
-        disabled={!currentCountry}
-        required
-        searchable="typeahead"
-        helperText="Your current province/state of residence abroad"
-      />
+        <CitySearchInput
+          id="currentCity"
+          label="City or town (optional)"
+          currentCity={currentCity}
+          setCurrentCity={setCurrentCity}
+          onPickCity={onPickCityResolved}
+          helperText="Type a few letters and choose a match to fill country and province below"
+        />
+
+        <SearchableSelect
+          id="currentProvince"
+          label={
+            manualCountryMode
+              ? "Province/State"
+              : "Province/State (search worldwide)"
+          }
+          options={provinceOptions}
+          value={provinceSelectValue}
+          onChange={handleProvinceChange}
+          placeholder={manualCountryMode ? "e.g., Ontario" : "e.g., Ontario, Canada"}
+          disabled={manualCountryMode && !currentCountryCode}
+          required
+          searchable="typeahead"
+          helperText={
+            manualCountryMode
+              ? "Pick your country first if needed, then province"
+              : "Choosing a row sets your country and province together"
+          }
+        />
+
+        {!manualCountryMode ? (
+          <div className="rounded-kin-sm border border-kin-stone-200 bg-kin-stone-50 px-4 py-3">
+            <p className="text-sm font-medium font-inter text-kin-navy mb-1">
+              Country
+            </p>
+            <p className="text-kin-navy font-inter">
+              {currentCountry || "—"}
+            </p>
+            <button
+              type="button"
+              onClick={() => setManualCountryMode(true)}
+              className="mt-2 text-sm font-semibold text-kin-teal hover:text-kin-teal-700 underline"
+              aria-label="Pick country and province manually"
+            >
+              Change country or province manually
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <SearchableSelect
+              id="currentCountry"
+              label="Where You Live Now (Country)"
+              options={COUNTRY_OPTIONS}
+              value={currentCountry}
+              onChange={onCurrentCountryChange}
+              placeholder="e.g., Canada"
+              required
+              searchable="typeahead"
+            />
+            <button
+              type="button"
+              onClick={() => setManualCountryMode(false)}
+              className="text-sm font-semibold text-kin-teal hover:text-kin-teal-700 underline"
+              aria-label="Use worldwide province list instead"
+            >
+              Use worldwide province list instead
+            </button>
+          </div>
+        )}
+      </div>
 
       <div>
         <label

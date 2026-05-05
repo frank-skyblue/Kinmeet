@@ -28,6 +28,7 @@ export interface RegisterData {
     currentLocation?: {
         province: string;
         country: string;
+        city?: string;
     };
     currentProvince?: string;
     currentCountry?: string;
@@ -137,6 +138,10 @@ export const authenticationService = {
             // Handle both currentLocation object and separate fields
             const province = currentLocation?.province || currentProvince;
             const country = currentLocation?.country || currentCountry;
+            const optionalCity =
+                typeof currentLocation?.city === 'string' && currentLocation.city.trim() !== ''
+                    ? currentLocation.city.trim()
+                    : undefined;
 
             // Validate required fields
             if (
@@ -249,6 +254,7 @@ export const authenticationService = {
                 homeCountry,
                 currentProvince: province,
                 currentCountry: country,
+                ...(optionalCity ? { currentCity: optionalCity } : {}),
                 languages,
                 interests: interests || [],
                 lookingFor,

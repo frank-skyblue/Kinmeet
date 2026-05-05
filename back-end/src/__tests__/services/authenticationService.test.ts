@@ -43,6 +43,21 @@ describe('authenticationService', () => {
       expect(user?.password).not.toBe('ValidPass1');
     });
 
+    it('persists optional currentCity from currentLocation', async () => {
+      const result = await authenticationService.register({
+        ...validData,
+        email: 'city-user@example.com',
+        currentLocation: {
+          country: 'Canada',
+          province: 'Ontario',
+          city: 'Toronto',
+        },
+      });
+      expect(result.success).toBe(true);
+      const user = await User.findOne({ email: 'city-user@example.com' });
+      expect(user?.currentCity).toBe('Toronto');
+    });
+
     it('rejects duplicate email', async () => {
       await authenticationService.register(validData);
       const result = await authenticationService.register(validData);

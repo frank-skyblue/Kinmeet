@@ -1,6 +1,9 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { getCountryCode } from "../../constants/profileOptions";
+import {
+  getCountryCode,
+  parseProvinceComposite,
+} from "../../constants/profileOptions";
 import { validatePhotoFile } from "../../constants/validation";
 import { useAuth } from '../../contexts/useAuth';
 import { profileAPI } from "../../services/api";
@@ -9,6 +12,7 @@ import SignupStep1 from "./SignupStep1";
 import SignupStep2 from "./SignupStep2";
 import SignupStep3 from "./SignupStep3";
 import SignupStep4 from "./SignupStep4";
+import type { ResolvedCityLocation } from "../../utils/citySearch";
 
 const TOTAL_STEPS = 4;
 
@@ -19,6 +23,7 @@ const GRADUATION_YEARS = Array.from(
 
 const Signup: React.FC = () => {
   const [step, setStep] = useState(1);
+  const [maxReachedStep, setMaxReachedStep] = useState(1);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { register } = useAuth();
@@ -34,6 +39,8 @@ const Signup: React.FC = () => {
   const [currentCountry, setCurrentCountry] = useState("");
   const [currentCountryCode, setCurrentCountryCode] = useState("");
   const [currentProvince, setCurrentProvince] = useState("");
+  const [currentCity, setCurrentCity] = useState("");
+  const [manualCountryMode, setManualCountryMode] = useState(false);
   const [jobTitle, setJobTitle] = useState("");
   const [company, setCompany] = useState("");
   const [institution, setInstitution] = useState("");
@@ -46,6 +53,26 @@ const Signup: React.FC = () => {
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setMaxReachedStep((m) => Math.max(m, step));
+  }, [step]);
+
+  const handlePickCityResolved = (r: ResolvedCityLocation) => {
+    setCurrentCity(r.cityName);
+    setCurrentCountry(r.countryName);
+    setCurrentCountryCode(r.countryCode);
+    setCurrentProvince(r.provinceName);
+    setManualCountryMode(false);
+  };
+
+  const applyProvinceFromComposite = (composite: string) => {
+    const p = parseProvinceComposite(composite);
+    if (!p) return;
+    setCurrentCountry(p.countryName);
+    setCurrentCountryCode(p.countryCode);
+    setCurrentProvince(p.provinceName);
+  };
 
   const handleAddLanguage = () => {
     setLanguages([...languages, ""]);
@@ -141,6 +168,7 @@ const Signup: React.FC = () => {
         currentLocation: {
           province: currentProvince,
           country: currentCountry,
+          ...(currentCity.trim() ? { city: currentCity.trim() } : {}),
         },
         languages: validLanguages,
         interests: validInterests,
@@ -185,15 +213,26 @@ const Signup: React.FC = () => {
         <div className="flex items-center justify-center mb-8">
           {Array.from({ length: TOTAL_STEPS }, (_, i) => i + 1).map((s) => (
             <React.Fragment key={s}>
-              <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold font-montserrat shadow-kin-soft transition ${
+              <button
+                type="button"
+                disabled={s > maxReachedStep}
+                onClick={() => {
+                  if (s <= maxReachedStep) setStep(s);
+                }}
+                aria-label={`Go to signup step ${s}`}
+                aria-current={step === s ? "step" : undefined}
+                className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold font-montserrat shadow-kin-soft transition focus:outline-none focus:ring-2 focus:ring-kin-coral focus:ring-offset-2 ${
                   step >= s
                     ? "bg-kin-coral text-white"
                     : "bg-kin-stone-200 text-kin-stone-500"
+                } ${
+                  s <= maxReachedStep
+                    ? "cursor-pointer hover:opacity-90"
+                    : "cursor-not-allowed opacity-60"
                 }`}
               >
                 {s}
-              </div>
+              </button>
               {s < TOTAL_STEPS && (
                 <div
                   className={`w-12 h-1 rounded-full transition ${
@@ -238,6 +277,12 @@ const Signup: React.FC = () => {
             currentCountryCode={currentCountryCode}
             currentProvince={currentProvince}
             setCurrentProvince={setCurrentProvince}
+            currentCity={currentCity}
+            setCurrentCity={setCurrentCity}
+            manualCountryMode={manualCountryMode}
+            setManualCountryMode={setManualCountryMode}
+            onPickCityResolved={handlePickCityResolved}
+            applyProvinceFromComposite={applyProvinceFromComposite}
             photoPreview={photoPreview}
             fileInputRef={fileInputRef}
             onCurrentCountryChange={handleCurrentCountryChange}

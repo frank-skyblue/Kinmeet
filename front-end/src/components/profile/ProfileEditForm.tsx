@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { profileAPI, getPhotoUrl } from '../../services/api';
 import { useAuth } from '../../contexts/useAuth';
 import SearchableSelect from '../common/SearchableSelect';
+import CitySearchInput from '../common/CitySearchInput';
 import DynamicListField from '../common/DynamicListField';
 import LookingForCheckboxes from '../common/LookingForCheckboxes';
 import { validatePhotoFile } from '../../constants/validation';
@@ -11,9 +12,13 @@ import {
   COUNTRY_OPTIONS,
   INTEREST_OPTIONS,
   SIGNUP_GENDER_OPTIONS,
+  getGlobalProvinceOptions,
   getProvinceOptions,
   getCountryCode,
+  findProvinceCompositeValue,
+  parseProvinceComposite,
 } from '../../constants/profileOptions';
+import type { ResolvedCityLocation } from '../../utils/citySearch';
 import type { UserProfile } from '../../types';
 
 interface ProfileEditFormProps {
@@ -43,6 +48,8 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
   const [currentCountry, setCurrentCountry] = useState('');
   const [currentCountryCode, setCurrentCountryCode] = useState('');
   const [currentProvince, setCurrentProvince] = useState('');
+  const [currentCity, setCurrentCity] = useState('');
+  const [manualCountryMode, setManualCountryMode] = useState(false);
   const [languages, setLanguages] = useState<string[]>(['']);
   const [interests, setInterests] = useState<string[]>(['']);
   const [lookingFor, setLookingFor] = useState<string[]>([]);
@@ -67,6 +74,8 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
     setCurrentCountry(profile.currentCountry);
     setCurrentCountryCode(getCountryCode(profile.currentCountry));
     setCurrentProvince(profile.currentProvince);
+    setCurrentCity(profile.currentCity ?? '');
+    setManualCountryMode(false);
     setLanguages(profile.languages.length > 0 ? profile.languages : ['']);
     setInterests(profile.interests.length > 0 ? profile.interests : ['']);
     setLookingFor(profile.lookingFor);
@@ -81,6 +90,38 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
     setCurrentCountry(countryName);
     setCurrentCountryCode(getCountryCode(countryName));
     setCurrentProvince('');
+  };
+
+  const handlePickCityResolved = (r: ResolvedCityLocation) => {
+    setCurrentCity(r.cityName);
+    setCurrentCountry(r.countryName);
+    setCurrentCountryCode(r.countryCode);
+    setCurrentProvince(r.provinceName);
+    setManualCountryMode(false);
+  };
+
+  const applyProvinceFromComposite = (composite: string) => {
+    const p = parseProvinceComposite(composite);
+    if (!p) return;
+    setCurrentCountry(p.countryName);
+    setCurrentCountryCode(p.countryCode);
+    setCurrentProvince(p.provinceName);
+  };
+
+  const provinceOptions = manualCountryMode
+    ? getProvinceOptions(currentCountryCode)
+    : getGlobalProvinceOptions();
+
+  const provinceSelectValue = manualCountryMode
+    ? currentProvince
+    : findProvinceCompositeValue(currentCountryCode, currentProvince);
+
+  const handleProvinceChange = (val: string) => {
+    if (manualCountryMode) {
+      setCurrentProvince(val);
+      return;
+    }
+    applyProvinceFromComposite(val);
   };
 
   const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -199,6 +240,7 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
         homeCountry,
         currentCountry,
         currentProvince,
+        currentCity: currentCity.trim() || undefined,
         languages: validLanguages,
         interests: validInterests,
         lookingFor,
@@ -429,29 +471,74 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
               helperText="The country where you were born or raised"
             />
 
-            <SearchableSelect
-              id="currentCountry"
-              label="Where You Live Now (Country)"
-              options={COUNTRY_OPTIONS}
-              value={currentCountry}
-              onChange={handleCurrentCountryChange}
-              placeholder="e.g., Canada"
-              required
-              searchable="typeahead"
-            />
-
-            <SearchableSelect
-              id="currentProvince"
-              label="Province/State"
-              options={getProvinceOptions(currentCountryCode)}
-              value={currentProvince}
-              onChange={setCurrentProvince}
-              placeholder="e.g., Ontario"
-              disabled={!currentCountry}
-              required
-              searchable="typeahead"
-              helperText="Your current province/state of residence"
-            />
+            <div className="space-y-4 border-t border-kin-stone-200 pt-4">
+              <p className="text-sm font-semibold font-montserrat text-kin-navy">
+                Where you live now
+              </p>
+              <CitySearchInput
+                id="profileCurrentCity"
+                label="City or town (optional)"
+                currentCity={currentCity}
+                setCurrentCity={setCurrentCity}
+                onPickCity={handlePickCityResolved}
+                helperText="Type a few letters and choose a match to fill country and province"
+              />
+              <SearchableSelect
+                id="currentProvince"
+                label={
+                  manualCountryMode
+                    ? 'Province/State'
+                    : 'Province/State (search worldwide)'
+                }
+                options={provinceOptions}
+                value={provinceSelectValue}
+                onChange={handleProvinceChange}
+                placeholder={manualCountryMode ? 'e.g., Ontario' : 'e.g., Ontario, Canada'}
+                disabled={manualCountryMode && !currentCountryCode}
+                required
+                searchable="typeahead"
+                helperText={
+                  manualCountryMode
+                    ? 'Pick your country first if needed, then province'
+                    : 'Choosing a row sets your country and province together'
+                }
+              />
+              {!manualCountryMode ? (
+                <div className="rounded-kin-sm border border-kin-stone-200 bg-kin-stone-50 px-4 py-3">
+                  <p className="text-sm font-medium font-inter text-kin-navy mb-1">Country</p>
+                  <p className="text-kin-navy font-inter">{currentCountry || '—'}</p>
+                  <button
+                    type="button"
+                    onClick={() => setManualCountryMode(true)}
+                    className="mt-2 text-sm font-semibold text-kin-teal hover:text-kin-teal-700 underline"
+                    aria-label="Pick country and province manually"
+                  >
+                    Change country or province manually
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <SearchableSelect
+                    id="currentCountry"
+                    label="Where You Live Now (Country)"
+                    options={COUNTRY_OPTIONS}
+                    value={currentCountry}
+                    onChange={handleCurrentCountryChange}
+                    placeholder="e.g., Canada"
+                    required
+                    searchable="typeahead"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setManualCountryMode(false)}
+                    className="text-sm font-semibold text-kin-teal hover:text-kin-teal-700 underline"
+                    aria-label="Use worldwide province list instead"
+                  >
+                    Use worldwide province list instead
+                  </button>
+                </div>
+              )}
+            </div>
 
             <DynamicListField
               label="Languages Spoken"
