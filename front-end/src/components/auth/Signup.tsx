@@ -30,6 +30,7 @@ const Signup: React.FC = () => {
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [firstName, setFirstName] = useState("");
@@ -156,6 +157,7 @@ const Signup: React.FC = () => {
 
       await register({
         email,
+        username: username.trim() || undefined,
         password,
         firstName,
         lastName,
@@ -254,6 +256,8 @@ const Signup: React.FC = () => {
           <SignupStep1
             email={email}
             setEmail={setEmail}
+            username={username}
+            setUsername={setUsername}
             password={password}
             setPassword={setPassword}
             confirmPassword={confirmPassword}

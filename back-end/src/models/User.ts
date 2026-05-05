@@ -5,6 +5,7 @@ type LookingForType = 'Friendship' | 'Networking' | 'Support';
 
 export interface IUser extends Document {
     email: string;
+    username?: string;
     password: string;
     firstName: string;
     lastName: string;
@@ -33,6 +34,15 @@ export interface IUser extends Document {
 
 const UserSchema: Schema<IUser> = new Schema({
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+    username: {
+        type: String,
+        unique: true,
+        sparse: true,
+        lowercase: true,
+        trim: true,
+        minlength: 3,
+        maxlength: 30,
+    },
     password: { type: String, required: true },
     firstName: { type: String, required: true },
     lastName: { type: String, required: true },

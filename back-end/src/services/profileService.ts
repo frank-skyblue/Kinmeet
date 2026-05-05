@@ -51,6 +51,7 @@ export const getUserProfile = async (requesterId: string, targetUserId: string) 
 
 export const updateProfile = async (userId: string, updates: Record<string, unknown>) => {
     delete updates.email;
+    delete updates.username;
     delete updates.password;
     delete updates._id;
     delete updates.blockedUsers;

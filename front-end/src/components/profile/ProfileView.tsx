@@ -56,7 +56,9 @@ const ProfileView: React.FC<ProfileViewProps> = ({ profile, onEdit, onOpenDelete
               <h1 className="text-3xl font-bold font-montserrat text-kin-navy mb-2">
                 {profile.firstName} {profile.lastName}
               </h1>
-              <p className="text-kin-teal font-inter">{profile.email}</p>
+              {profile.username && (
+                <p className="text-kin-teal font-inter">@{profile.username}</p>
+              )}
             </div>
 
             <div className="space-y-6 mb-6">

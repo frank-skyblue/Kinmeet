@@ -106,6 +106,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const updated: User = {
           id: response.user._id,
           email: response.user.email,
+          username: response.user.username,
           firstName: response.user.firstName,
           lastName: response.user.lastName,
           photo: response.user.photo,
