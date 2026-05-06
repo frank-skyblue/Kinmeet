@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { profileAPI, getPhotoUrl } from '../../services/api';
 import { useAuth } from '../../contexts/useAuth';
 import SearchableSelect from '../common/SearchableSelect';
@@ -59,8 +59,26 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [pendingPhotoFile, setPendingPhotoFile] = useState<File | null>(null);
+  const [pendingPhotoRemoval, setPendingPhotoRemoval] = useState(false);
+  const pendingBlobUrlRef = useRef<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const revokePendingBlob = useCallback(() => {
+    if (pendingBlobUrlRef.current) {
+      URL.revokeObjectURL(pendingBlobUrlRef.current);
+      pendingBlobUrlRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (pendingBlobUrlRef.current) {
+        URL.revokeObjectURL(pendingBlobUrlRef.current);
+        pendingBlobUrlRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     setFirstName(profile.firstName);
@@ -84,7 +102,11 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
     setDateOfBirth(
       typeof dob === 'string' && dob.length >= 10 ? dob.slice(0, 10) : '',
     );
-  }, [profile]);
+    revokePendingBlob();
+    setPhotoPreview(null);
+    setPendingPhotoFile(null);
+    setPendingPhotoRemoval(false);
+  }, [profile, revokePendingBlob]);
 
   const handleCurrentCountryChange = (countryName: string) => {
     setCurrentCountry(countryName);
@@ -124,7 +146,7 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
     applyProvinceFromComposite(val);
   };
 
-  const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -134,39 +156,23 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
       return;
     }
 
-    setPhotoPreview(URL.createObjectURL(file));
-    setIsUploadingPhoto(true);
     setError('');
-
-    try {
-      const response = await profileAPI.uploadPhoto(file);
-      if (response.success) {
-        onSave({ ...profile, photo: response.photo });
-        await refreshUser();
-      }
-    } catch (err: unknown) {
-      setError(getErrorMessage(err, 'Failed to upload photo'));
-      setPhotoPreview(null);
-    } finally {
-      setIsUploadingPhoto(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    }
+    revokePendingBlob();
+    const url = URL.createObjectURL(file);
+    pendingBlobUrlRef.current = url;
+    setPhotoPreview(url);
+    setPendingPhotoFile(file);
+    setPendingPhotoRemoval(false);
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const handleRemovePhoto = async () => {
-    setIsUploadingPhoto(true);
+  const handleRemovePhoto = () => {
     setError('');
-    try {
-      const response = await profileAPI.deletePhoto();
-      if (response.success) {
-        onSave({ ...profile, photo: undefined });
-        setPhotoPreview(null);
-        await refreshUser();
-      }
-    } catch (err: unknown) {
-      setError(getErrorMessage(err, 'Failed to remove photo'));
-    } finally {
-      setIsUploadingPhoto(false);
+    revokePendingBlob();
+    setPhotoPreview(null);
+    setPendingPhotoFile(null);
+    if (profile.photo) {
+      setPendingPhotoRemoval(true);
     }
   };
 
@@ -225,6 +231,24 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
 
     setIsSaving(true);
     try {
+      if (pendingPhotoRemoval && !pendingPhotoFile) {
+        const del = await profileAPI.deletePhoto();
+        if (!del.success) {
+          setError('Failed to remove photo');
+          return;
+        }
+      }
+
+      let uploadedPhotoUrl: string | undefined;
+      if (pendingPhotoFile) {
+        const up = await profileAPI.uploadPhoto(pendingPhotoFile);
+        if (!up.success || !up.photo) {
+          setError('Failed to upload photo');
+          return;
+        }
+        uploadedPhotoUrl = up.photo;
+      }
+
       const validLanguages = languages.filter((lang) => lang.trim() !== '');
       const validInterests = interests.filter((int) => int.trim() !== '');
 
@@ -249,7 +273,15 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
       });
 
       if (response.success) {
-        onSave(response.user);
+        let photoOut = response.user.photo;
+        if (uploadedPhotoUrl !== undefined) {
+          photoOut = uploadedPhotoUrl;
+        } else if (pendingPhotoRemoval && !pendingPhotoFile) {
+          photoOut = undefined;
+        }
+
+        await refreshUser();
+        onSave({ ...response.user, photo: photoOut });
       }
     } catch (err: unknown) {
       setError(getErrorMessage(err, 'Failed to update profile'));
@@ -274,9 +306,12 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
             {/* Profile Photo */}
             <div className="flex flex-col items-center gap-4">
               <div className="relative group">
-                {photoPreview || profile.photo ? (
+                {photoPreview || (!pendingPhotoRemoval && profile.photo) ? (
                   <img
-                    src={photoPreview || getPhotoUrl(profile.photo!)}
+                    src={
+                      photoPreview ||
+                      (!pendingPhotoRemoval && profile.photo ? getPhotoUrl(profile.photo) : '')
+                    }
                     alt="Profile"
                     className="w-28 h-28 rounded-full object-cover border-4 border-kin-stone-200"
                   />
@@ -285,27 +320,27 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
                     {profile.firstName.charAt(0)}
                   </div>
                 )}
-                {isUploadingPhoto && (
+                {isSaving && (
                   <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
                   </div>
                 )}
               </div>
-              <div className="flex gap-3">
+              <div className="flex flex-wrap justify-center gap-3">
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  disabled={isUploadingPhoto}
+                  disabled={isSaving}
                   className="px-4 py-2 text-sm font-semibold font-inter text-kin-teal border border-kin-teal rounded-kin-sm hover:bg-kin-teal hover:text-white transition disabled:opacity-50"
                   aria-label="Upload profile photo"
                 >
-                  {profile.photo ? 'Change Photo' : 'Upload Photo'}
+                  {photoPreview || (!pendingPhotoRemoval && profile.photo) ? 'Change Photo' : 'Upload Photo'}
                 </button>
-                {profile.photo && (
+                {(pendingPhotoFile || (profile.photo && !pendingPhotoRemoval)) && (
                   <button
                     type="button"
                     onClick={handleRemovePhoto}
-                    disabled={isUploadingPhoto}
+                    disabled={isSaving}
                     className="px-4 py-2 text-sm font-semibold font-inter text-kin-coral-700 border border-kin-coral-200 rounded-kin-sm hover:bg-kin-coral-50 transition disabled:opacity-50"
                     aria-label="Remove profile photo"
                   >
@@ -321,7 +356,9 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
                 className="hidden"
                 aria-hidden="true"
               />
-              <p className="text-xs text-kin-teal font-inter">JPEG, PNG, WebP, or GIF. Max 5 MB.</p>
+              <p className="text-xs text-kin-teal font-inter text-center">
+                JPEG, PNG, WebP, or GIF. Max 5 MB. Photo updates apply when you save.
+              </p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { chatAPI, profileAPI, getPhotoUrl } from '../../services/api';
 import { useAuth } from '../../contexts/useAuth';
 import { useSocket } from '../../contexts/useSocket';
@@ -250,28 +250,32 @@ const ChatThread: React.FC<ChatThreadProps> = ({ userId }) => {
             </button>
 
             {otherUser && (
-              <>
+              <Link
+                to={`/profile/${userId}`}
+                className="flex min-w-0 items-center gap-3 rounded-kin-sm outline-none transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-kin-coral focus-visible:ring-offset-2 md:gap-4"
+                aria-label={`View ${otherUser.firstName} ${otherUser.lastName}'s profile`}
+              >
                 {otherUser.photo ? (
                   <img
                     src={getPhotoUrl(otherUser.photo)}
-                    alt={`${otherUser.firstName} ${otherUser.lastName}`}
-                    className="h-10 w-10 rounded-full object-cover shadow-kin-soft md:h-12 md:w-12"
+                    alt=""
+                    className="h-10 w-10 shrink-0 rounded-full object-cover shadow-kin-soft md:h-12 md:w-12"
                   />
                 ) : (
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-linear-to-br from-kin-coral to-kin-teal text-lg font-bold font-montserrat text-white shadow-kin-soft md:h-12 md:w-12 md:text-xl">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-kin-coral to-kin-teal text-lg font-bold font-montserrat text-white shadow-kin-soft md:h-12 md:w-12 md:text-xl">
                     {otherUser.firstName.charAt(0)}
                   </div>
                 )}
 
-                <div>
-                  <h2 className="font-montserrat text-base font-bold text-kin-navy md:text-lg">
+                <div className="min-w-0 text-left">
+                  <h2 className="truncate font-montserrat text-base font-bold text-kin-navy md:text-lg">
                     {otherUser.firstName} {otherUser.lastName}
                   </h2>
-                  <p className="font-inter text-xs text-kin-teal md:text-sm">
+                  <p className="truncate font-inter text-xs text-kin-teal md:text-sm">
                     {otherUser.currentProvince}, {otherUser.currentCountry}
                   </p>
                 </div>
-              </>
+              </Link>
             )}
           </div>
 

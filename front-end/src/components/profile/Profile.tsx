@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { profileAPI } from '../../services/api';
+import { useAuth } from '../../contexts/useAuth';
 import { getErrorMessage } from '../../utils/error';
 import type { UserProfile } from '../../types';
 import ProfileView from './ProfileView';
@@ -7,21 +9,36 @@ import ProfileEditForm from './ProfileEditForm';
 import DeleteAccountModal from './DeleteAccountModal';
 
 const Profile: React.FC = () => {
+  const { userId: routeUserId } = useParams<{ userId: string }>();
+  const { user, isLoading: authLoading } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  const showManageActions =
+    routeUserId === undefined || (user?.id !== undefined && routeUserId === user.id);
+
   useEffect(() => {
-    loadProfile();
-  }, []);
+    setIsEditing(false);
+    setShowDeleteConfirm(false);
+  }, [routeUserId]);
+
+  useEffect(() => {
+    if (authLoading) return;
+    void loadProfile();
+  }, [authLoading, routeUserId, user?.id]);
 
   const loadProfile = async () => {
     try {
       setIsLoading(true);
       setError('');
-      const response = await profileAPI.getProfile();
+      const loadOwn =
+        routeUserId === undefined || (user?.id !== undefined && routeUserId === user.id);
+      const response = loadOwn
+        ? await profileAPI.getProfile()
+        : await profileAPI.getUserProfile(routeUserId!);
       if (response.success) {
         setProfile(response.user);
       }
@@ -32,7 +49,7 @@ const Profile: React.FC = () => {
     }
   };
 
-  if (isLoading) {
+  if (authLoading || isLoading) {
     return (
       <div className="h-full flex items-center justify-center bg-kin-beige">
         <div className="text-center">
@@ -57,7 +74,7 @@ const Profile: React.FC = () => {
     return null;
   }
 
-  if (isEditing) {
+  if (isEditing && showManageActions) {
     return (
       <ProfileEditForm
         profile={profile}
@@ -76,11 +93,14 @@ const Profile: React.FC = () => {
         profile={profile}
         onEdit={() => setIsEditing(true)}
         onOpenDeleteConfirm={() => setShowDeleteConfirm(true)}
+        showManageActions={showManageActions}
       />
-      <DeleteAccountModal
-        isOpen={showDeleteConfirm}
-        onClose={() => setShowDeleteConfirm(false)}
-      />
+      {showManageActions && (
+        <DeleteAccountModal
+          isOpen={showDeleteConfirm}
+          onClose={() => setShowDeleteConfirm(false)}
+        />
+      )}
     </>
   );
 };

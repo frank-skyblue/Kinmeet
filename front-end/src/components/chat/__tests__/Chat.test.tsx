@@ -143,6 +143,14 @@ describe('Chat', () => {
     });
   });
 
+  it('links chat header to the other user profile', async () => {
+    renderChat();
+    await waitFor(() => {
+      const link = screen.getByRole('link', { name: /view marie dupont.*profile/i });
+      expect(link).toHaveAttribute('href', '/profile/other-1');
+    });
+  });
+
   it('shows connection status indicator', async () => {
     renderChat();
     await waitFor(() => {
