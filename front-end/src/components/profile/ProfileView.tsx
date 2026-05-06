@@ -28,9 +28,15 @@ interface ProfileViewProps {
   profile: UserProfile;
   onEdit: () => void;
   onOpenDeleteConfirm: () => void;
+  showManageActions?: boolean;
 }
 
-const ProfileView: React.FC<ProfileViewProps> = ({ profile, onEdit, onOpenDeleteConfirm }) => {
+const ProfileView: React.FC<ProfileViewProps> = ({
+  profile,
+  onEdit,
+  onOpenDeleteConfirm,
+  showManageActions = true,
+}) => {
   return (
     <div className="bg-kin-beige py-8 px-4">
       <div className="max-w-3xl mx-auto">
@@ -163,22 +169,24 @@ const ProfileView: React.FC<ProfileViewProps> = ({ profile, onEdit, onOpenDelete
               </div>
             </div>
 
-            <div className="mt-8 space-y-4">
-              <button
-                type="button"
-                onClick={onEdit}
-                className="w-full bg-kin-teal text-white py-3 rounded-kin-sm font-semibold font-montserrat hover:bg-kin-teal-600 shadow-kin-soft hover:shadow-kin-medium transition"
-              >
-                Edit Profile
-              </button>
-              <button
-                type="button"
-                onClick={onOpenDeleteConfirm}
-                className="w-full bg-kin-stone-200 text-kin-coral-700 py-3 rounded-kin-sm font-semibold font-montserrat hover:bg-kin-stone-300 transition"
-              >
-                Delete Account
-              </button>
-            </div>
+            {showManageActions && (
+              <div className="mt-8 space-y-4">
+                <button
+                  type="button"
+                  onClick={onEdit}
+                  className="w-full bg-kin-teal text-white py-3 rounded-kin-sm font-semibold font-montserrat hover:bg-kin-teal-600 shadow-kin-soft hover:shadow-kin-medium transition"
+                >
+                  Edit Profile
+                </button>
+                <button
+                  type="button"
+                  onClick={onOpenDeleteConfirm}
+                  className="w-full bg-kin-stone-200 text-kin-coral-700 py-3 rounded-kin-sm font-semibold font-montserrat hover:bg-kin-stone-300 transition"
+                >
+                  Delete Account
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
