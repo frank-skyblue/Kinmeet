@@ -1,133 +1,200 @@
 # Contributor onboarding
 
-This document is the **first read for new engineers**: tech stack, hosting, how we work, and what CI expects. For product features, prerequisites, full `.env` examples, and how to run the apps locally, see the [README](README.md).
+Your **first read** for working on Kinmeet: environment, how to run things, CI expectations, and seed data for local demos. Product overview, full `.env` examples, and feature-level docs live in the [README](README.md).
+
+---
+
+## First day checklist
+
+1. **Node 22** — from the repo root: `nvm install` (once) and `nvm use` (see [`.nvmrc`](.nvmrc)).
+2. **Dependencies** — in both `back-end/` and `front-end/`: `npm ci` (see [Dependencies](#dependencies-npm-ci-vs-npm-install)).
+3. **Env files** — create `back-end/.env` (and `front-end/.env` if needed). Never commit them. Ask your lead for shared secrets (Atlas, Cloudinary, JWT, etc.).
+4. **MongoDB** — local install, [Docker](#local-mongodb-with-docker), or Atlas; `MONGODB_URI` must match where Mongo is listening.
+5. **Run the stack** — [Run the app locally](#run-the-app-locally).
+6. **Optional seed data** — [Seed users](#seed-users-demo-data) so you can log in with fixed accounts and exercise connections, chat, requests, and blocks.
+
+---
+
+## Run the app locally
+
+Use **two terminals** from the repo root (after `back-end/.env` and `front-end/.env` exist as needed):
+
+| Terminal | Directory   | Command        | URL                     |
+|----------|-------------|----------------|-------------------------|
+| 1        | `back-end/` | `npm run dev`  | API `http://localhost:8080` |
+| 2        | `front-end/` | `npm run dev` | App `http://localhost:5173` |
+
+The front-end expects the API (see `VITE_API_URL` in the README — typically `http://localhost:8080/api`).
+
+---
+
+## Seed users (demo data)
+
+The script [`back-end/src/scripts/seedUsers.ts`](back-end/src/scripts/seedUsers.ts) creates **10 fictional Argentine–Canadian profiles**, a small **connection graph**, **pending connection requests**, **mock chat messages**, and a few **blocks** — useful for UI work without clicking through signup for every scenario.
+
+### How to run it
+
+From `back-end/` (loads `MONGODB_URI` / `MONGO_URL` from your environment; same `.env` as the API):
+
+```bash
+cd back-end
+npm run seed
+```
+
+- **`npm run seed`** — Upserts users by email, then adds missing connections, requests, messages, and blocks. Safe to re-run on a dev DB; it skips work that is already present.
+- **`npm run seed:reset`** — **Drops the entire MongoDB database** named in your connection string, then seeds from scratch. Use only on a **throwaway local** database. Never point this at production or a shared Atlas cluster.
+
+In **VS Code**, you can also use **Run and Debug → “Seed Users”** (see [`.vscode/launch.json`](.vscode/launch.json)); that configuration uses `--reset` and loads `back-end/.env`.
+
+### Log in (all accounts)
+
+**Password for every seed user:** `Password123`
+
+| # | First name | Email |
+|---|------------|-------|
+| 0 | Lucia | lucia.martinez@example.com |
+| 1 | Mateo | mateo.gomez@example.com |
+| 2 | Valentina | valentina.lopez@example.com |
+| 3 | Santiago | santiago.fernandez@example.com |
+| 4 | Camila | camila.ruiz@example.com |
+| 5 | Nicolas | nicolas.silva@example.com |
+| 6 | Sofia | sofia.moreno@example.com |
+| 7 | Joaquin | joaquin.garcia@example.com |
+| 8 | Martina | martina.aguirre@example.com |
+| 9 | Tomas | tomas.perez@example.com |
+
+### What gets created (summary)
+
+- **Connections** — Lucia (#0) is the **hub**: she is connected to all nine others. **Tomas** (#9) is also connected to Mateo, Valentina, and Santiago (#1–3), so Tomas ends up with **four** connections. Several others only connect to Lucia (good for testing “single connection” UX).
+- **Pending incoming requests** — Varied counts per user (targets are defined in the script). The algorithm picks eligible senders in a deterministic way; details are in the file header comment in `seedUsers.ts`.
+- **Messages** — Short mock threads between pairs that are connected **before** blocks run (e.g. Lucia ↔ Mateo, Santiago ↔ Tomas).
+- **Blocks** — Three blocks, including **Mateo blocking Tomas**, which removes their mutual connection and any requests between them (same behavior as the real block API).
+
+For the **exact** edge list, request targets, block list, and message threads, read the **large reference comment at the top of** `seedUsers.ts` — it stays in sync with the constants in that file.
 
 ---
 
 ## Tech stack
 
-### Backend (`back-end/`)
-
-Node.js, Express, TypeScript, MongoDB with Mongoose, JWT (bcryptjs), Zod, Socket.io, Cloudinary, Multer.
-
-### Frontend (`front-end/`)
-
-React 19, TypeScript, Vite, React Router, Tailwind CSS, Axios, Socket.io client.
-
-### Testing
-
-- **Backend:** Vitest, Supertest, `mongodb-memory-server` (see `back-end/src/__tests__/`).
-- **Frontend:** Vitest, Testing Library (see `front-end/src/**/__tests__/`).
-- **E2E:** Playwright in `front-end/` (see `front-end/playwright.config.ts`).
+| Area | Stack |
+|------|--------|
+| **Backend** (`back-end/`) | Node.js, Express, TypeScript, MongoDB + Mongoose, JWT (bcryptjs), Zod, Socket.io, Cloudinary, Multer |
+| **Frontend** (`front-end/`) | React 19, TypeScript, Vite, React Router, Tailwind CSS, Axios, Socket.io client |
+| **Backend tests** | Vitest, Supertest, `mongodb-memory-server` — `back-end/src/__tests__/` |
+| **Frontend tests** | Vitest, Testing Library — `front-end/src/**/__tests__/` |
+| **E2E** | Playwright — `front-end/playwright.config.ts` |
 
 ---
 
-## Hosted services
+## Hosted services (high level)
 
-| Area | Service |
-|------|---------|
-| Frontend | **Vercel** |
-| Backend API | **Render** |
-| Images | **Cloudinary** |
-| Database (production) | **MongoDB Atlas** |
+| Concern | Typical hosting |
+|---------|-----------------|
+| Frontend | Vercel |
+| Backend API | Render |
+| Images | Cloudinary |
+| Production DB | MongoDB Atlas |
 
-Production URLs, dashboards, and shared credentials are team-internal. Do not put real secrets in this repo or in public channels.
+URLs, dashboards, and credentials are **team-internal**. Do not commit real secrets or paste them into public channels.
 
 ---
 
-## Local development environment
+## Environment variables
 
-### Node and repo layout
+- **`back-end/.env`** and optionally **`front-end/.env`** — required names and example placeholders are in the [README](README.md) (Getting Started).
+- **Secrets** (Atlas URI, Cloudinary, JWT, etc.) — get them from your team lead or approved secret store.
 
-- Use **Node.js 22**, matching [`.nvmrc`](.nvmrc) and [CI](.github/workflows/ci.yml). With [nvm](https://github.com/nvm-sh/nvm): from the repo root run `nvm install` (once) and `nvm use`, then confirm `node -v` is `v22.x.x`.
-- The monorepo has two npm packages: **`back-end/`** and **`front-end/`**. Install dependencies in **each** directory (see [Dependencies](#dependencies-npm-ci-vs-npm-install) below).
+---
 
-### Environment variables
+## Local MongoDB with Docker
 
-- Add **`back-end/.env`** and (if needed) **`front-end/.env`**. **Never commit `.env` files.**
-- For **shared or sensitive values** (MongoDB Atlas URI, Cloudinary keys, JWT secret, deployment-related URLs), **ask your team lead** or use whatever secret store the team uses. Do not paste production secrets into chat or documentation.
-- Variable names and example placeholders are in the [README](README.md) (Getting Started / back-end and front-end setup).
+If you do not want MongoDB installed on the host:
 
-### Local MongoDB with Docker
-
-If you prefer not to install MongoDB on the host or use Atlas for local dev, you can run **MongoDB 7** in Docker (same major version as the Mongo service in [`.github/workflows/e2e.yml`](.github/workflows/e2e.yml)).
-
-1. Install and start [Docker](https://docs.docker.com/get-docker/).
-2. Start a container:
+1. Install [Docker](https://docs.docker.com/get-docker/).
+2. Start MongoDB 7 (aligned with CI’s Mongo image):
 
    ```bash
    docker run -d --name kinmeet-mongo -p 27017:27017 mongo:7
    ```
 
-3. In **`back-end/.env`**, set:
+3. In `back-end/.env`:
 
    ```env
    MONGODB_URI=mongodb://localhost:27017/kinmeet
    ```
 
-4. **Lifecycle:** `docker stop kinmeet-mongo` / `docker start kinmeet-mongo`. To remove the container (data in the container is lost unless you use a volume): `docker rm -f kinmeet-mongo`.
+4. **Lifecycle:** `docker stop kinmeet-mongo` / `docker start kinmeet-mongo`. Remove with `docker rm -f kinmeet-mongo` (data inside the container is lost unless you use a volume).
 
-For a native MongoDB install or Atlas, follow the [README](README.md).
+Native MongoDB or Atlas: see the [README](README.md).
 
 ---
 
-## Testing and CI/CD
+## Where things live in the repo
+
+| Path | Purpose |
+|------|---------|
+| `back-end/` | REST API + Socket.io server |
+| `front-end/` | Vite + React SPA |
+| `.cursor/rules/` | Architecture and conventions for humans and AI assistants |
+| `front-end/docs/ARCHITECTURE.md` | Frontend system map (update when you change routing, providers, or `services/api.ts` organization) |
+
+---
+
+## Testing and CI
 
 ### GitHub Actions
 
-- **[`.github/workflows/ci.yml`](.github/workflows/ci.yml)** runs on **pull requests** and **pushes to `main`**. It runs **backend** and **frontend** jobs in parallel: `npm ci`, `npx tsc --noEmit`, `npm test`, and on the frontend **`npm run build`**.
-- **[`.github/workflows/e2e.yml`](.github/workflows/e2e.yml)** runs **Playwright** E2E with a **MongoDB service container** on **PRs into `main`**, on **push to `main`**, and on any extra push branches listed there. Add **E2E / e2e-tests** as a **required status check** on `main` if merges should wait until E2E passes.
+- **[`.github/workflows/ci.yml`](.github/workflows/ci.yml)** — On PRs and pushes to `main`: `npm ci`, `npx tsc --noEmit`, `npm test`, and on the frontend **`npm run build`** (backend and frontend jobs run in parallel).
+- **[`.github/workflows/e2e.yml`](.github/workflows/e2e.yml)** — Playwright with a **MongoDB service container** on PRs to `main`, push to `main`, and any extra branches listed there. Consider requiring **E2E / e2e-tests** on `main` before merge.
 
-### What we expect from you
+### What we expect when you change code
 
-- Add or update **unit tests for API routes/endpoints** when you change backend HTTP behavior.
-- Add or update **frontend unit tests** for components (or flows) when the behavior is non-trivial or easy to regress.
-- Follow existing patterns under `back-end/src/__tests__/` and `front-end/src/**/__tests__/`.
+- **Backend** — Add or update route/service tests when HTTP behavior changes (`back-end/src/__tests__/`).
+- **Frontend** — Add or update tests when UI behavior is non-trivial or easy to regress (`front-end/src/**/__tests__/`).
 
-### Useful local commands
+### Commands
 
 | Location | Command |
 |----------|---------|
 | `back-end/` | `npm test`, `npm run test:watch` |
 | `front-end/` | `npm test`, `npm run test:watch` |
-| `front-end/` (E2E) | `npx playwright test` (see Playwright docs and `playwright.config.ts` for env needs) |
+| `front-end/` (E2E) | `npx playwright test` — needs Mongo on `localhost:27017` for local runs; see `playwright.config.ts` |
+
+Backend unit tests use an **in-memory MongoDB** — no running database required for `npm test` in `back-end/`.
 
 ---
 
 ## Development flow
 
-1. Create a branch from **`main`** (use your team’s naming convention if you have one, e.g. `feat/…`, `fix/…`).
-2. Implement your change; **run tests and typecheck locally** before opening a PR.
-3. Open a **pull request**, get **code review**, and ensure **CI is green**.
-4. After approval, merge into **`main`**. In normal process, **failing CI blocks merging**.
+1. Branch from **`main`** (use your team’s naming convention: `feat/…`, `fix/…`, etc.).
+2. Implement, then run **tests and typecheck** locally before opening a PR.
+3. Open a **pull request**, get **review**, and keep **CI green**.
+4. Merge to **`main`** after approval — failing CI should block merges.
 
 ---
 
 ## Dependencies: `npm ci` vs `npm install`
 
-- When you **clone** the repo or **pull changes that did not touch dependencies**, prefer **`npm ci`** in **`back-end/`** and **`front-end/`**. That installs exactly what is in each **`package-lock.json`**, matching CI and avoiding surprise lockfile edits.
-- When you **add, upgrade, or remove** packages, use **`npm install`** (or `npm install <package>`), then commit **`package.json`** and **`package-lock.json`** together in the same change.
-- Use the same **Node 22** (and a recent npm) as CI to reduce unnecessary lockfile churn.
+- After **clone** or when **lockfiles did not change**, prefer **`npm ci`** in **`back-end/`** and **`front-end/`** so installs match `package-lock.json` and CI.
+- When you **add, upgrade, or remove** packages, use **`npm install`**, then commit **`package.json`** and **`package-lock.json`** together.
+- Use **Node 22** (see `.nvmrc`) to avoid noisy lockfile churn.
 
 ---
 
 ## Security hygiene
 
-- Do not commit secrets. If something was committed by mistake, tell the team lead and **rotate** affected credentials.
-- Share `.env` content only through approved team channels.
+- Do not commit secrets. If something leaked, tell your lead and **rotate** affected credentials.
+- Share `.env` values only through approved channels.
 
-## Repository layout
-
-- **`back-end/`** — API server.
-- **`front-end/`** — Vite + React SPA.
-
-If you use Cursor, architecture notes for AI and humans live under [`.cursor/rules/`](.cursor/rules/).
+---
 
 ## Before you open a PR
 
-- `npm test` in both `back-end/` and `front-end/`.
-- `npx tsc --noEmit` in both packages (CI runs this too).
+- `npm test` in **`back-end/`** and **`front-end/`**.
+- `npx tsc --noEmit` in **both** packages (CI runs this too).
+
+---
 
 ## Getting unstuck
 
-Questions about access, env values, or process: **ask your team lead** or use your team’s usual chat channel.
+Access, env values, or process questions: ask your **team lead** or use your team’s usual chat channel.

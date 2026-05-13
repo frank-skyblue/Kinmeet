@@ -23,9 +23,9 @@ test.describe('Connection Request Flow', () => {
 
     await loginAs(page, `conn-receiver-${ts}@test.com`, 'TestPass1');
 
-    await page.goto('/requests');
+    await page.goto('/connections?tab=requests');
     await expect(page.getByText('Sender')).toBeVisible({ timeout: 10000 });
-    await expect(page.getByText('1 pending request')).toBeVisible();
+    await expect(page.getByText('1 pending')).toBeVisible();
 
     await page.getByRole('button', { name: /accept/i }).click();
 
