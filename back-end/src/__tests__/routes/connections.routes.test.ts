@@ -134,4 +134,40 @@ describe('Connections Routes', () => {
       expect(connRes.body.connections[0].firstName).toBe('Sender');
     });
   });
+
+  describe('DELETE /api/connections/:userId', () => {
+    it('removes a connection with the other user', async () => {
+      const userA = await createTestUser({ email: 'del-a@test.com' });
+      const userB = await createTestUser({ email: 'del-b@test.com' });
+      await Connection.create({ user1: userA._id, user2: userB._id });
+      const token = getAuthToken(userA);
+
+      const res = await request(app)
+        .delete(`/api/connections/${userB._id.toString()}`)
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+
+      const conn = await Connection.findOne({
+        $or: [
+          { user1: userA._id, user2: userB._id },
+          { user1: userB._id, user2: userA._id },
+        ],
+      });
+      expect(conn).toBeNull();
+    });
+
+    it('returns 404 when no connection exists', async () => {
+      const userA = await createTestUser({ email: 'del-a2@test.com' });
+      const userB = await createTestUser({ email: 'del-b2@test.com' });
+      const token = getAuthToken(userA);
+
+      const res = await request(app)
+        .delete(`/api/connections/${userB._id.toString()}`)
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.status).toBe(404);
+    });
+  });
 });

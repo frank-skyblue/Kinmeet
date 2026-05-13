@@ -1,24 +1,6 @@
 import { Block } from '../models/Block';
-import { Connection } from '../models/Connection';
-import { ConnectionRequest } from '../models/ConnectionRequest';
 import { AppError } from '../middleware/errorHandler';
-
-const removeConnectionAndRequests = async (userId: string, otherUserId: string) => {
-    await Promise.all([
-        Connection.deleteOne({
-            $or: [
-                { user1: userId, user2: otherUserId },
-                { user1: otherUserId, user2: userId },
-            ],
-        }),
-        ConnectionRequest.deleteMany({
-            $or: [
-                { sender: userId, receiver: otherUserId },
-                { sender: otherUserId, receiver: userId },
-            ],
-        }),
-    ]);
-};
+import { deleteConnectionAndRequestsBetweenUsers } from './connectionService';
 
 export const blockService = {
     blockUser: async (userId: string, blockedUserId: string, reason?: string) => {
@@ -38,7 +20,7 @@ export const blockService = {
         });
         await block.save();
 
-        await removeConnectionAndRequests(userId, blockedUserId);
+        await deleteConnectionAndRequestsBetweenUsers(userId, blockedUserId);
     },
 
     unblockUser: async (userId: string, blockedUserId: string) => {
@@ -70,6 +52,6 @@ export const blockService = {
         });
         await block.save();
 
-        await removeConnectionAndRequests(userId, reportedUserId);
+        await deleteConnectionAndRequestsBetweenUsers(userId, reportedUserId);
     },
 };

@@ -10,7 +10,9 @@
     "start": "ts-node ./src/app.ts",
     "dev": "nodemon",
     "build": "npx tsc",
-    "serve": "node dist/app.js"
+    "serve": "node dist/app.js",
+    "seed": "ts-node ./src/scripts/seedUsers.ts",
+    "seed:reset": "ts-node ./src/scripts/seedUsers.ts --reset"
   },
   "author": "",
   "license": "ISC",
