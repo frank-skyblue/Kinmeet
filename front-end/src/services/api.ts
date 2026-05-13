@@ -115,6 +115,11 @@ export const connectionsAPI = {
     const response = await api.post(`/connections/requests/${requestId}/ignore`);
     return response.data;
   },
+
+  removeConnection: async (otherUserId: string) => {
+    const response = await api.delete(`/connections/${otherUserId}`);
+    return response.data;
+  },
 };
 
 export const chatAPI = {

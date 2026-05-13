@@ -3,13 +3,38 @@ import { ConnectionRequest } from '../models/ConnectionRequest';
 import { User } from '../models/User';
 import { AppError } from '../middleware/errorHandler';
 
+const connectionPairFilter = (userId: string, otherUserId: string) => ({
+    $or: [
+        { user1: userId, user2: otherUserId },
+        { user1: otherUserId, user2: userId },
+    ],
+});
+
+const connectionRequestPairFilter = (userId: string, otherUserId: string) => ({
+    $or: [
+        { sender: userId, receiver: otherUserId },
+        { sender: otherUserId, receiver: userId },
+    ],
+});
+
+/** Deletes the connection row and all connection requests between two users (e.g. block/report). */
+export const deleteConnectionAndRequestsBetweenUsers = async (
+    userId: string,
+    otherUserId: string,
+): Promise<void> => {
+    await Promise.all([
+        Connection.deleteOne(connectionPairFilter(userId, otherUserId)),
+        ConnectionRequest.deleteMany(connectionRequestPairFilter(userId, otherUserId)),
+    ]);
+};
+
 export const getConnectionRequests = async (userId: string) => {
     const requests = await ConnectionRequest.find({
         receiver: userId,
         status: 'pending'
     })
-    .populate('sender', '-password -lastName -email -blockedUsers')
-    .sort({ createdAt: -1 });
+        .populate('sender', '-password -lastName -email -blockedUsers')
+        .sort({ createdAt: -1 });
 
     return requests;
 };
@@ -73,4 +98,21 @@ export const getConnections = async (userId: string) => {
     }).select('-password -email -blockedUsers');
 
     return users;
+};
+
+export const removeConnection = async (userId: string, otherUserId: string): Promise<void> => {
+    if (userId === otherUserId) {
+        throw new AppError(400, 'Cannot remove connection with yourself');
+    }
+
+    if (!(await User.exists({ _id: otherUserId }))) {
+        throw new AppError(404, 'User not found');
+    }
+
+    const deleteResult = await Connection.deleteOne(connectionPairFilter(userId, otherUserId));
+    if (deleteResult.deletedCount === 0) {
+        throw new AppError(404, 'Connection not found');
+    }
+
+    await ConnectionRequest.deleteMany(connectionRequestPairFilter(userId, otherUserId));
 };

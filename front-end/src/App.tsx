@@ -8,8 +8,7 @@ import Signup from './components/auth/Signup';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import Layout from './components/dashboard/Layout';
 import Discover from './components/matching/Discover';
-import Requests from './components/connections/Requests';
-import ConnectionsList from './components/connections/ConnectionsList';
+import ConnectionsHub from './components/connections/ConnectionsHub';
 import Chat from './components/chat/Chat';
 import Profile from './components/profile/Profile';
 
@@ -29,8 +28,11 @@ const App = () => {
                 <Route element={<ProtectedRoute />}>
                   <Route element={<Layout />}>
                     <Route path="/discover" element={<Discover />} />
-                    <Route path="/requests" element={<Requests />} />
-                    <Route path="/connections" element={<ConnectionsList />} />
+                    <Route path="/connections" element={<ConnectionsHub />} />
+                    <Route
+                      path="/requests"
+                      element={<Navigate to="/connections?tab=requests" replace />}
+                    />
                     <Route path="/profile" element={<Profile />} />
                     <Route path="/profile/:userId" element={<Profile />} />
                     <Route path="/chat" element={<Chat />} />

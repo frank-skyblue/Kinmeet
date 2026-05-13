@@ -4,6 +4,7 @@ import {
   acceptConnectionRequest,
   ignoreConnectionRequest,
   getConnections,
+  removeConnection,
 } from '../../services/connectionService';
 import { createTestUser } from '../helpers';
 import { Connection } from '../../models/Connection';
@@ -133,6 +134,61 @@ describe('connectionService', () => {
       const user = await createTestUser({ email: 'alone@test.com' });
       const connections = await getConnections(user._id.toString());
       expect(connections).toHaveLength(0);
+    });
+  });
+
+  describe('removeConnection', () => {
+    it('removes the connection and related connection requests', async () => {
+      const userA = await createTestUser({ email: 'a-remove@test.com' });
+      const userB = await createTestUser({ email: 'b-remove@test.com' });
+      await Connection.create({ user1: userA._id, user2: userB._id });
+      await ConnectionRequest.create({
+        sender: userA._id,
+        receiver: userB._id,
+        status: 'accepted',
+      });
+
+      await removeConnection(userA._id.toString(), userB._id.toString());
+
+      const conn = await Connection.findOne({
+        $or: [
+          { user1: userA._id, user2: userB._id },
+          { user1: userB._id, user2: userA._id },
+        ],
+      });
+      expect(conn).toBeNull();
+      const reqs = await ConnectionRequest.find({
+        $or: [
+          { sender: userA._id, receiver: userB._id },
+          { sender: userB._id, receiver: userA._id },
+        ],
+      });
+      expect(reqs).toHaveLength(0);
+    });
+
+    it('throws if not connected', async () => {
+      const userA = await createTestUser({ email: 'a-noconn@test.com' });
+      const userB = await createTestUser({ email: 'b-noconn@test.com' });
+
+      await expect(
+        removeConnection(userA._id.toString(), userB._id.toString()),
+      ).rejects.toThrow('Connection not found');
+    });
+
+    it('throws if other user does not exist', async () => {
+      const userA = await createTestUser({ email: 'a-missing@test.com' });
+
+      await expect(
+        removeConnection(userA._id.toString(), '507f1f77bcf86cd799439099'),
+      ).rejects.toThrow('User not found');
+    });
+
+    it('throws if removing connection with yourself', async () => {
+      const userA = await createTestUser({ email: 'a-self@test.com' });
+
+      await expect(
+        removeConnection(userA._id.toString(), userA._id.toString()),
+      ).rejects.toThrow('Cannot remove connection with yourself');
     });
   });
 });

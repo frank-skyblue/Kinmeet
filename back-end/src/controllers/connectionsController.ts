@@ -24,3 +24,9 @@ export const getConnections = asyncHandler(async (req: AuthRequest, res: Respons
     const connections = await connectionService.getConnections(req.user!.id);
     return res.status(200).json({ success: true, connections });
 });
+
+export const removeConnection = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { userId } = req.params;
+    await connectionService.removeConnection(req.user!.id, userId);
+    return res.status(200).json({ success: true, message: 'Connection removed' });
+});
