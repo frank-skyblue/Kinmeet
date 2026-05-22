@@ -167,4 +167,23 @@ describe('Signup', () => {
       expect(screen.getByText('Registration failed')).toBeInTheDocument();
     });
   });
+
+  it('shows clear message when register fails with duplicate email', async () => {
+    mockRegister.mockRejectedValueOnce(
+      new Error('This email is already registered. Please log in instead.'),
+    );
+    const user = userEvent.setup();
+    renderSignup();
+
+    await user.click(screen.getByText('Next Step 1'));
+    await user.click(screen.getByText('Next Step 2'));
+    await user.click(screen.getByText('Next Step 3'));
+    await user.click(screen.getByText('Create Account'));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText('This email is already registered. Please log in instead.'),
+      ).toBeInTheDocument();
+    });
+  });
 });

@@ -63,7 +63,29 @@ describe('authenticationService', () => {
       const result = await authenticationService.register(validData);
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe('User already exists');
+      expect(result.message).toBe('This email is already registered. Please log in instead.');
+    });
+
+    it('rejects duplicate email with different casing', async () => {
+      await authenticationService.register(validData);
+      const result = await authenticationService.register({
+        ...validData,
+        email: 'New@Example.com',
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.message).toBe('This email is already registered. Please log in instead.');
+    });
+
+    it('rejects duplicate email with surrounding whitespace', async () => {
+      await authenticationService.register(validData);
+      const result = await authenticationService.register({
+        ...validData,
+        email: ' new@example.com ',
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.message).toBe('This email is already registered. Please log in instead.');
     });
 
     it('rejects missing required fields', async () => {

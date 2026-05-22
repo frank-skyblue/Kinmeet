@@ -6,6 +6,19 @@ const REGISTER_GENDER_VALUES = ['female', 'male', 'other'] as const;
 
 const USERNAME_REGEX = /^[a-z0-9_]{3,30}$/;
 
+const DUPLICATE_EMAIL_MESSAGE = 'This email is already registered. Please log in instead.';
+
+const isDuplicateEmailError = (error: unknown): boolean => {
+    if (!error || typeof error !== 'object') return false;
+    const mongoError = error as {
+        code?: number;
+        keyPattern?: Record<string, unknown>;
+        keyValue?: Record<string, unknown>;
+    };
+    if (mongoError.code !== 11000) return false;
+    return Boolean(mongoError.keyPattern?.email ?? mongoError.keyValue?.email);
+};
+
 const isPasswordSecure = (password: string) => {
     // At least 8 chars, one uppercase, one lowercase, one number (special chars optional)
     return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$/.test(password);
@@ -203,12 +216,14 @@ export const authenticationService = {
                 };
             }
 
+            const normalizedEmail = email.trim().toLowerCase();
+
             // Check if user already exists
-            const existingUser = await User.findOne({ email });
+            const existingUser = await User.findOne({ email: normalizedEmail });
             if (existingUser) {
                 return {
                     success: false,
-                    message: "User already exists"
+                    message: DUPLICATE_EMAIL_MESSAGE
                 };
             }
 
@@ -281,7 +296,7 @@ export const authenticationService = {
 
             // Create new user with profile
             const newUser = new User({ 
-                email, 
+                email: normalizedEmail, 
                 username: resolvedUsername,
                 password, 
                 firstName,
@@ -328,6 +343,12 @@ export const authenticationService = {
             };
         } catch (error) {
             console.error('Registration error:', error);
+            if (isDuplicateEmailError(error)) {
+                return {
+                    success: false,
+                    message: DUPLICATE_EMAIL_MESSAGE
+                };
+            }
             return {
                 success: false,
                 message: "Registration failed"
