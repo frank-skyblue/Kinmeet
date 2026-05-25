@@ -26,7 +26,7 @@ test.describe('Chat Flow', () => {
     await page.goto('/connections');
     await expect(page.getByText('ChatBob Bbbb')).toBeVisible({ timeout: 10000 });
 
-    await page.getByRole('button', { name: /send message/i }).click();
+    await page.getByRole('button', { name: /^message chatbob bbbb$/i }).click();
     await expect(page).toHaveURL(/\/chat\//);
 
     await page.getByPlaceholder('Type a message...').fill('Hello from E2E!');
