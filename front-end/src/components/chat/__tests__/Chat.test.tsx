@@ -133,6 +133,22 @@ describe('Chat', () => {
     expect(screen.getAllByText('Hi there!').length).toBeGreaterThanOrEqual(1);
   });
 
+  it('applies hover highlight classes to message bubbles', async () => {
+    renderChat();
+    await waitFor(() => {
+      expect(screen.getByText('Hello Marie!')).toBeInTheDocument();
+    });
+
+    const ownMessageBubble = screen.getByText('Hello Marie!').closest('div');
+    const receivedMessageBubble = screen
+      .getAllByText('Hi there!')
+      .find((node) => node.closest('[class*="justify-start"]'))
+      ?.closest('div');
+
+    expect(ownMessageBubble).toHaveClass('hover:shadow-kin-medium', 'hover:bg-kin-coral-600');
+    expect(receivedMessageBubble).toHaveClass('hover:shadow-kin-medium', 'hover:bg-kin-stone-50');
+  });
+
   it('displays other user name and location', async () => {
     renderChat();
     await waitFor(() => {
