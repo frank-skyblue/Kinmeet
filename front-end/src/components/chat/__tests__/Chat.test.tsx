@@ -133,6 +133,19 @@ describe('Chat', () => {
     expect(screen.getAllByText('Hi there!').length).toBeGreaterThanOrEqual(1);
   });
 
+  it('applies hover highlight classes to message bubbles', async () => {
+    renderChat();
+    await waitFor(() => {
+      expect(screen.getByText('Hello Marie!')).toBeInTheDocument();
+    });
+
+    const ownMessage = screen.getByRole('article', { name: /message from you/i });
+    const otherMessage = screen.getByRole('article', { name: /message from marie/i });
+
+    expect(ownMessage).toHaveClass('cursor-pointer', 'hover:shadow-kin-medium', 'hover:bg-kin-coral-600');
+    expect(otherMessage).toHaveClass('cursor-pointer', 'hover:shadow-kin-medium', 'hover:bg-kin-stone-50');
+  });
+
   it('displays other user name and location', async () => {
     renderChat();
     await waitFor(() => {
