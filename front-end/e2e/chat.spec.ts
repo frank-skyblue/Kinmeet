@@ -32,6 +32,12 @@ test.describe('Chat Flow', () => {
     await page.getByPlaceholder('Type a message...').fill('Hello from E2E!');
     await page.getByRole('button', { name: /send message/i }).click();
 
-    await expect(page.getByText('Hello from E2E!')).toBeVisible({ timeout: 10000 });
+    const messageBubble = page
+      .getByTestId('chat-message-bubble')
+      .filter({ hasText: 'Hello from E2E!' });
+    await expect(messageBubble).toBeVisible({ timeout: 10000 });
+
+    await messageBubble.hover();
+    await expect(messageBubble).toHaveClass(/hover:shadow-kin-medium/);
   });
 });
