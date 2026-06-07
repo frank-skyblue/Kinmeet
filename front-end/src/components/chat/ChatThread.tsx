@@ -319,10 +319,10 @@ const ChatThread: React.FC<ChatThreadProps> = ({ userId }) => {
               return (
                 <div key={message._id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
                   <div
-                    className={`max-w-xs rounded-kin-lg px-4 py-3 font-inter lg:max-w-md ${
+                    className={`max-w-xs rounded-kin-lg px-4 py-3 font-inter transition hover:shadow-kin-medium lg:max-w-md ${
                       isOwn
-                        ? 'bg-kin-coral text-white shadow-kin-soft'
-                        : 'bg-white text-kin-navy shadow-kin-soft'
+                        ? 'bg-kin-coral text-white shadow-kin-soft hover:bg-kin-coral-600'
+                        : 'bg-white text-kin-navy shadow-kin-soft hover:bg-kin-stone-50'
                     }`}
                   >
                     <p className="wrap-break-word whitespace-pre-wrap">{message.content}</p>
