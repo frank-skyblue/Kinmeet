@@ -1,0 +1,8 @@
+{
+  "terminalAllowlist": [
+    "git",
+    "gh",
+    "npm:run e2e*",
+    "npm run upload-e2e-video"
+  ]
+}

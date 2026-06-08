@@ -1,0 +1,25 @@
+{
+  "projectId": "6fFP893rgqXGjPCJ",
+  "projectName": "KinMeet",
+  "readySectionId": "6gq36QvHJGJpvXgr",
+  "readySectionName": "AI (Ready for Dev)",
+  "inProgressSectionId": "6gq382FJm4jM5R7J",
+  "inProgressSectionName": "AI (In Progress)",
+  "inReviewSectionId": "6gq383746hwRGg8r",
+  "inReviewSectionName": "AI (In Review)",
+  "baseBranch": "main",
+  "githubRepo": "frank-skyblue/Kinmeet",
+  "maxTasksPerRun": 1,
+  "e2e": {
+    "workingDirectory": "front-end",
+    "defaultProject": "chromium",
+    "specsByArea": {
+      "auth": "e2e/auth.spec.ts",
+      "chat": "e2e/chat.spec.ts",
+      "connections": "e2e/connections.spec.ts",
+      "matching": "e2e/matching.spec.ts"
+    },
+    "videoUploadCommand": "npm run upload-e2e-video -- --latest",
+    "videoUploadWorkingDirectory": "back-end"
+  }
+}
