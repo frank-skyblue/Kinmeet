@@ -16,6 +16,12 @@ import type { ResolvedCityLocation } from "../../utils/citySearch";
 
 const TOTAL_STEPS = 4;
 
+const DUPLICATE_EMAIL_MESSAGE =
+  "This email is already registered. Please log in instead.";
+
+const isDuplicateEmailMessage = (message: string): boolean =>
+  message === DUPLICATE_EMAIL_MESSAGE || message === "User already exists";
+
 const GRADUATION_YEARS = Array.from(
   { length: new Date().getFullYear() - 1950 + 5 },
   (_, i) => new Date().getFullYear() + 4 - i,
@@ -190,7 +196,11 @@ const Signup: React.FC = () => {
       navigate("/discover");
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : "Unknown error";
-      setError(errorMessage || "Registration failed. Please try again.");
+      setError(
+        isDuplicateEmailMessage(errorMessage)
+          ? DUPLICATE_EMAIL_MESSAGE
+          : errorMessage || "Registration failed. Please try again.",
+      );
     } finally {
       setIsLoading(false);
     }
