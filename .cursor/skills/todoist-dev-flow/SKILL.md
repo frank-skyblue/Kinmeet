@@ -18,7 +18,21 @@ Manual workflow: fetch the next task from a Todoist section → implement → PR
 - Config at `.cursor/todoist-dev.config.json`.
 - **UI tasks:** MongoDB running locally; `CLOUDINARY_*` in `back-end/.env` for E2E video upload to PR.
 
-## Git setup (required once)
+## Cloud agents (cursor.com/agents)
+
+For cloud or scheduled automation runs, read `AGENTS.md` first. Environment boot is defined in `.cursor/environment.json` (`install` refreshes deps; `start` forks MongoDB on port 27017).
+
+| Local IDE | Cloud agent |
+| --------- | ----------- |
+| Todoist MCP in `.cursor/mcp.json` | Todoist MCP in dashboard (cursor.com/agents) |
+| `gh auth login` + sandbox allowlist | GitHub connected via Cursor; no allowlist needed |
+| Hardcoded `/home/frank/Documents/Projects/Kinmeet` | Repo root (workspace root) |
+| User confirms before coding | Proceed automatically unless spec is ambiguous |
+| `back-end/.env` for secrets | Dashboard → Cloud Agents → Secrets |
+
+If **Ready for Dev** is empty, stop with "queue empty". Do not open a PR with failing tests.
+
+## Git setup (required once — local IDE only)
 
 Remote git fails in the **sandbox** with `Could not resolve hostname github.com`. The allowlist only helps when commands **start with** `git` or `gh` — not when prefixed with `cd`.
 

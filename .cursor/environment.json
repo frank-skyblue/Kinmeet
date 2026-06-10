@@ -1,0 +1,4 @@
+{
+  "install": "export NVM_DIR=\"$HOME/.nvm\" && [ -s \"$NVM_DIR/nvm.sh\" ] && . \"$NVM_DIR/nvm.sh\" && nvm use 22 && cd back-end && npm ci && cd ../front-end && npm ci && npx playwright install --with-deps chromium",
+  "start": "sudo -u mongodb mongod --dbpath /data/db --bind_ip 127.0.0.1 --port 27017 --fork --logpath /var/log/mongodb/mongod.log 2>/dev/null || true"
+}
