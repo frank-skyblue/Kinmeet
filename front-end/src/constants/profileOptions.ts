@@ -4,6 +4,17 @@ import type { SearchableSelectOption } from '../types';
 
 export const LOOKING_FOR_OPTIONS = ['Friendship', 'Networking', 'Support'];
 
+export const EDUCATION_LEVEL_OPTIONS: { value: string; label: string }[] = [
+  { value: 'High School', label: 'High School' },
+  { value: 'Some College/University', label: 'Some College/University' },
+  { value: 'College Diploma', label: 'College Diploma' },
+  { value: "Bachelor's Degree", label: "Bachelor's Degree" },
+  { value: "Master's Degree", label: "Master's Degree" },
+  { value: 'Doctorate / PhD', label: 'Doctorate / PhD' },
+  { value: 'Trade School', label: 'Trade School' },
+  { value: 'Other', label: 'Other' },
+];
+
 export const LANGUAGE_OPTIONS: SearchableSelectOption[] = ISO6391.getAllNames()
   .sort((a, b) => a.localeCompare(b))
   .map((name) => ({ value: name, label: name }));

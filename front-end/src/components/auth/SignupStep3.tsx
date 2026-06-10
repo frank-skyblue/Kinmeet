@@ -1,12 +1,13 @@
 import React from "react";
+import { EDUCATION_LEVEL_OPTIONS } from "../../constants/profileOptions";
 
 interface SignupStep3Props {
   jobTitle: string;
   setJobTitle: React.Dispatch<React.SetStateAction<string>>;
   company: string;
   setCompany: React.Dispatch<React.SetStateAction<string>>;
-  institution: string;
-  setInstitution: React.Dispatch<React.SetStateAction<string>>;
+  educationLevel: string;
+  setEducationLevel: React.Dispatch<React.SetStateAction<string>>;
   graduationYear: string;
   setGraduationYear: React.Dispatch<React.SetStateAction<string>>;
   graduationYears: number[];
@@ -19,8 +20,8 @@ const SignupStep3: React.FC<SignupStep3Props> = ({
   setJobTitle,
   company,
   setCompany,
-  institution,
-  setInstitution,
+  educationLevel,
+  setEducationLevel,
   graduationYear,
   setGraduationYear,
   graduationYears,
@@ -91,20 +92,25 @@ const SignupStep3: React.FC<SignupStep3Props> = ({
 
         <div>
           <label
-            htmlFor="institution"
+            htmlFor="educationLevel"
             className="block text-sm font-medium font-inter text-kin-navy mb-2"
           >
-            Institution Name
+            Education Level
           </label>
-          <input
-            type="text"
-            id="institution"
-            value={institution}
-            onChange={(e) => setInstitution(e.target.value)}
-            className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
-            placeholder="e.g., University of Toronto"
-            aria-label="Institution name"
-          />
+          <select
+            id="educationLevel"
+            value={educationLevel}
+            onChange={(e) => setEducationLevel(e.target.value)}
+            className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter bg-white"
+            aria-label="Education level"
+          >
+            <option value="">Select education level</option>
+            {EDUCATION_LEVEL_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div>

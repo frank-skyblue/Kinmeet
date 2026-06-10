@@ -50,7 +50,7 @@ const Signup: React.FC = () => {
   const [manualCountryMode, setManualCountryMode] = useState(false);
   const [jobTitle, setJobTitle] = useState("");
   const [company, setCompany] = useState("");
-  const [institution, setInstitution] = useState("");
+  const [educationLevel, setEducationLevel] = useState("");
   const [graduationYear, setGraduationYear] = useState("");
   const [languages, setLanguages] = useState<string[]>([""]);
   const [interests, setInterests] = useState<string[]>([""]);
@@ -170,7 +170,7 @@ const Signup: React.FC = () => {
         about: about.trim() || undefined,
         jobTitle: jobTitle.trim() || undefined,
         company: company.trim() || undefined,
-        institution: institution.trim() || undefined,
+        educationLevel: educationLevel.trim() || undefined,
         graduationYear: graduationYear ? Number(graduationYear) : undefined,
         homeCountry,
         currentLocation: {
@@ -318,8 +318,8 @@ const Signup: React.FC = () => {
             setJobTitle={setJobTitle}
             company={company}
             setCompany={setCompany}
-            institution={institution}
-            setInstitution={setInstitution}
+            educationLevel={educationLevel}
+            setEducationLevel={setEducationLevel}
             graduationYear={graduationYear}
             setGraduationYear={setGraduationYear}
             graduationYears={GRADUATION_YEARS}
