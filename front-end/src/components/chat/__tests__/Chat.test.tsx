@@ -9,6 +9,10 @@ import { ChatInboxProvider } from '../../../contexts/ChatInboxProvider';
 import type { ChatMessage, ChatSendMessagePayload, GetConversationsResponse, UserProfile } from '../../../types';
 import { CHAT_THREAD_INBOUND_EVENTS } from './chatSocketTestConstants';
 
+const today = new Date();
+const yesterday = new Date(today);
+yesterday.setDate(today.getDate() - 1);
+
 const mockMessages: ChatMessage[] = [
   {
     _id: 'msg-1',
@@ -16,7 +20,7 @@ const mockMessages: ChatMessage[] = [
     receiver: { _id: 'other-1', firstName: 'Marie', lastName: 'Dupont' },
     content: 'Hello Marie!',
     read: true,
-    createdAt: new Date().toISOString(),
+    createdAt: yesterday.toISOString(),
   },
   {
     _id: 'msg-2',
@@ -24,7 +28,7 @@ const mockMessages: ChatMessage[] = [
     receiver: { _id: 'user-1', firstName: 'Test', lastName: 'User' },
     content: 'Hi there!',
     read: false,
-    createdAt: new Date().toISOString(),
+    createdAt: today.toISOString(),
   },
 ];
 
@@ -211,5 +215,30 @@ describe('Chat', () => {
       expectedSendPayload,
       expect.any(Function),
     );
+  });
+
+  it('shows one date separator per calendar day', async () => {
+    renderChat();
+    await waitFor(() => {
+      expect(screen.getByText('Hello Marie!')).toBeInTheDocument();
+    });
+
+    const separators = screen.getAllByTestId('chat-date-separator');
+    expect(separators).toHaveLength(2);
+    expect(separators[0]).toHaveTextContent('Yesterday');
+    expect(separators[1]).toHaveTextContent('Today');
+  });
+
+  it('reveals exact time only after clicking a message', async () => {
+    const user = userEvent.setup();
+    renderChat();
+    await waitFor(() => {
+      expect(screen.getByText('Hello Marie!')).toBeInTheDocument();
+    });
+
+    expect(screen.queryByTestId('chat-message-timestamp')).not.toBeInTheDocument();
+
+    await user.click(screen.getByText('Hello Marie!'));
+    expect(screen.getByTestId('chat-message-timestamp')).toHaveTextContent(/\d/);
   });
 });
