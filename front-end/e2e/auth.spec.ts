@@ -7,8 +7,44 @@ test.describe('Auth Flow', () => {
 
     await expect(page.getByText('Join KinMeet')).toBeVisible();
 
-    // The signup flow is multi-step and depends on specific form components.
-    // For E2E we verify the page loads and the login flow works with a seeded user.
+  test('signup step 3 shows industry field only', async ({ page }) => {
+    await page.goto('/signup');
+
+    await expect(page.getByText('Join KinMeet')).toBeVisible();
+
+    // Step 1
+    await page.getByLabel('Email').fill(`signup-${Date.now()}@test.com`);
+    await page.getByLabel('Password', { exact: true }).fill('TestPass1');
+    await page.getByLabel('Confirm Password').fill('TestPass1');
+    await page.getByRole('button', { name: /^next$/i }).click();
+
+    // Step 2
+    await page.getByLabel('First Name').fill('Industry');
+    await page.getByLabel('Last Name').fill('Tester');
+
+    const homeCountry = page.getByRole('combobox', { name: 'Your Home Country' });
+    await homeCountry.click();
+    await homeCountry.pressSequentially('fra');
+    await page.getByRole('option', { name: 'France' }).click();
+
+    const province = page.getByRole('combobox', { name: /Province\/State/i });
+    await province.click();
+    await province.pressSequentially('ont');
+    await page.getByRole('option', { name: /Ontario/i }).click();
+
+    await page.getByLabel('Date of birth').fill('1995-01-15');
+
+    const gender = page.getByRole('combobox', { name: 'Gender' });
+    await gender.click();
+    await page.getByRole('option', { name: 'Female' }).click();
+
+    await page.getByRole('button', { name: /^next$/i }).click();
+
+    // Step 3 — industry only (no job title / company)
+    await expect(page.getByLabel(/industry or field of work/i)).toBeVisible();
+    await expect(page.getByLabel(/job title/i)).toHaveCount(0);
+    await expect(page.getByLabel(/company/i)).toHaveCount(0);
+  });
   });
 
   test('login with valid credentials redirects to discover', async ({ page }) => {

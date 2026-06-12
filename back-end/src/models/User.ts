@@ -12,6 +12,7 @@ export interface IUser extends Document {
     about?: string;
     jobTitle?: string;
     company?: string;
+    industry?: string;
     institution?: string;
     graduationYear?: number;
     homeCountry: string;
@@ -49,6 +50,7 @@ const UserSchema: Schema<IUser> = new Schema({
     about: { type: String, maxlength: 500 },
     jobTitle: { type: String, trim: true },
     company: { type: String, trim: true },
+    industry: { type: String, trim: true },
     institution: { type: String, trim: true },
     graduationYear: { type: Number, min: 1950, max: 2100 },
     homeCountry: { type: String, required: true },

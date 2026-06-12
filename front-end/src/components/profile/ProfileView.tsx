@@ -101,6 +101,13 @@ const ProfileView: React.FC<ProfileViewProps> = ({
                 </div>
               )}
 
+              {profile.industry && !profile.jobTitle && !profile.company && (
+                <div>
+                  <h3 className="text-sm font-semibold font-inter text-kin-navy mb-2">Work</h3>
+                  <p className="text-lg text-kin-navy font-montserrat">{profile.industry}</p>
+                </div>
+              )}
+
               {(profile.institution || profile.graduationYear) && (
                 <div>
                   <h3 className="text-sm font-semibold font-inter text-kin-navy mb-2">Education</h3>
