@@ -6,6 +6,7 @@ test.describe('Auth Flow', () => {
     await page.goto('/signup');
 
     await expect(page.getByText('Join KinMeet')).toBeVisible();
+  });
 
   test('signup step 3 shows industry field only', async ({ page }) => {
     await page.goto('/signup');
@@ -44,7 +45,6 @@ test.describe('Auth Flow', () => {
     await expect(page.getByLabel(/industry or field of work/i)).toBeVisible();
     await expect(page.getByLabel(/job title/i)).toHaveCount(0);
     await expect(page.getByLabel(/company/i)).toHaveCount(0);
-  });
   });
 
   test('login with valid credentials redirects to discover', async ({ page }) => {
