@@ -33,4 +33,27 @@ test.describe('Discover + Meet Flow', () => {
     // After meeting the only match, Bob should disappear from the card
     await expect(page.getByText('Bob')).not.toBeVisible({ timeout: 10000 });
   });
+
+  test('profile dropdown shows icons for My Profile and Sign Out', async ({ page }) => {
+    const ts = Date.now();
+
+    await seedTestUser({
+      email: `menu-${ts}@test.com`,
+      password: 'TestPass1',
+      firstName: 'MenuUser',
+      lastName: 'Test',
+    });
+
+    await loginAs(page, `menu-${ts}@test.com`, 'TestPass1');
+
+    await page.getByRole('button', { name: 'User menu' }).click();
+
+    const profileLink = page.getByRole('link', { name: /my profile/i });
+    const signOutButton = page.getByRole('button', { name: /sign out/i });
+
+    await expect(profileLink).toBeVisible();
+    await expect(signOutButton).toBeVisible();
+    await expect(profileLink.locator('svg')).toBeVisible();
+    await expect(signOutButton.locator('svg')).toBeVisible();
+  });
 });
