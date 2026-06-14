@@ -113,7 +113,7 @@ export interface RegisterPayload {
     currentLocation: {
         province: string;
         country: string;
-        city?: string;
+        city: string;
     };
     languages: string[];
     interests: string[];
