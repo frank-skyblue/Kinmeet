@@ -11,6 +11,7 @@ interface SeedUserOptions {
   homeCountry?: string;
   currentProvince?: string;
   currentCountry?: string;
+  currentCity?: string;
   languages?: string[];
   lookingFor?: string[];
 }
@@ -27,8 +28,11 @@ export const seedTestUser = async (opts: SeedUserOptions): Promise<SeedResult> =
     firstName: opts.firstName,
     lastName: opts.lastName,
     homeCountry: opts.homeCountry ?? 'France',
-    currentProvince: opts.currentProvince ?? 'Ontario',
-    currentCountry: opts.currentCountry ?? 'Canada',
+    currentLocation: {
+      province: opts.currentProvince ?? 'Ontario',
+      country: opts.currentCountry ?? 'Canada',
+      city: opts.currentCity ?? 'Toronto',
+    },
     languages: opts.languages ?? ['English'],
     interests: ['Hiking'],
     lookingFor: opts.lookingFor ?? ['Friendship'],

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import request from 'supertest';
+import { User } from '../../models/User';
 import { createTestApp, createTestUser } from '../helpers';
 
 const app = createTestApp();
@@ -10,8 +11,11 @@ const validRegister = {
   firstName: 'Jane',
   lastName: 'Doe',
   homeCountry: 'France',
-  currentProvince: 'Ontario',
-  currentCountry: 'Canada',
+  currentLocation: {
+    province: 'Ontario',
+    country: 'Canada',
+    city: 'Toronto',
+  },
   languages: ['English'],
   interests: ['Hiking'],
   lookingFor: ['Friendship'],
@@ -68,6 +72,154 @@ describe('Auth Routes', () => {
       expect(res.status).toBe(400);
       expect(res.body.success).toBe(false);
       expect(res.body.message).toBe('Invalid date of birth');
+    });
+
+    it('returns 400 for missing firstName', async () => {
+      const { firstName: _firstName, ...payload } = validRegister;
+      const res = await request(app)
+        .post('/api/auth/register')
+        .send({ ...payload, email: 'missing-first@example.com' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+    });
+
+    it('returns 400 for blank firstName', async () => {
+      const res = await request(app)
+        .post('/api/auth/register')
+        .send({ ...validRegister, email: 'blank-first@example.com', firstName: '   ' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+    });
+
+    it('returns 400 for missing lastName', async () => {
+      const { lastName: _lastName, ...payload } = validRegister;
+      const res = await request(app)
+        .post('/api/auth/register')
+        .send({ ...payload, email: 'missing-last@example.com' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+    });
+
+    it('returns 400 for missing homeCountry', async () => {
+      const { homeCountry: _homeCountry, ...payload } = validRegister;
+      const res = await request(app)
+        .post('/api/auth/register')
+        .send({ ...payload, email: 'missing-home@example.com' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+    });
+
+    it('returns 400 for missing currentLocation.province', async () => {
+      const res = await request(app)
+        .post('/api/auth/register')
+        .send({
+          ...validRegister,
+          email: 'missing-province@example.com',
+          currentLocation: { country: 'Canada', city: 'Toronto' },
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+    });
+
+    it('returns 400 for missing currentLocation.country', async () => {
+      const res = await request(app)
+        .post('/api/auth/register')
+        .send({
+          ...validRegister,
+          email: 'missing-country@example.com',
+          currentLocation: { province: 'Ontario', city: 'Toronto' },
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+    });
+
+    it('returns 400 for missing currentLocation.city', async () => {
+      const res = await request(app)
+        .post('/api/auth/register')
+        .send({
+          ...validRegister,
+          email: 'missing-city@example.com',
+          currentLocation: { province: 'Ontario', country: 'Canada' },
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+    });
+
+    it('returns 400 for invalid dateOfBirth', async () => {
+      const res = await request(app)
+        .post('/api/auth/register')
+        .send({ ...validRegister, email: 'invalid-dob@example.com', dateOfBirth: '1990-13-45' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+    });
+
+    it('returns 400 for missing gender', async () => {
+      const { gender: _gender, ...payload } = validRegister;
+      const res = await request(app)
+        .post('/api/auth/register')
+        .send({ ...payload, email: 'missing-gender@example.com' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+    });
+
+    it('returns 400 for missing lookingFor', async () => {
+      const res = await request(app)
+        .post('/api/auth/register')
+        .send({ ...validRegister, email: 'missing-looking@example.com', lookingFor: [] });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+    });
+
+    it('saves firstName trimmed when input has surrounding spaces', async () => {
+      const res = await request(app)
+        .post('/api/auth/register')
+        .send({
+          ...validRegister,
+          email: 'trimmed-first@example.com',
+          firstName: '  Ethan  ',
+        });
+
+      expect(res.status).toBe(201);
+      const user = await User.findOne({ email: 'trimmed-first@example.com' });
+      expect(user?.firstName).toBe('Ethan');
+    });
+
+    it('accepts mixed-case username and saves it lowercased', async () => {
+      const res = await request(app)
+        .post('/api/auth/register')
+        .send({
+          ...validRegister,
+          email: 'mixed-case-username@example.com',
+          username: ' Custom_User1 ',
+        });
+
+      expect(res.status).toBe(201);
+      const user = await User.findOne({ email: 'mixed-case-username@example.com' });
+      expect(user?.username).toBe('custom_user1');
+    });
+
+    it('does not trim password before existing password validation', async () => {
+      const res = await request(app)
+        .post('/api/auth/register')
+        .send({
+          ...validRegister,
+          email: 'password-spaces@example.com',
+          password: '  ValidPass1  ',
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toContain('Password must be at least 8 characters');
     });
   });
 

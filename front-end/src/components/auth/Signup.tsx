@@ -176,7 +176,7 @@ const Signup: React.FC = () => {
         currentLocation: {
           province: currentProvince,
           country: currentCountry,
-          ...(currentCity.trim() ? { city: currentCity.trim() } : {}),
+          city: currentCity.trim(),
         },
         languages: validLanguages,
         interests: validInterests,
