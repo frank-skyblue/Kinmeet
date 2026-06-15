@@ -223,6 +223,13 @@ const Layout: React.FC = () => {
                     >
                       Sign Out
                     </button>
+                    <Link
+                      to="/settings"
+                      onClick={() => setShowMenu(false)}
+                      className="block px-4 py-2 text-sm font-inter text-kin-navy hover:bg-kin-beige hover:text-kin-coral transition"
+                    >
+                      Settings &amp; Privacy
+                    </Link>
                   </div>
                 )}
               </div>

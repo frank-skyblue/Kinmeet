@@ -45,4 +45,26 @@ test.describe('Auth Flow', () => {
     await page.goto('/discover');
     await expect(page).toHaveURL(/\/login/);
   });
+
+  test('user menu opens Settings & Privacy and Account delete flow', async ({ page }) => {
+    const email = `settings-${Date.now()}@test.com`;
+    await seedTestUser({
+      email,
+      password: 'TestPass1',
+      firstName: 'Settings',
+      lastName: 'User',
+    });
+
+    await loginAs(page, email, 'TestPass1');
+    await page.getByRole('button', { name: /user menu/i }).click();
+    await page.getByRole('link', { name: /settings & privacy/i }).click();
+
+    await expect(page).toHaveURL(/\/settings$/);
+    await expect(page.getByRole('heading', { name: /settings & privacy/i })).toBeVisible();
+
+    await page.getByRole('link', { name: /account:/i }).click();
+    await expect(page).toHaveURL(/\/settings\/account/);
+    await expect(page.getByRole('heading', { name: /^account$/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /delete account/i })).toBeVisible();
+  });
 });
