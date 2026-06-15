@@ -19,6 +19,7 @@ const fullProfile: UserProfile = {
   interests: ['Music'],
   lookingFor: ['Friends'],
   profileComplete: true,
+  dateOfBirth: '1990-06-15',
 };
 
 const otherProfile: UserProfile = {
@@ -55,6 +56,7 @@ vi.mock('../../../contexts/useAuth', () => ({
 }));
 
 import { profileAPI } from '../../../services/api';
+import { calculateAgeFromDateOfBirth } from '../../../utils/age';
 
 const renderProfileAt = (path: string) =>
   render(
@@ -106,5 +108,33 @@ describe('Profile', () => {
     });
     expect(profileAPI.getProfile).toHaveBeenCalled();
     expect(profileAPI.getUserProfile).not.toHaveBeenCalled();
+  });
+
+  it('shows age instead of raw date of birth on own profile', async () => {
+    vi.mocked(profileAPI.getProfile).mockResolvedValue({ success: true, user: fullProfile });
+    renderProfileAt('/profile');
+    const expectedAge = calculateAgeFromDateOfBirth(fullProfile.dateOfBirth);
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /^age$/i })).toBeInTheDocument();
+    });
+    expect(screen.getByText(String(expectedAge))).toBeInTheDocument();
+    expect(screen.queryByText('1990-06-15')).not.toBeInTheDocument();
+    expect(screen.queryByText(/birthday/i)).not.toBeInTheDocument();
+  });
+
+  it('shows age instead of raw date of birth on another user profile', async () => {
+    const userWithDob = { ...otherProfile, dateOfBirth: '1990-06-15' };
+    vi.mocked(profileAPI.getUserProfile).mockResolvedValue({
+      success: true,
+      user: userWithDob,
+      isConnected: true,
+    });
+    renderProfileAt('/profile/other-9');
+    const expectedAge = calculateAgeFromDateOfBirth(userWithDob.dateOfBirth);
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /^age$/i })).toBeInTheDocument();
+    });
+    expect(screen.getByText(String(expectedAge))).toBeInTheDocument();
+    expect(screen.queryByText('1990-06-15')).not.toBeInTheDocument();
   });
 });
