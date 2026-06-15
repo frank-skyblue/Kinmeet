@@ -16,6 +16,33 @@ type NavItem = {
 const CHAT_ICON_PATH =
   "M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z";
 
+const PROFILE_ICON_PATH =
+  "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z";
+
+const SIGN_OUT_ICON_PATH =
+  "M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1";
+
+type MenuIconProps = {
+  path: string;
+};
+
+const MenuIcon: React.FC<MenuIconProps> = ({ path }) => (
+  <svg
+    className="h-4 w-4 shrink-0"
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+    aria-hidden
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d={path}
+    />
+  </svg>
+);
+
 const navBadgeForItem = (
   item: NavItem,
   pendingRequestCount: number,
@@ -213,14 +240,17 @@ const Layout: React.FC = () => {
                     <Link
                       to="/profile"
                       onClick={() => setShowMenu(false)}
-                      className="block px-4 py-2 text-sm font-inter text-kin-navy hover:bg-kin-beige hover:text-kin-coral transition"
+                      className="flex items-center gap-2 px-4 py-2 text-sm font-inter text-kin-navy hover:bg-kin-beige hover:text-kin-coral transition"
                     >
+                      <MenuIcon path={PROFILE_ICON_PATH} />
                       My Profile
                     </Link>
                     <button
+                      type="button"
                       onClick={handleLogout}
-                      className="block w-full text-left px-4 py-2 text-sm font-inter text-kin-coral hover:bg-kin-coral-50 transition"
+                      className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm font-inter text-kin-coral hover:bg-kin-coral-50 transition"
                     >
+                      <MenuIcon path={SIGN_OUT_ICON_PATH} />
                       Sign Out
                     </button>
                   </div>
