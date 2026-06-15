@@ -12,7 +12,8 @@
     "build": "npx tsc",
     "serve": "node dist/app.js",
     "seed": "ts-node ./src/scripts/seedUsers.ts",
-    "seed:reset": "ts-node ./src/scripts/seedUsers.ts --reset"
+    "seed:reset": "ts-node ./src/scripts/seedUsers.ts --reset",
+    "upload-e2e-video": "ts-node ./scripts/uploadE2eVideo.ts"
   },
   "author": "",
   "license": "ISC",
