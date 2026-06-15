@@ -108,12 +108,12 @@ const ProfileView: React.FC<ProfileViewProps> = ({
                 </div>
               )}
 
-              {(profile.institution || profile.graduationYear) && (
+              {(profile.educationLevel || profile.graduationYear) && (
                 <div>
                   <h3 className="text-sm font-semibold font-inter text-kin-navy mb-2">Education</h3>
                   <p className="text-lg text-kin-navy font-montserrat">
-                    {profile.institution}
-                    {profile.institution && profile.graduationYear && ' · '}
+                    {profile.educationLevel}
+                    {profile.educationLevel && profile.graduationYear && ' · '}
                     {profile.graduationYear && `Class of ${profile.graduationYear}`}
                   </p>
                 </div>

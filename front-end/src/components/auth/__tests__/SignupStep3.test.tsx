@@ -3,59 +3,93 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import SignupStep3 from '../SignupStep3';
 
-const graduationYears = [2024, 2023, 2022];
+const GRADUATION_YEARS = [2026, 2025, 2024];
 
-const renderStep3 = (overrides: Partial<{
-  industry: string;
-  institution: string;
-  graduationYear: string;
-}> = {}) => {
-  const props = {
-    industry: '',
-    setIndustry: vi.fn(),
-    institution: '',
-    setInstitution: vi.fn(),
-    graduationYear: '',
-    setGraduationYear: vi.fn(),
-    graduationYears,
-    onNext: vi.fn(),
-    onBack: vi.fn(),
-    ...overrides,
-  };
-
-  render(<SignupStep3 {...props} />);
-  return props;
+const defaultProps = {
+  industry: '',
+  setIndustry: vi.fn(),
+  educationLevel: '',
+  setEducationLevel: vi.fn(),
+  graduationYear: '',
+  setGraduationYear: vi.fn(),
+  graduationYears: GRADUATION_YEARS,
+  onNext: vi.fn(),
+  onBack: vi.fn(),
 };
 
 describe('SignupStep3', () => {
+  it('renders Work & Education heading', () => {
+    render(<SignupStep3 {...defaultProps} />);
+    expect(screen.getByText('Work & Education')).toBeInTheDocument();
+  });
+
   it('shows industry field instead of job title and company', () => {
-    renderStep3();
+    render(<SignupStep3 {...defaultProps} />);
 
     expect(screen.getByLabelText(/industry or field of work/i)).toBeInTheDocument();
     expect(screen.queryByLabelText(/job title/i)).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/company name/i)).not.toBeInTheDocument();
   });
 
-  it('keeps education fields', () => {
-    renderStep3();
+  it('renders the Education Level dropdown with all options', async () => {
+    const user = userEvent.setup();
+    render(<SignupStep3 {...defaultProps} />);
 
-    expect(screen.getByLabelText(/institution name/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/graduation year/i)).toBeInTheDocument();
+    await user.click(screen.getByRole('combobox', { name: /education level/i }));
+
+    expect(screen.getByRole('option', { name: "Bachelor's Degree" })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: "Master's Degree" })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'High School' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Trade School' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Other' })).toBeInTheDocument();
+  });
+
+  it('does not render an institution text input', () => {
+    render(<SignupStep3 {...defaultProps} />);
+    expect(screen.queryByLabelText(/institution/i)).not.toBeInTheDocument();
+    expect(screen.queryByPlaceholderText(/university of toronto/i)).not.toBeInTheDocument();
+  });
+
+  it('calls setEducationLevel when a value is selected', async () => {
+    const setEducationLevel = vi.fn();
+    const user = userEvent.setup();
+    render(<SignupStep3 {...defaultProps} setEducationLevel={setEducationLevel} />);
+
+    await user.click(screen.getByRole('combobox', { name: /education level/i }));
+    await user.click(screen.getByRole('option', { name: "Bachelor's Degree" }));
+
+    expect(setEducationLevel).toHaveBeenCalledWith("Bachelor's Degree");
+  });
+
+  it('shows the currently selected education level', () => {
+    render(<SignupStep3 {...defaultProps} educationLevel="Master's Degree" />);
+    expect(screen.getByText("Master's Degree")).toBeInTheDocument();
+  });
+
+  it('calls setGraduationYear when a year is selected', async () => {
+    const setGraduationYear = vi.fn();
+    const user = userEvent.setup();
+    render(<SignupStep3 {...defaultProps} setGraduationYear={setGraduationYear} />);
+
+    await user.click(screen.getByRole('combobox', { name: /graduation year/i }));
+    await user.click(screen.getByRole('option', { name: '2025' }));
+
+    expect(setGraduationYear).toHaveBeenCalledWith('2025');
   });
 
   it('calls onNext when Next is clicked', async () => {
+    const onNext = vi.fn();
     const user = userEvent.setup();
-    const props = renderStep3();
-
-    await user.click(screen.getByRole('button', { name: /next/i }));
-    expect(props.onNext).toHaveBeenCalled();
+    render(<SignupStep3 {...defaultProps} onNext={onNext} />);
+    await user.click(screen.getByText('Next'));
+    expect(onNext).toHaveBeenCalled();
   });
 
   it('calls onBack when Back is clicked', async () => {
+    const onBack = vi.fn();
     const user = userEvent.setup();
-    const props = renderStep3();
-
-    await user.click(screen.getByRole('button', { name: /back/i }));
-    expect(props.onBack).toHaveBeenCalled();
+    render(<SignupStep3 {...defaultProps} onBack={onBack} />);
+    await user.click(screen.getByText('Back'));
+    expect(onBack).toHaveBeenCalled();
   });
 });

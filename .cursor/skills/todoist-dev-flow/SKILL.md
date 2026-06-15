@@ -20,41 +20,88 @@ Manual workflow: fetch the next task from a Todoist section → implement → PR
 
 ## Git setup (required once)
 
-Remote git fails in the **sandbox** with `Could not resolve hostname github.com`. The allowlist only helps when commands **start with** `git` or `gh` — not when prefixed with `cd`.
+Remote git over SSH fails in the **sandbox** with `Could not resolve hostname github.com`. Even with `git` on the allowlist, Cursor still sandboxes some subcommands (`pull`, `push`, and any command string that contains them). Chaining with `&&` does not fix this — the whole invocation is sandboxed when `pull`/`push` is present.
 
 This repo includes:
 
-| File                       | Purpose                                                |
-| -------------------------- | ------------------------------------------------------ |
-| `.cursor/permissions.json` | `terminalAllowlist`: `git`, `gh` — bypass sandbox      |
-| `.cursor/sandbox.json`     | Allows `api.github.com` when `gh` runs sandboxed       |
+| File                       | Purpose                                                                 |
+| -------------------------- | ----------------------------------------------------------------------- |
+| `.cursor/permissions.json` | Restricted `terminalAllowlist` + `mcpAllowlist` for this workflow only  |
+| `.cursor/sandbox.json`     | Extra GitHub domains when a command still runs sandboxed                |
+
+**GitHub guardrail:** branch protection on `main` blocks direct pushes. The agent must use feature branches + PRs only.
 
 **Cursor settings** (Settings → Agents):
 
-1. **Run Mode**: **`Allowlist (with Sandbox)`** — allowlisted commands run outside the sandbox. Auto-review may still sandbox allowlisted commands.
-2. **Auto-Run network access**: `sandbox.json + Defaults` (or `Allow All`).
+1. **Run Mode**: **`Allowlist`** (recommended). Plain Allowlist runs allowlisted commands outside the sandbox (needed for `git push` / `gh`).
+2. **Auto-Run network access**: `sandbox.json + Defaults` (or `Allow All`) if using Allowlist (with Sandbox) instead.
 3. **`gh auth login`** done in your normal terminal.
 
-Never use `required_permissions: ["all"]`.
+Never use `required_permissions: ["all"]`. Do not rely on `required_permissions: ["full_network"]` to bypass the sandbox — it often still runs sandboxed.
+
+### Allowlisted commands (must match prefix)
+
+Cursor uses **prefix matching** on the full command string. Only these shapes auto-run; anything else prompts for approval. Keep commands aligned with `.cursor/permissions.json`.
+
+| Phase | Allowed command prefix | Example |
+| ----- | ---------------------- | ------- |
+| Sync base | `git fetch origin` | `git fetch origin` |
+| Sync base | `git checkout main` | `git checkout main` |
+| Sync base | `git merge origin/` | `git merge origin/main` |
+| Branch | `git switch -c todoist/` | `git switch -c todoist/6gXp9cmj8P8V5rpJ-fe-020-slug` |
+| Local | `git status`, `git diff`, `git log` | `git status -sb` |
+| Commit | `git add`, `git commit` | `git add front-end/src/...` |
+| PR | `git push -u origin HEAD` | exactly this push shape — not `git push origin main` |
+| PR | `gh pr create` | `gh pr create --title "..." --body "..."` |
+| Tests | `npm test -- --run` | Vitest in `front-end` or `back-end` |
+| E2E | `npm:run e2e*` / `npm run e2e` | Playwright in `front-end` |
+| Video | `npm run upload-e2e-video` | Cloudinary upload in `back-end` |
+
+**Not allowlisted (will prompt or fail):** `git pull`, `git push origin main`, `git push --force`, `git reset`, `gh pr merge`, bare `git` / `gh`, `npm install`, etc.
+
+If `baseBranch` in config ever changes from `main`, update `git checkout main` in `.cursor/permissions.json` to match.
 
 ### Agent git rules (critical)
 
-**Command must start with `git` or `gh`.** Cursor matches the allowlist on the command prefix only.
+**Command must match an allowlist prefix.** Cursor does not allowlist bare `git` or `gh`. Never prefix with `cd ... &&`.
 
-| Bad (sandboxed — DNS fails) | Good (allowlisted — works) |
-| --------------------------- | -------------------------- |
+| Agent behavior (observed) | Command |
+| ------------------------- | ------- |
+| Usually outside sandbox | `git fetch origin`, `git checkout main`, `git merge origin/main` |
+| Sandboxed — SSH/DNS fails | `git pull …`, `git push …`, chains that include `pull` or `push` |
+| Sandboxed — may fail on `.cursor/` | `git merge origin/main` when origin changed `.cursor/` files |
+
+| Bad (sandboxed or prefix mismatch) | Good |
+| ------------------------------------ | ---- |
 | `cd /path && git fetch origin` | `git fetch origin` with `working_directory: /home/frank/Documents/Projects/Kinmeet` |
+| `git fetch origin && git checkout main && git pull origin main` | Three separate calls: `git fetch origin`, then `git checkout main`, then `git merge origin/<baseBranch>` |
 | `cd /path && gh pr create ...` | `gh pr create ...` with `working_directory` set |
 
 Rules:
 
 1. Set `working_directory` to the repo root (`/home/frank/Documents/Projects/Kinmeet`). Never prefix git/gh with `cd ... &&`.
-2. Run each git/gh command as its own shell invocation starting with `git` or `gh`.
-3. Pass `required_permissions: ["git_write", "full_network"]` on remote git/gh calls if prompted.
-4. If remote git/gh still fails, **stop** — do not continue on stale `main`. Use **Manual fallback** below.
-5. Local git (`status`, `diff`, `log`, `checkout`, `switch -c`, `add`, `commit`): `git_write` when needed; command still must start with `git`.
+2. Run each git/gh command as its **own** shell invocation starting with `git` or `gh`. Never chain `pull` or `push` with `&&`.
+3. To update the base branch, use **`fetch` → `checkout` → `merge`** — not `git pull`.
+4. Push only with **`git push -u origin HEAD`** on a `todoist/` feature branch — never push to `main` / `<baseBranch>`. **Never** append `--force` or any ref other than `HEAD`.
+5. **Before every push**, run pre-push verification (below). If any check fails, **stop** — do not push.
+6. If push or `gh pr create` still fails after verification, **stop** — do not continue on stale `main`. Use **Manual fallback** below.
+7. Local git (`status`, `diff`, `log`, `add`, `commit`): use only the allowlisted prefixes above.
+
+### Pre-push verification (required)
+
+Run **before** `git push -u origin HEAD`. Use separate allowlisted calls (`git status -sb`, `git log -1 --oneline`, `git diff …`).
+
+1. **Branch name** — from `git status -sb`, current branch must match `todoist/<task-id>-*` for the task being worked (from step 3 / branch created in step 4). Examples: OK `## todoist/6gXp9cmj8P8V5rpJ-fe-020-slug...`; **stop** on `main`, `master`, or any non-`todoist/` branch.
+2. **Not base branch** — branch must not equal `<baseBranch>` from config (usually `main`).
+3. **Commit present** — `git log origin/<baseBranch>..HEAD --oneline` shows at least one commit for this task (or report if only uncommitted changes remain and commit first).
+4. **No secrets in diff** — skim `git diff origin/<baseBranch>...HEAD --stat` (and spot-check suspicious paths). **Stop** if `.env`, credentials, or `test-results/` / video binaries would be pushed.
+5. **Push command** — use exactly `git push -u origin HEAD` with no extra flags.
+
+If any check fails, tell the user what failed and do not push. Fix or use **Manual fallback**.
 
 ### Manual fallback
+
+When the agent cannot reach GitHub, give the user these commands for **their normal terminal** (chained commands are fine there):
 
 ```bash
 cd /home/frank/Documents/Projects/Kinmeet
@@ -125,7 +172,7 @@ Server: `todoist` (configured in `.cursor/mcp.json`). Tool schemas live in Curso
 | `update-tasks`  | Move between sections | `tasks: [{ id, sectionId }]` — use `inProgressSectionId` or `inReviewSectionId` |
 | `add-comments`  | Status updates        | `comments: [{ taskId, content }]` — work started, PR link, blocked notes        |
 
-Before each MCP call, read the tool schema from the connected `todoist` server if argument shape is unclear.
+Before each MCP call, read the tool schema from the connected `todoist` server if argument shape is unclear. Only the five Todoist tools listed above are on `mcpAllowlist`; other MCP tools require approval.
 
 ## Execution steps
 
@@ -156,7 +203,10 @@ Always load comments for the selected task **before** marking it in progress or 
 
 Repo root: `/home/frank/Documents/Projects/Kinmeet`. Every git command must **start with `git`** (use `working_directory`, never `cd && git`).
 
-1. `git fetch origin` — then `git checkout <baseBranch>` — then `git pull origin <baseBranch>` (separate calls or one command starting with `git`: `git fetch origin && git checkout <baseBranch> && git pull origin <baseBranch>`).
+1. Update base branch — **three separate shell calls** (never `git pull`; never chain with `&&`):
+   - `git fetch origin`
+   - `git checkout <baseBranch>`
+   - `git merge origin/<baseBranch>`
 2. `git switch -c todoist/<task-id>-<short-slug>` (slug from title, lowercase, hyphens, max ~40 chars).
 3. Implement from the full spec gathered in step 2 (title, description, and comments).
 4. Follow repo rules in `.cursor/rules/` (backend/frontend architecture, tests for changed features).
@@ -190,8 +240,9 @@ Playwright is configured with `video: 'on'` in `front-end/playwright.config.ts`.
 
 Commands must start with `git` or `gh`; set `working_directory` to repo root.
 
-1. `git push -u origin HEAD`
-2. `gh pr create` with a body that includes:
+1. Run **Pre-push verification** (see above). Abort if not on `todoist/<task-id>-*`.
+2. `git push -u origin HEAD` (only this push form — no `--force`; never `git push origin main`)
+3. `gh pr create` with a body that includes:
    - **Summary** and **Test plan** (checkboxes)
    - **Todoist task id**
    - **Video demo** (when E2E ran) — embed the Cloudinary URL on its own line so GitHub renders a player:
@@ -202,7 +253,7 @@ Commands must start with `git` or `gh`; set `working_directory` to repo root.
 
      _E2E spec: `e2e/chat.spec.ts`_
      ```
-3. Return the PR URL. If push/gh fails, use **Manual fallback** (include the video URL in the body text you give the user).
+4. Return the PR URL. If push/gh fails, use **Manual fallback** (include the video URL in the body text you give the user).
 
 ### 6. Update Todoist
 
@@ -229,6 +280,8 @@ Write Todoist tasks so the agent can implement without guessing:
 - **MCP auth error**: tell user to re-authenticate Todoist MCP in Cursor settings.
 - **gh not authenticated**: run `gh auth login` guidance; stop before push.
 - **`Could not read package.json` / ENOENT on npm**: command ran at repo root — re-run with `working_directory` set to `front-end` or `back-end` per **Monorepo layout**.
+- **`Could not resolve hostname github.com` on git**: command was sandboxed — use fetch/checkout/merge instead of pull; split into separate invocations; if push/gh still fails, use **Manual fallback**.
+- **Pre-push verification failed** (wrong branch, on `main`, secrets in diff, no commits): stop and report; never push until fixed.
 
 ## Example user prompts
 

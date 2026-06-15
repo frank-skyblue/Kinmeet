@@ -49,7 +49,7 @@ const Signup: React.FC = () => {
   const [currentCity, setCurrentCity] = useState("");
   const [manualCountryMode, setManualCountryMode] = useState(false);
   const [industry, setIndustry] = useState("");
-  const [institution, setInstitution] = useState("");
+  const [educationLevel, setEducationLevel] = useState("");
   const [graduationYear, setGraduationYear] = useState("");
   const [languages, setLanguages] = useState<string[]>([""]);
   const [interests, setInterests] = useState<string[]>([""]);
@@ -168,13 +168,13 @@ const Signup: React.FC = () => {
         lastName,
         about: about.trim() || undefined,
         industry: industry.trim() || undefined,
-        institution: institution.trim() || undefined,
+        educationLevel: educationLevel.trim() || undefined,
         graduationYear: graduationYear ? Number(graduationYear) : undefined,
         homeCountry,
         currentLocation: {
           province: currentProvince,
           country: currentCountry,
-          ...(currentCity.trim() ? { city: currentCity.trim() } : {}),
+          city: currentCity.trim(),
         },
         languages: validLanguages,
         interests: validInterests,
@@ -314,8 +314,8 @@ const Signup: React.FC = () => {
           <SignupStep3
             industry={industry}
             setIndustry={setIndustry}
-            institution={institution}
-            setInstitution={setInstitution}
+            educationLevel={educationLevel}
+            setEducationLevel={setEducationLevel}
             graduationYear={graduationYear}
             setGraduationYear={setGraduationYear}
             graduationYears={GRADUATION_YEARS}

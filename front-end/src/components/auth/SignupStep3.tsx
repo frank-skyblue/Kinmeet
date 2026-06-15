@@ -1,10 +1,12 @@
 import React from "react";
+import SearchableSelect from "../common/SearchableSelect";
+import { EDUCATION_LEVEL_OPTIONS } from "../../constants/profileOptions";
 
 interface SignupStep3Props {
   industry: string;
   setIndustry: React.Dispatch<React.SetStateAction<string>>;
-  institution: string;
-  setInstitution: React.Dispatch<React.SetStateAction<string>>;
+  educationLevel: string;
+  setEducationLevel: React.Dispatch<React.SetStateAction<string>>;
   graduationYear: string;
   setGraduationYear: React.Dispatch<React.SetStateAction<string>>;
   graduationYears: number[];
@@ -15,8 +17,8 @@ interface SignupStep3Props {
 const SignupStep3: React.FC<SignupStep3Props> = ({
   industry,
   setIndustry,
-  institution,
-  setInstitution,
+  educationLevel,
+  setEducationLevel,
   graduationYear,
   setGraduationYear,
   graduationYears,
@@ -26,6 +28,11 @@ const SignupStep3: React.FC<SignupStep3Props> = ({
   const handleNext = () => {
     onNext();
   };
+
+  const graduationYearOptions = graduationYears.map((year) => ({
+    value: String(year),
+    label: String(year),
+  }));
 
   return (
     <div className="space-y-6">
@@ -67,46 +74,23 @@ const SignupStep3: React.FC<SignupStep3Props> = ({
           Education
         </legend>
 
-        <div>
-          <label
-            htmlFor="institution"
-            className="block text-sm font-medium font-inter text-kin-navy mb-2"
-          >
-            Institution Name
-          </label>
-          <input
-            type="text"
-            id="institution"
-            value={institution}
-            onChange={(e) => setInstitution(e.target.value)}
-            className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
-            placeholder="e.g., University of Toronto"
-            aria-label="Institution name"
-          />
-        </div>
+        <SearchableSelect
+          id="educationLevel"
+          label="Education Level"
+          options={EDUCATION_LEVEL_OPTIONS}
+          value={educationLevel}
+          onChange={setEducationLevel}
+          placeholder="Select education level"
+        />
 
-        <div>
-          <label
-            htmlFor="graduationYear"
-            className="block text-sm font-medium font-inter text-kin-navy mb-2"
-          >
-            Graduation Year
-          </label>
-          <select
-            id="graduationYear"
-            value={graduationYear}
-            onChange={(e) => setGraduationYear(e.target.value)}
-            className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter bg-white"
-            aria-label="Graduation year"
-          >
-            <option value="">Select year</option>
-            {graduationYears.map((year) => (
-              <option key={year} value={year}>
-                {year}
-              </option>
-            ))}
-          </select>
-        </div>
+        <SearchableSelect
+          id="graduationYear"
+          label="Graduation Year"
+          options={graduationYearOptions}
+          value={graduationYear}
+          onChange={setGraduationYear}
+          placeholder="Select year"
+        />
       </fieldset>
 
       <div className="flex gap-4 mt-4">

@@ -17,7 +17,46 @@ const api = axios.create({
   },
 });
 
+const SKIP_SANITIZE_KEYS = new Set(['password', 'confirmPassword', 'token', 'accessToken', 'refreshToken']);
+
+const removeControlCharacters = (value: string) =>
+  Array.from(value)
+    .filter((char) => {
+      const code = char.charCodeAt(0);
+      return code > 0x1f && code !== 0x7f;
+    })
+    .join('');
+
+const isPlainObject = (value: unknown): value is Record<string, unknown> => {
+  if (value === null || typeof value !== 'object') return false;
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+};
+
+const shouldSkipSanitizeValue = (value: unknown) =>
+  (typeof FormData !== 'undefined' && value instanceof FormData)
+  || (typeof File !== 'undefined' && value instanceof File)
+  || (typeof Blob !== 'undefined' && value instanceof Blob);
+
+const sanitizeRequestData = (value: unknown): unknown => {
+  if (shouldSkipSanitizeValue(value)) return value;
+  if (typeof value === 'string') return removeControlCharacters(value).trim();
+  if (Array.isArray(value)) return value.map((item) => sanitizeRequestData(item));
+  if (isPlainObject(value)) {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, item]) => [
+        key,
+        SKIP_SANITIZE_KEYS.has(key) ? item : sanitizeRequestData(item),
+      ]),
+    );
+  }
+  return value;
+};
+
 api.interceptors.request.use((config) => {
+  if (config.data !== undefined) {
+    config.data = sanitizeRequestData(config.data);
+  }
   const token = localStorage.getItem('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;

@@ -1,7 +1,7 @@
 import type { Page } from '@playwright/test';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8080/api';
+const API_URL = 'http://127.0.0.1:8080/api';
 
 interface SeedUserOptions {
   email: string;
@@ -11,6 +11,7 @@ interface SeedUserOptions {
   homeCountry?: string;
   currentProvince?: string;
   currentCountry?: string;
+  currentCity?: string;
   languages?: string[];
   lookingFor?: string[];
 }
@@ -27,8 +28,11 @@ export const seedTestUser = async (opts: SeedUserOptions): Promise<SeedResult> =
     firstName: opts.firstName,
     lastName: opts.lastName,
     homeCountry: opts.homeCountry ?? 'France',
-    currentProvince: opts.currentProvince ?? 'Ontario',
-    currentCountry: opts.currentCountry ?? 'Canada',
+    currentLocation: {
+      province: opts.currentProvince ?? 'Ontario',
+      country: opts.currentCountry ?? 'Canada',
+      city: opts.currentCity ?? 'Toronto',
+    },
     languages: opts.languages ?? ['English'],
     interests: ['Hiking'],
     lookingFor: opts.lookingFor ?? ['Friendship'],
@@ -61,6 +65,26 @@ export const seedConnection = async (senderToken: string, receiverToken: string,
     {},
     { headers: { Authorization: `Bearer ${receiverToken}` } },
   );
+};
+
+export const selectTypeaheadOption = async (
+  page: Page,
+  comboboxName: string | RegExp,
+  typeText: string,
+  optionName: string | RegExp,
+) => {
+  await page.getByRole('combobox', { name: comboboxName }).click();
+  await page.keyboard.type(typeText);
+  await page.getByRole('option', { name: optionName }).click();
+};
+
+export const selectDropdownOption = async (
+  page: Page,
+  comboboxName: string | RegExp,
+  optionName: string | RegExp,
+) => {
+  await page.getByRole('combobox', { name: comboboxName }).click();
+  await page.getByRole('option', { name: optionName }).click();
 };
 
 export const loginAs = async (page: Page, email: string, password: string) => {

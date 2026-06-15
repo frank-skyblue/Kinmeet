@@ -106,6 +106,7 @@ const SignupStep2: React.FC<SignupStep2Props> = ({
       !homeCountry ||
       !currentCountry ||
       !currentProvince ||
+      !currentCity.trim() ||
       !dateOfBirth.trim() ||
       !gender.trim()
     ) {
@@ -284,7 +285,7 @@ const SignupStep2: React.FC<SignupStep2Props> = ({
 
         <CitySearchInput
           id="currentCity"
-          label="City or town (optional)"
+          label="City or town"
           currentCity={currentCity}
           setCurrentCity={setCurrentCity}
           onPickCity={onPickCityResolved}

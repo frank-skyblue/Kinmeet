@@ -12,6 +12,7 @@ import {
   COUNTRY_OPTIONS,
   INTEREST_OPTIONS,
   SIGNUP_GENDER_OPTIONS,
+  EDUCATION_LEVEL_OPTIONS,
   getGlobalProvinceOptions,
   getProvinceOptions,
   getCountryCode,
@@ -43,7 +44,7 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
   const [jobTitle, setJobTitle] = useState('');
   const [company, setCompany] = useState('');
   const [industry, setIndustry] = useState('');
-  const [institution, setInstitution] = useState('');
+  const [educationLevel, setEducationLevel] = useState('');
   const [graduationYear, setGraduationYear] = useState('');
   const [homeCountry, setHomeCountry] = useState('');
   const [currentCountry, setCurrentCountry] = useState('');
@@ -88,7 +89,7 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
     setJobTitle(profile.jobTitle || '');
     setCompany(profile.company || '');
     setIndustry(profile.industry || '');
-    setInstitution(profile.institution || '');
+    setEducationLevel(profile.educationLevel || '');
     setGraduationYear(profile.graduationYear != null ? String(profile.graduationYear) : '');
     setHomeCountry(profile.homeCountry);
     setCurrentCountry(profile.currentCountry);
@@ -262,7 +263,7 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
         jobTitle: jobTitle.trim() || undefined,
         company: company.trim() || undefined,
         industry: industry.trim() || undefined,
-        institution: institution.trim() || undefined,
+        educationLevel: educationLevel.trim() || undefined,
         graduationYear: gy ? parseInt(gy, 10) : undefined,
         homeCountry,
         currentCountry,
@@ -487,15 +488,13 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label htmlFor="institution" className="block text-sm font-medium font-inter text-kin-navy mb-2">
-                  School / Institution
-                </label>
-                <input
-                  type="text"
-                  id="institution"
-                  value={institution}
-                  onChange={(e) => setInstitution(e.target.value)}
-                  className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
+                <SearchableSelect
+                  id="educationLevel"
+                  label="Education Level"
+                  options={EDUCATION_LEVEL_OPTIONS}
+                  value={educationLevel}
+                  onChange={setEducationLevel}
+                  placeholder="Select education level"
                 />
               </div>
               <div>

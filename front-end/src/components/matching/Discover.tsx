@@ -9,7 +9,7 @@ interface Match {
   jobTitle?: string;
   company?: string;
   industry?: string;
-  institution?: string;
+  educationLevel?: string;
   graduationYear?: number;
   homeCountry: string;
   currentProvince: string;
@@ -173,7 +173,7 @@ const Discover: React.FC = () => {
               )}
 
               <div className="space-y-1 text-xs md:text-sm font-inter">
-                {(currentMatch.institution || currentMatch.graduationYear) && (
+                {(currentMatch.educationLevel || currentMatch.graduationYear) && (
                   <div className="flex items-center text-kin-teal">
                     <svg className="w-4 h-4 mr-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" />
@@ -181,8 +181,8 @@ const Discover: React.FC = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5zM12 14v7" />
                     </svg>
                     <span className="truncate">
-                      {currentMatch.institution}
-                      {currentMatch.institution && currentMatch.graduationYear && ' · '}
+                      {currentMatch.educationLevel}
+                      {currentMatch.educationLevel && currentMatch.graduationYear && ' · '}
                       {currentMatch.graduationYear && `Class of ${currentMatch.graduationYear}`}
                     </span>
                   </div>
