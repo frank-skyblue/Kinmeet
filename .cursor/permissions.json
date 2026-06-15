@@ -1,8 +1,33 @@
 {
   "terminalAllowlist": [
-    "git",
-    "gh",
+    "git fetch origin",
+    "git checkout main",
+    "git merge origin/",
+    "git switch -c todoist/",
+    "git status",
+    "git diff",
+    "git log",
+    "git add",
+    "git commit",
+    "git push -u origin HEAD",
+    "gh pr create",
+    "npm test -- --run",
     "npm:run e2e*",
+    "npm run e2e",
     "npm run upload-e2e-video"
-  ]
+  ],
+  "mcpAllowlist": [
+    "todoist:find-tasks",
+    "todoist:find-comments",
+    "todoist:fetch-object",
+    "todoist:update-tasks",
+    "todoist:add-comments"
+  ],
+  "autoRun": {
+    "block_instructions": [
+      "Never push directly to main or the configured base branch; only git push -u origin HEAD on a todoist/ feature branch.",
+      "Never run git push --force, git reset --hard, git clean, or git pull.",
+      "Never run gh commands other than gh pr create for this workflow."
+    ]
+  }
 }
