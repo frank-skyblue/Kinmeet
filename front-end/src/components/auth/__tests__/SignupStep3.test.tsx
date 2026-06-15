@@ -25,10 +25,11 @@ describe('SignupStep3', () => {
     expect(screen.getByText('Work & Education')).toBeInTheDocument();
   });
 
-  it('renders the Education Level dropdown with all options', () => {
+  it('renders the Education Level dropdown with all options', async () => {
+    const user = userEvent.setup();
     render(<SignupStep3 {...defaultProps} />);
-    const select = screen.getByRole('combobox', { name: /education level/i });
-    expect(select).toBeInTheDocument();
+
+    await user.click(screen.getByRole('combobox', { name: /education level/i }));
 
     expect(screen.getByRole('option', { name: "Bachelor's Degree" })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: "Master's Degree" })).toBeInTheDocument();
@@ -48,16 +49,26 @@ describe('SignupStep3', () => {
     const user = userEvent.setup();
     render(<SignupStep3 {...defaultProps} setEducationLevel={setEducationLevel} />);
 
-    const select = screen.getByRole('combobox', { name: /education level/i });
-    await user.selectOptions(select, "Bachelor's Degree");
+    await user.click(screen.getByRole('combobox', { name: /education level/i }));
+    await user.click(screen.getByRole('option', { name: "Bachelor's Degree" }));
 
     expect(setEducationLevel).toHaveBeenCalledWith("Bachelor's Degree");
   });
 
   it('shows the currently selected education level', () => {
     render(<SignupStep3 {...defaultProps} educationLevel="Master's Degree" />);
-    const select = screen.getByRole('combobox', { name: /education level/i }) as HTMLSelectElement;
-    expect(select.value).toBe("Master's Degree");
+    expect(screen.getByText("Master's Degree")).toBeInTheDocument();
+  });
+
+  it('calls setGraduationYear when a year is selected', async () => {
+    const setGraduationYear = vi.fn();
+    const user = userEvent.setup();
+    render(<SignupStep3 {...defaultProps} setGraduationYear={setGraduationYear} />);
+
+    await user.click(screen.getByRole('combobox', { name: /graduation year/i }));
+    await user.click(screen.getByRole('option', { name: '2025' }));
+
+    expect(setGraduationYear).toHaveBeenCalledWith('2025');
   });
 
   it('calls onNext when Next is clicked', async () => {

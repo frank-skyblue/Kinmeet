@@ -1,4 +1,5 @@
 import React from "react";
+import SearchableSelect from "../common/SearchableSelect";
 import { EDUCATION_LEVEL_OPTIONS } from "../../constants/profileOptions";
 
 interface SignupStep3Props {
@@ -31,6 +32,11 @@ const SignupStep3: React.FC<SignupStep3Props> = ({
   const handleNext = () => {
     onNext();
   };
+
+  const graduationYearOptions = graduationYears.map((year) => ({
+    value: String(year),
+    label: String(year),
+  }));
 
   return (
     <div className="space-y-6">
@@ -90,51 +96,23 @@ const SignupStep3: React.FC<SignupStep3Props> = ({
           Education
         </legend>
 
-        <div>
-          <label
-            htmlFor="educationLevel"
-            className="block text-sm font-medium font-inter text-kin-navy mb-2"
-          >
-            Education Level
-          </label>
-          <select
-            id="educationLevel"
-            value={educationLevel}
-            onChange={(e) => setEducationLevel(e.target.value)}
-            className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter bg-white"
-            aria-label="Education level"
-          >
-            <option value="">Select education level</option>
-            {EDUCATION_LEVEL_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        <SearchableSelect
+          id="educationLevel"
+          label="Education Level"
+          options={EDUCATION_LEVEL_OPTIONS}
+          value={educationLevel}
+          onChange={setEducationLevel}
+          placeholder="Select education level"
+        />
 
-        <div>
-          <label
-            htmlFor="graduationYear"
-            className="block text-sm font-medium font-inter text-kin-navy mb-2"
-          >
-            Graduation Year
-          </label>
-          <select
-            id="graduationYear"
-            value={graduationYear}
-            onChange={(e) => setGraduationYear(e.target.value)}
-            className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter bg-white"
-            aria-label="Graduation year"
-          >
-            <option value="">Select year</option>
-            {graduationYears.map((year) => (
-              <option key={year} value={year}>
-                {year}
-              </option>
-            ))}
-          </select>
-        </div>
+        <SearchableSelect
+          id="graduationYear"
+          label="Graduation Year"
+          options={graduationYearOptions}
+          value={graduationYear}
+          onChange={setGraduationYear}
+          placeholder="Select year"
+        />
       </fieldset>
 
       <div className="flex gap-4 mt-4">
