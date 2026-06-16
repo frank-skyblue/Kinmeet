@@ -102,4 +102,14 @@ describe('api', () => {
     const { capturedAuthorization } = await postWithAdapter({ firstName: 'Ethan' });
     expect(capturedAuthorization).toBe('Bearer stored-token');
   });
+
+  it('normalizes email fields in request body', async () => {
+    const { capturedData } = await postWithAdapter({
+      email: ' New@Example.com\u200B ',
+      password: '  Secret1  ',
+    });
+    const body = parsedBody(capturedData) as { email: string; password: string };
+    expect(body.email).toBe('new@example.com');
+    expect(body.password).toBe('  Secret1  ');
+  });
 });

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { normalizeEmail } from '../utils/email';
 import type {
   GetConnectionRequestsResponse,
   GetConversationsResponse,
@@ -38,15 +39,21 @@ const shouldSkipSanitizeValue = (value: unknown) =>
   || (typeof File !== 'undefined' && value instanceof File)
   || (typeof Blob !== 'undefined' && value instanceof Blob);
 
-const sanitizeRequestData = (value: unknown): unknown => {
+const sanitizeString = (value: string, key?: string) => {
+  const cleaned = removeControlCharacters(value);
+  if (key === 'email') return normalizeEmail(cleaned);
+  return cleaned.trim();
+};
+
+const sanitizeRequestData = (value: unknown, key?: string): unknown => {
   if (shouldSkipSanitizeValue(value)) return value;
-  if (typeof value === 'string') return removeControlCharacters(value).trim();
+  if (typeof value === 'string') return sanitizeString(value, key);
   if (Array.isArray(value)) return value.map((item) => sanitizeRequestData(item));
   if (isPlainObject(value)) {
     return Object.fromEntries(
-      Object.entries(value).map(([key, item]) => [
-        key,
-        SKIP_SANITIZE_KEYS.has(key) ? item : sanitizeRequestData(item),
+      Object.entries(value).map(([entryKey, item]) => [
+        entryKey,
+        SKIP_SANITIZE_KEYS.has(entryKey) ? item : sanitizeRequestData(item, entryKey),
       ]),
     );
   }

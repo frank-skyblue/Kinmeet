@@ -87,6 +87,17 @@ export const selectDropdownOption = async (
   await page.getByRole('option', { name: optionName }).click();
 };
 
+export const pickCityOption = async (
+  page: Page,
+  typeText: string,
+  optionName: string | RegExp,
+) => {
+  await page.getByLabel('City or town').fill(typeText);
+  const option = page.getByRole('option', { name: optionName });
+  await option.waitFor({ state: 'visible', timeout: 5000 });
+  await option.click();
+};
+
 export const loginAs = async (page: Page, email: string, password: string) => {
   await page.goto('/login');
   await page.getByLabel('Email').fill(email);
