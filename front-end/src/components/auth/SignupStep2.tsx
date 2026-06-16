@@ -1,6 +1,7 @@
 import React from "react";
 import SearchableSelect from "../common/SearchableSelect";
 import CitySearchInput from "../common/CitySearchInput";
+import BirthdaySelect from "../common/BirthdaySelect";
 import {
   HOME_COUNTRY_OPTIONS,
   COUNTRY_OPTIONS,
@@ -367,26 +368,15 @@ const SignupStep2: React.FC<SignupStep2Props> = ({
         )}
       </div>
 
-      <div>
-        <label
-          htmlFor="dateOfBirth"
-          className="block text-sm font-medium font-inter text-kin-navy mb-2"
-        >
-          Date of Birth
-          <span className="text-kin-coral ml-1">*</span>
-        </label>
-        <input
-          type="date"
-          id="dateOfBirth"
-          value={dateOfBirth}
-          min={minIsoUtc}
-          max={todayIsoUtc}
-          onChange={(e) => setDateOfBirth(e.target.value)}
-          className="w-full min-h-[48px] px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
-          required
-          aria-label="Date of birth"
-        />
-      </div>
+      <BirthdaySelect
+        idPrefix="dateOfBirth"
+        label="Date of Birth"
+        value={dateOfBirth}
+        minIsoDate={minIsoUtc}
+        maxIsoDate={todayIsoUtc}
+        onChange={setDateOfBirth}
+        required
+      />
 
       <SearchableSelect
         id="gender"
