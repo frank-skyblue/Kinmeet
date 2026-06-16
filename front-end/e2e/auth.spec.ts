@@ -18,7 +18,9 @@ test.describe('Auth Flow', () => {
     await page.locator('#lastName').fill('Demo');
     await selectTypeaheadOption(page, 'Your Home Country', 'France', 'France');
     await pickCityOption(page, 'Toronto', 'Toronto, Ontario, Canada');
-    await page.locator('#dateOfBirth').fill('1990-01-15');
+    await selectDropdownOption(page, 'Month', 'January');
+    await selectDropdownOption(page, 'Day', '15');
+    await selectDropdownOption(page, 'Year', '1990');
     await selectDropdownOption(page, 'Gender', 'Female');
     await page.getByRole('button', { name: 'Next' }).click();
 
