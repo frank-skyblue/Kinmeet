@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { loginAs, seedTestUser, selectDropdownOption, selectTypeaheadOption } from './helpers';
+import { loginAs, pickCityOption, seedTestUser, selectDropdownOption, selectTypeaheadOption } from './helpers';
 
 test.describe('Auth Flow', () => {
   test('signup step 3 shows education level dropdown', async ({ page }) => {
@@ -17,21 +17,20 @@ test.describe('Auth Flow', () => {
     await page.locator('#firstName').fill('Edu');
     await page.locator('#lastName').fill('Demo');
     await selectTypeaheadOption(page, 'Your Home Country', 'France', 'France');
-    await selectTypeaheadOption(page, /Province\/State/, 'Ontario', 'Ontario, Canada');
+    await pickCityOption(page, 'Toronto', 'Toronto, Ontario, Canada');
     await page.locator('#dateOfBirth').fill('1990-01-15');
     await selectDropdownOption(page, 'Gender', 'Female');
     await page.getByRole('button', { name: 'Next' }).click();
 
     await expect(page.getByText('Work & Education')).toBeVisible();
-    await expect(page.getByLabel('Education level')).toBeVisible();
+    await expect(page.getByRole('combobox', { name: /education level/i })).toBeVisible();
     await expect(page.getByLabel(/institution/i)).toHaveCount(0);
 
-    const educationSelect = page.getByLabel('Education level');
-    await educationSelect.selectOption("Bachelor's Degree");
-    await expect(educationSelect).toHaveValue("Bachelor's Degree");
+    await selectDropdownOption(page, /education level/i, "Bachelor's Degree");
+    await expect(page.getByRole('combobox', { name: /education level/i })).toContainText("Bachelor's Degree");
 
-    await page.getByLabel('Graduation year').selectOption('2020');
-    await expect(page.getByLabel('Graduation year')).toHaveValue('2020');
+    await selectDropdownOption(page, /graduation year/i, '2020');
+    await expect(page.getByRole('combobox', { name: /graduation year/i })).toContainText('2020');
   });
 
   test('login with valid credentials redirects to discover', async ({ page }) => {
