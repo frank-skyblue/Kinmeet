@@ -395,7 +395,7 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
 
             <BirthdaySelect
               idPrefix="dateOfBirth"
-              label="Birthday"
+              label="Date of Birth"
               value={dateOfBirth}
               minIsoDate={minIsoUtc}
               maxIsoDate={todayIsoUtc}
