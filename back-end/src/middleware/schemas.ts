@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { normalizeEmail } from '../utils/email';
 
 const objectId = z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid ID format');
 const requiredString = (field: string, maxLength: number) =>
@@ -60,7 +61,16 @@ export const sendMeetRequestSchema = z.object({
 });
 
 export const registerSchema = z.object({
-    email: requiredString('Email', 254).email('Invalid email address'),
+    email: z
+        .string()
+        .transform((value) => normalizeEmail(value))
+        .pipe(
+            z
+                .string()
+                .min(1, 'Email is required')
+                .max(254, 'Email is too long')
+                .email('Invalid email address'),
+        ),
     username: z.string().trim().toLowerCase().min(3, 'Username must be 3-30 characters using lowercase letters, numbers, or underscores').max(30, 'Username must be 3-30 characters using lowercase letters, numbers, or underscores').regex(/^[a-z0-9_]+$/, 'Username must be 3-30 characters using lowercase letters, numbers, or underscores').optional(),
     password: z.string(),
     firstName: requiredString('First name', 50),

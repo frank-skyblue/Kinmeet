@@ -29,6 +29,7 @@ interface SignupStep2Props {
   manualCountryMode: boolean;
   setManualCountryMode: React.Dispatch<React.SetStateAction<boolean>>;
   onPickCityResolved: (resolved: ResolvedCityLocation) => void;
+  onClearResolvedLocation: () => void;
   applyProvinceFromComposite: (composite: string) => void;
   photoPreview: string | null;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
@@ -62,6 +63,7 @@ const SignupStep2: React.FC<SignupStep2Props> = ({
   manualCountryMode,
   setManualCountryMode,
   onPickCityResolved,
+  onClearResolvedLocation,
   applyProvinceFromComposite,
   photoPreview,
   fileInputRef,
@@ -100,19 +102,27 @@ const SignupStep2: React.FC<SignupStep2Props> = ({
   };
 
   const validate = (): boolean => {
-    if (
-      !firstName ||
-      !lastName ||
-      !homeCountry ||
-      !currentCountry ||
-      !currentProvince ||
-      !currentCity.trim() ||
-      !dateOfBirth.trim() ||
-      !gender.trim()
-    ) {
-      setError("Please fill in all required fields");
+    const missing: string[] = [];
+    if (!firstName.trim()) missing.push("first name");
+    if (!lastName.trim()) missing.push("last name");
+    if (!homeCountry) missing.push("home country");
+    if (!dateOfBirth.trim()) missing.push("date of birth");
+    if (!gender.trim()) missing.push("gender");
+
+    if (!currentCity.trim()) {
+      missing.push("city");
+    } else if (!currentCountry || !currentProvince) {
+      setError(
+        "Pick your city from the suggestions to fill country and province, or use manual entry below",
+      );
       return false;
     }
+
+    if (missing.length > 0) {
+      setError(`Please fill in: ${missing.join(", ")}`);
+      return false;
+    }
+
     const dob = dateOfBirth.trim();
     if (
       /^\d{4}-\d{2}-\d{2}$/.test(dob) &&
@@ -289,6 +299,9 @@ const SignupStep2: React.FC<SignupStep2Props> = ({
           currentCity={currentCity}
           setCurrentCity={setCurrentCity}
           onPickCity={onPickCityResolved}
+          onManualEdit={() => {
+            if (!manualCountryMode) onClearResolvedLocation();
+          }}
           helperText="Type a few letters and choose a match to fill country and province below"
         />
 

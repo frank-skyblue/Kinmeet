@@ -15,6 +15,7 @@ export interface CitySearchInputProps {
   currentCity: string;
   setCurrentCity: (value: string) => void;
   onPickCity: (resolved: ResolvedCityLocation) => void;
+  onManualEdit?: () => void;
   helperText?: string;
 }
 
@@ -24,6 +25,7 @@ const CitySearchInput: React.FC<CitySearchInputProps> = ({
   currentCity,
   setCurrentCity,
   onPickCity,
+  onManualEdit,
   helperText,
 }) => {
   const [query, setQuery] = useState(currentCity);
@@ -67,9 +69,8 @@ const CitySearchInput: React.FC<CitySearchInputProps> = ({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const v = e.target.value;
     setQuery(v);
-    if (v !== currentCity) {
-      setCurrentCity("");
-    }
+    setCurrentCity(v);
+    onManualEdit?.();
     setOpen(true);
   };
 
