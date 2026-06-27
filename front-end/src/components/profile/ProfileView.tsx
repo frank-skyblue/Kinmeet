@@ -1,26 +1,12 @@
 import React from 'react';
 import { getPhotoUrl } from '../../services/api';
 import type { UserProfile } from '../../types';
+import { calculateAgeFromDateOfBirth } from '../../utils/age';
 
 const genderLabel = (value: string | undefined) => {
   if (value === 'female') return 'Female';
   if (value === 'male') return 'Male';
   if (value === 'other') return 'Other';
-  return null;
-};
-
-const birthdayDisplay = (value: string | undefined) => {
-  if (!value) return null;
-  const d = value.slice(0, 10);
-  if (/^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
-  try {
-    const parsed = new Date(value);
-    if (!Number.isNaN(parsed.getTime())) {
-      return parsed.toISOString().slice(0, 10);
-    }
-  } catch {
-    /* ignore */
-  }
   return null;
 };
 
@@ -75,9 +61,9 @@ const ProfileView: React.FC<ProfileViewProps> = ({
                 </p>
               </div>
               <div>
-                <h3 className="text-sm font-semibold font-inter text-kin-navy mb-2">Birthday</h3>
+                <h3 className="text-sm font-semibold font-inter text-kin-navy mb-2">Age</h3>
                 <p className="text-lg text-kin-navy font-montserrat">
-                  {birthdayDisplay(profile.dateOfBirth) ?? '—'}
+                  {calculateAgeFromDateOfBirth(profile.dateOfBirth) ?? '—'}
                 </p>
               </div>
             </div>

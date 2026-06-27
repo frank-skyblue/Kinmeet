@@ -39,5 +39,10 @@ test.describe('Chat Flow', () => {
 
     await messageBubble.hover();
     await expect(messageBubble).toHaveClass(/hover:shadow-kin-medium/);
+
+    await expect(page.getByTestId('chat-date-separator').filter({ hasText: 'Today' })).toBeVisible();
+
+    await messageBubble.click();
+    await expect(page.getByTestId('chat-message-timestamp')).toBeVisible();
   });
 });

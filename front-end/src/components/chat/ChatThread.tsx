@@ -15,6 +15,10 @@ import type {
   ChatUserTypingPayload,
   UserProfile,
 } from '../../types';
+import {
+  formatMessageTime,
+  groupMessagesByDate,
+} from '../../utils/chatMessageDates';
 
 interface ChatThreadProps {
   userId: string;
@@ -34,8 +38,10 @@ const ChatThread: React.FC<ChatThreadProps> = ({ userId }) => {
   const [isSending, setIsSending] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [error, setError] = useState('');
+  const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const messageDateGroups = groupMessagesByDate(messages);
 
   useEffect(() => {
     loadConversation();
@@ -200,22 +206,15 @@ const ChatThread: React.FC<ChatThreadProps> = ({ userId }) => {
     }
   };
 
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const handleMessageClick = (messageId: string) => {
+    setSelectedMessageId((current) => (current === messageId ? null : messageId));
+  };
 
-    if (days === 0) {
-      return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  const handleMessageKeyDown = (event: React.KeyboardEvent, messageId: string) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      handleMessageClick(messageId);
     }
-    if (days === 1) {
-      return 'Yesterday';
-    }
-    if (days < 7) {
-      return date.toLocaleDateString('en-US', { weekday: 'short' });
-    }
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
   const handleBackToInbox = () => {
@@ -313,29 +312,55 @@ const ChatThread: React.FC<ChatThreadProps> = ({ userId }) => {
               <p className="font-inter text-kin-teal">Send a message to begin chatting!</p>
             </div>
           ) : (
-            messages.map((message) => {
-              const isOwn = message.sender._id === user?.id;
-
-              return (
-                <div key={message._id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
-                  <div
-                    data-testid="chat-message-bubble"
-                    className={`max-w-xs cursor-default rounded-kin-lg px-4 py-3 font-inter transition duration-200 hover:shadow-kin-medium lg:max-w-md ${
-                      isOwn
-                        ? 'bg-kin-coral text-white shadow-kin-soft hover:bg-kin-coral-600'
-                        : 'bg-white text-kin-navy shadow-kin-soft hover:bg-kin-beige'
-                    }`}
-                  >
-                    <p className="wrap-break-word whitespace-pre-wrap">{message.content}</p>
-                    <p
-                      className={`mt-1 text-xs ${isOwn ? 'text-kin-beige' : 'text-kin-teal'}`}
-                    >
-                      {formatTime(message.createdAt)}
-                    </p>
-                  </div>
+            messageDateGroups.map((group) => (
+              <div key={group.dateKey} className="space-y-4">
+                <div
+                  className="sticky top-0 z-10 flex justify-center py-2"
+                  data-testid="chat-date-separator"
+                >
+                  <span className="rounded-full bg-white px-4 py-1 font-inter text-xs font-medium text-kin-teal shadow-kin-soft">
+                    {group.dateLabel}
+                  </span>
                 </div>
-              );
-            })
+
+                {group.messages.map((message) => {
+                  const isOwn = message.sender._id === user?.id;
+                  const isSelected = selectedMessageId === message._id;
+
+                  return (
+                    <div
+                      key={message._id}
+                      className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'}`}
+                    >
+                      <div
+                        data-testid="chat-message-bubble"
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`Message from ${message.sender.firstName}. Click to ${isSelected ? 'hide' : 'show'} sent time.`}
+                        aria-pressed={isSelected}
+                        onClick={() => handleMessageClick(message._id)}
+                        onKeyDown={(event) => handleMessageKeyDown(event, message._id)}
+                        className={`max-w-xs cursor-pointer rounded-kin-lg px-4 py-3 font-inter transition duration-200 hover:shadow-kin-medium lg:max-w-md ${
+                          isOwn
+                            ? 'bg-kin-coral text-white shadow-kin-soft hover:bg-kin-coral-600'
+                            : 'bg-white text-kin-navy shadow-kin-soft hover:bg-kin-beige'
+                        }`}
+                      >
+                        <p className="wrap-break-word whitespace-pre-wrap">{message.content}</p>
+                      </div>
+                      {isSelected && (
+                        <p
+                          data-testid="chat-message-timestamp"
+                          className={`mt-1 px-1 font-inter text-xs ${isOwn ? 'text-kin-teal' : 'text-kin-teal'}`}
+                        >
+                          {formatMessageTime(message.createdAt)}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ))
           )}
 
           {isTyping && (

@@ -64,6 +64,12 @@ const Signup: React.FC = () => {
     setMaxReachedStep((m) => Math.max(m, step));
   }, [step]);
 
+  const handleClearResolvedLocation = () => {
+    setCurrentCountry("");
+    setCurrentCountryCode("");
+    setCurrentProvince("");
+  };
+
   const handlePickCityResolved = (r: ResolvedCityLocation) => {
     setCurrentCity(r.cityName);
     setCurrentCountry(r.countryName);
@@ -294,6 +300,7 @@ const Signup: React.FC = () => {
             manualCountryMode={manualCountryMode}
             setManualCountryMode={setManualCountryMode}
             onPickCityResolved={handlePickCityResolved}
+            onClearResolvedLocation={handleClearResolvedLocation}
             applyProvinceFromComposite={applyProvinceFromComposite}
             photoPreview={photoPreview}
             fileInputRef={fileInputRef}
