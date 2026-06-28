@@ -96,6 +96,28 @@ const SignupStep3: React.FC<SignupStep3Props> = ({
           onChange={setEducationLevel}
           placeholder="Select education level"
         />
+
+        {/*
+          FE-030: Graduation Year UI hidden for now.
+          To show again:
+            1. Uncomment graduationYearOptions + SearchableSelect below.
+            2. Add graduationYear, setGraduationYear back to the destructured props above.
+            3. Uncomment graduation-year test in SignupStep3.test.tsx and e2e/auth.spec.ts if needed.
+
+          const graduationYearOptions = graduationYears.map((year) => ({
+            value: String(year),
+            label: String(year),
+          }));
+
+        <SearchableSelect
+          id="graduationYear"
+          label="Graduation Year"
+          options={graduationYearOptions}
+          value={graduationYear}
+          onChange={setGraduationYear}
+          placeholder="Select year"
+        />
+        */}
       </fieldset>
 
       <div className="flex gap-4 mt-4">

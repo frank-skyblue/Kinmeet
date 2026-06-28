@@ -477,6 +477,32 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
               placeholder="Select education level"
             />
 
+            {/*
+              FE-030: Graduation Year UI hidden for now.
+              To show again: use grid grid-cols-2 for Education Level + Graduation Year,
+              then uncomment the block below (state/submit logic in this file is unchanged).
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                ... keep Education Level SearchableSelect in left column ...
+              </div>
+              <div>
+                <label htmlFor="graduationYear" className="block text-sm font-medium font-inter text-kin-navy mb-2">
+                  Graduation Year
+                </label>
+                <input
+                  type="number"
+                  id="graduationYear"
+                  value={graduationYear}
+                  onChange={(e) => setGraduationYear(e.target.value)}
+                  className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
+                  min={1950}
+                  max={2100}
+                />
+              </div>
+            </div>
+            */}
+
             <SearchableSelect
               id="homeCountry"
               label="Your Home Country"
