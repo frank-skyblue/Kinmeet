@@ -367,6 +367,13 @@ export const authenticationService = {
         }
     },
 
+    checkEmailAvailability: async (
+        email: string,
+    ): Promise<{ success: true; available: boolean }> => {
+        const existingUser = await findUserByEmail(email);
+        return { success: true, available: !existingUser };
+    },
+
     logout: async (token: string): Promise<{ success: boolean; message: string }> => {
         try {
             // TODO: Add actual logout logic here (e.g., blacklist token)

@@ -223,6 +223,30 @@ describe('Auth Routes', () => {
     });
   });
 
+  describe('POST /api/auth/check-email', () => {
+    it('returns available true for a new email', async () => {
+      const res = await request(app)
+        .post('/api/auth/check-email')
+        .send({ email: 'new-check@example.com' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.available).toBe(true);
+    });
+
+    it('returns available false for an existing email', async () => {
+      await request(app).post('/api/auth/register').send(validRegister);
+
+      const res = await request(app)
+        .post('/api/auth/check-email')
+        .send({ email: validRegister.email });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.available).toBe(false);
+    });
+  });
+
   describe('POST /api/auth/login', () => {
     it('returns 200 and a token for valid credentials', async () => {
       await createTestUser({ email: 'login@test.com', password: 'TestPass123' });

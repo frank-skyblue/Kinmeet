@@ -32,6 +32,12 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
     }
 });
 
+export const checkEmail = asyncHandler(async (req: Request, res: Response) => {
+    const { email } = req.body;
+    const result = await authenticationService.checkEmailAvailability(email);
+    return res.status(200).json(result);
+});
+
 export const logout = asyncHandler(async (req: Request, res: Response) => {
     const token = req.headers.authorization?.replace("Bearer ", "");
 
