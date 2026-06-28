@@ -17,6 +17,8 @@ type SearchableSelectProps = {
   searchable?: boolean | "typeahead";
   /** When true, hides the visible label (e.g. when used in a group with a parent label) */
   hideLabel?: boolean;
+  /** Optional content shown before the selected value (e.g. a country flag) */
+  leadingContent?: React.ReactNode;
 };
 
 const SearchableSelect: React.FC<SearchableSelectProps> = ({
@@ -31,6 +33,7 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
   helperText,
   searchable = false,
   hideLabel = false,
+  leadingContent,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -126,6 +129,8 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
       ? searchQuery
       : (options.find((o) => o.value === value)?.label ?? value);
 
+  const showLeadingContent = Boolean(leadingContent && value && !(isTypeahead && searchQuery));
+
   return (
     <div ref={containerRef} className="relative">
       {!hideLabel && (
@@ -154,8 +159,11 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
         }`}
         aria-label={hideLabel ? (label || placeholder) : label}
       >
-        <span className={value ? "text-kin-navy" : "text-kin-stone-500"}>
-          {displayValue || placeholder}
+        <span
+          className={`flex items-center gap-2 min-w-0 ${value ? "text-kin-navy" : "text-kin-stone-500"}`}
+        >
+          {showLeadingContent ? leadingContent : null}
+          <span className="truncate">{displayValue || placeholder}</span>
         </span>
         <svg
           className={`w-5 h-5 text-kin-stone-500 transition-transform ${isOpen ? "rotate-180" : ""}`}
