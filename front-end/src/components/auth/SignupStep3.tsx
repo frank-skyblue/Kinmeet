@@ -23,20 +23,12 @@ const SignupStep3: React.FC<SignupStep3Props> = ({
   setCompany,
   educationLevel,
   setEducationLevel,
-  graduationYear,
-  setGraduationYear,
-  graduationYears,
   onNext,
   onBack,
 }) => {
   const handleNext = () => {
     onNext();
   };
-
-  const graduationYearOptions = graduationYears.map((year) => ({
-    value: String(year),
-    label: String(year),
-  }));
 
   return (
     <div className="space-y-6">
@@ -103,15 +95,6 @@ const SignupStep3: React.FC<SignupStep3Props> = ({
           value={educationLevel}
           onChange={setEducationLevel}
           placeholder="Select education level"
-        />
-
-        <SearchableSelect
-          id="graduationYear"
-          label="Graduation Year"
-          options={graduationYearOptions}
-          value={graduationYear}
-          onChange={setGraduationYear}
-          placeholder="Select year"
         />
       </fieldset>
 

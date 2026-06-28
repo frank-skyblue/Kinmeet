@@ -60,15 +60,9 @@ describe('SignupStep3', () => {
     expect(screen.getByText("Master's Degree")).toBeInTheDocument();
   });
 
-  it('calls setGraduationYear when a year is selected', async () => {
-    const setGraduationYear = vi.fn();
-    const user = userEvent.setup();
-    render(<SignupStep3 {...defaultProps} setGraduationYear={setGraduationYear} />);
-
-    await user.click(screen.getByRole('combobox', { name: /graduation year/i }));
-    await user.click(screen.getByRole('option', { name: '2025' }));
-
-    expect(setGraduationYear).toHaveBeenCalledWith('2025');
+  it('does not render graduation year field', () => {
+    render(<SignupStep3 {...defaultProps} />);
+    expect(screen.queryByRole('combobox', { name: /graduation year/i })).not.toBeInTheDocument();
   });
 
   it('calls onNext when Next is clicked', async () => {
