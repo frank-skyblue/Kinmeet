@@ -1,5 +1,11 @@
 import { test, expect } from '@playwright/test';
-import { loginAs, pickCityOption, seedTestUser, selectDropdownOption, selectTypeaheadOption } from './helpers';
+import {
+  loginAs,
+  seedTestUser,
+  selectCityOption,
+  selectDropdownOption,
+  selectTypeaheadOption,
+} from './helpers';
 
 test.describe('Auth Flow', () => {
   test('signup step 3 shows education level dropdown', async ({ page }) => {
@@ -17,7 +23,8 @@ test.describe('Auth Flow', () => {
     await page.locator('#firstName').fill('Edu');
     await page.locator('#lastName').fill('Demo');
     await selectTypeaheadOption(page, 'Your Home Country', 'France', 'France');
-    await pickCityOption(page, 'Toronto', 'Toronto, Ontario, Canada');
+    await selectCityOption(page, 'Toronto', /Toronto, Ontario, Canada/);
+    await selectTypeaheadOption(page, /Province\/State/, 'Ontario', 'Ontario, Canada');
     await page.locator('#dateOfBirth').fill('1990-01-15');
     await selectDropdownOption(page, 'Gender', 'Female');
     await page.getByRole('button', { name: 'Next' }).click();
@@ -31,6 +38,33 @@ test.describe('Auth Flow', () => {
 
     await selectDropdownOption(page, /graduation year/i, '2020');
     await expect(page.getByRole('combobox', { name: /graduation year/i })).toContainText('2020');
+  });
+
+  test('signup step 3 shows industry field only', async ({ page }) => {
+    await page.goto('/signup');
+    await expect(page.getByText('Join KinMeet')).toBeVisible();
+
+    const email = `industry-${Date.now()}@test.com`;
+
+    await page.locator('#email').fill(email);
+    await page.locator('#password').fill('TestPass1');
+    await page.locator('#confirmPassword').fill('TestPass1');
+    await page.getByRole('button', { name: 'Next' }).click();
+
+    await expect(page.getByText('Profile Information')).toBeVisible();
+    await page.locator('#firstName').fill('Industry');
+    await page.locator('#lastName').fill('Tester');
+    await selectTypeaheadOption(page, 'Your Home Country', 'France', 'France');
+    await selectCityOption(page, 'Toronto', /Toronto, Ontario, Canada/);
+    await selectTypeaheadOption(page, /Province\/State/, 'Ontario', 'Ontario, Canada');
+    await page.locator('#dateOfBirth').fill('1995-01-15');
+    await selectDropdownOption(page, 'Gender', 'Female');
+    await page.getByRole('button', { name: 'Next' }).click();
+
+    await expect(page.getByText('Work & Education')).toBeVisible();
+    await expect(page.getByLabel(/industry or field of work/i)).toBeVisible();
+    await expect(page.getByLabel(/job title/i)).toHaveCount(0);
+    await expect(page.getByLabel(/company/i)).toHaveCount(0);
   });
 
   test('login with valid credentials redirects to discover', async ({ page }) => {

@@ -65,6 +65,7 @@ export interface RegisterData {
     about?: string;
     jobTitle?: string;
     company?: string;
+    industry?: string;
     institution?: string;
     graduationYear?: number;
     homeCountry: string;
@@ -166,6 +167,7 @@ export const authenticationService = {
                 about,
                 jobTitle,
                 company,
+                industry,
                 institution,
                 graduationYear,
                 homeCountry, 
@@ -317,6 +319,7 @@ export const authenticationService = {
                 about: about || undefined,
                 jobTitle: jobTitle || undefined,
                 company: company || undefined,
+                industry: industry || undefined,
                 institution: institution || undefined,
                 graduationYear: graduationYear || undefined,
                 homeCountry,

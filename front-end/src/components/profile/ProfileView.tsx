@@ -76,14 +76,10 @@ const ProfileView: React.FC<ProfileViewProps> = ({
                 </div>
               )}
 
-              {(profile.jobTitle || profile.company) && (
+              {profile.industry && (
                 <div>
                   <h3 className="text-sm font-semibold font-inter text-kin-navy mb-2">Work</h3>
-                  <p className="text-lg text-kin-navy font-montserrat">
-                    {profile.jobTitle}
-                    {profile.jobTitle && profile.company && ' at '}
-                    {profile.company}
-                  </p>
+                  <p className="text-lg text-kin-navy font-montserrat">{profile.industry}</p>
                 </div>
               )}
 

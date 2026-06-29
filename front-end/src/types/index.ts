@@ -22,6 +22,7 @@ export interface UserProfile {
     about?: string;
     jobTitle?: string;
     company?: string;
+    industry?: string;
     educationLevel?: string;
     graduationYear?: number;
     homeCountry: string;
@@ -107,6 +108,7 @@ export interface RegisterPayload {
     about?: string;
     jobTitle?: string;
     company?: string;
+    industry?: string;
     educationLevel?: string;
     graduationYear?: number;
     homeCountry: string;
@@ -129,6 +131,7 @@ export interface UpdateProfilePayload {
     about?: string;
     jobTitle?: string;
     company?: string;
+    industry?: string;
     educationLevel?: string;
     graduationYear?: number;
     homeCountry?: string;

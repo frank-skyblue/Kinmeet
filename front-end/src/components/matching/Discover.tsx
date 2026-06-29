@@ -8,6 +8,7 @@ interface Match {
   about?: string;
   jobTitle?: string;
   company?: string;
+  industry?: string;
   educationLevel?: string;
   graduationYear?: number;
   homeCountry: string;
@@ -150,11 +151,9 @@ const Discover: React.FC = () => {
                   {currentMatch.firstName}
                 </h2>
 
-                {(currentMatch.jobTitle || currentMatch.company) && (
+                {currentMatch.industry && (
                   <p className="text-kin-teal font-inter text-xs md:text-sm line-clamp-1">
-                    {currentMatch.jobTitle}
-                    {currentMatch.jobTitle && currentMatch.company && ' at '}
-                    {currentMatch.company}
+                    {currentMatch.industry}
                   </p>
                 )}
               </div>
