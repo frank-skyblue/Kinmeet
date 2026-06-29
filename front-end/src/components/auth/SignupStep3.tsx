@@ -1,6 +1,6 @@
 import React from "react";
 import SearchableSelect from "../common/SearchableSelect";
-import { EDUCATION_LEVEL_OPTIONS } from "../../constants/profileOptions";
+import { EDUCATION_LEVEL_OPTIONS, INDUSTRY_OPTIONS } from "../../constants/profileOptions";
 
 interface SignupStep3Props {
   industry: string;
@@ -49,23 +49,15 @@ const SignupStep3: React.FC<SignupStep3Props> = ({
           Work
         </legend>
 
-        <div>
-          <label
-            htmlFor="industry"
-            className="block text-sm font-medium font-inter text-kin-navy mb-2"
-          >
-            Industry or Field of Work
-          </label>
-          <input
-            type="text"
-            id="industry"
-            value={industry}
-            onChange={(e) => setIndustry(e.target.value)}
-            className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
-            placeholder="e.g., Technology, Healthcare, Education"
-            aria-label="Industry or field of work"
-          />
-        </div>
+        <SearchableSelect
+          id="industry"
+          label="Industry or Field of Work"
+          options={INDUSTRY_OPTIONS}
+          value={industry}
+          onChange={setIndustry}
+          placeholder="Select your industry"
+          searchable={true}
+        />
       </fieldset>
 
       {/* Education Section */}

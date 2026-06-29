@@ -11,6 +11,7 @@ import {
   LANGUAGE_OPTIONS,
   COUNTRY_OPTIONS,
   INTEREST_OPTIONS,
+  INDUSTRY_OPTIONS,
   SIGNUP_GENDER_OPTIONS,
   EDUCATION_LEVEL_OPTIONS,
   getGlobalProvinceOptions,
@@ -41,8 +42,6 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [about, setAbout] = useState('');
-  const [jobTitle, setJobTitle] = useState('');
-  const [company, setCompany] = useState('');
   const [industry, setIndustry] = useState('');
   const [educationLevel, setEducationLevel] = useState('');
   const [graduationYear, setGraduationYear] = useState('');
@@ -86,8 +85,6 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
     setFirstName(profile.firstName);
     setLastName(profile.lastName || '');
     setAbout(profile.about || '');
-    setJobTitle(profile.jobTitle || '');
-    setCompany(profile.company || '');
     setIndustry(profile.industry || '');
     setEducationLevel(profile.educationLevel || '');
     setGraduationYear(profile.graduationYear != null ? String(profile.graduationYear) : '');
@@ -260,8 +257,6 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         about: about.trim() || undefined,
-        jobTitle: jobTitle.trim() || undefined,
-        company: company.trim() || undefined,
         industry: industry.trim() || undefined,
         educationLevel: educationLevel.trim() || undefined,
         graduationYear: gy ? parseInt(gy, 10) : undefined,
@@ -444,47 +439,15 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
               </p>
             </div>
 
-            <div>
-              <label htmlFor="industry" className="block text-sm font-medium font-inter text-kin-navy mb-2">
-                Industry or Field of Work
-              </label>
-              <input
-                type="text"
-                id="industry"
-                value={industry}
-                onChange={(e) => setIndustry(e.target.value)}
-                className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
-                placeholder="e.g., Technology, Healthcare, Education"
-                aria-label="Industry or field of work"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="jobTitle" className="block text-sm font-medium font-inter text-kin-navy mb-2">
-                  Job Title
-                </label>
-                <input
-                  type="text"
-                  id="jobTitle"
-                  value={jobTitle}
-                  onChange={(e) => setJobTitle(e.target.value)}
-                  className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
-                />
-              </div>
-              <div>
-                <label htmlFor="company" className="block text-sm font-medium font-inter text-kin-navy mb-2">
-                  Company
-                </label>
-                <input
-                  type="text"
-                  id="company"
-                  value={company}
-                  onChange={(e) => setCompany(e.target.value)}
-                  className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
-                />
-              </div>
-            </div>
+            <SearchableSelect
+              id="industry"
+              label="Industry or Field of Work"
+              options={INDUSTRY_OPTIONS}
+              value={industry}
+              onChange={setIndustry}
+              placeholder="Select your industry"
+              searchable={true}
+            />
 
             <div className="grid grid-cols-2 gap-4">
               <div>
