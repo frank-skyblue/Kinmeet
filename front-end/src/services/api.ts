@@ -82,6 +82,11 @@ export const authAPI = {
     return response.data;
   },
 
+  checkEmail: async (email: string) => {
+    const response = await api.post('/auth/check-email', { email });
+    return response.data as { success: boolean; available?: boolean; message?: string };
+  },
+
   logout: async () => {
     const response = await api.post('/auth/logout');
     return response.data;

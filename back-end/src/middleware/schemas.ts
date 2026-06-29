@@ -60,7 +60,7 @@ export const sendMeetRequestSchema = z.object({
     receiverId: objectId,
 });
 
-export const registerSchema = z.object({
+export const checkEmailSchema = z.object({
     email: z
         .string()
         .transform((value) => normalizeEmail(value))
@@ -71,6 +71,10 @@ export const registerSchema = z.object({
                 .max(254, 'Email is too long')
                 .email('Invalid email address'),
         ),
+});
+
+export const registerSchema = z.object({
+    email: checkEmailSchema.shape.email,
     username: z.string().trim().toLowerCase().min(3, 'Username must be 3-30 characters using lowercase letters, numbers, or underscores').max(30, 'Username must be 3-30 characters using lowercase letters, numbers, or underscores').regex(/^[a-z0-9_]+$/, 'Username must be 3-30 characters using lowercase letters, numbers, or underscores').optional(),
     password: z.string(),
     firstName: requiredString('First name', 50),
