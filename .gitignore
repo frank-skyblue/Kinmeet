@@ -146,3 +146,6 @@ test-results/
 # Misc
 .vercel
 .turbo
+
+data/**
+trace/**
