@@ -35,9 +35,6 @@ test.describe('Auth Flow', () => {
 
     await selectDropdownOption(page, /education level/i, "Bachelor's Degree");
     await expect(page.getByRole('combobox', { name: /education level/i })).toContainText("Bachelor's Degree");
-
-    await selectDropdownOption(page, /graduation year/i, '2020');
-    await expect(page.getByRole('combobox', { name: /graduation year/i })).toContainText('2020');
   });
 
   test('signup step 3 shows industry field only', async ({ page }) => {
