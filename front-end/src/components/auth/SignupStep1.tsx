@@ -19,6 +19,7 @@ interface SignupStep1Props {
 }
 
 const USERNAME_PATTERN = /^[a-z0-9_]{3,30}$/;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const SignupStep1: React.FC<SignupStep1Props> = ({
   email,
@@ -35,6 +36,10 @@ const SignupStep1: React.FC<SignupStep1Props> = ({
   const validate = (): boolean => {
     if (!email || !password || !confirmPassword) {
       setError("All fields are required");
+      return false;
+    }
+    if (!EMAIL_PATTERN.test(email.trim())) {
+      setError("Please enter a valid email address.");
       return false;
     }
     const trimmedUsername = username.trim();

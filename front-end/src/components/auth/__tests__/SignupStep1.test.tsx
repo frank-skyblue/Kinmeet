@@ -58,4 +58,47 @@ describe('SignupStep1', () => {
       expect(defaultProps.onNext).toHaveBeenCalled();
     });
   });
+
+  it('shows email format error and does not call checkEmail for invalid email format', async () => {
+    const user = userEvent.setup();
+    render(<SignupStep1 {...defaultProps} email="notavalidemail" />);
+
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+
+    await waitFor(() => {
+      expect(defaultProps.setError).toHaveBeenCalledWith(
+        'Please enter a valid email address.',
+      );
+      expect(mockCheckEmail).not.toHaveBeenCalled();
+      expect(defaultProps.onNext).not.toHaveBeenCalled();
+    });
+  });
+
+  it('shows email format error for email missing domain extension', async () => {
+    const user = userEvent.setup();
+    render(<SignupStep1 {...defaultProps} email="user@nodomain" />);
+
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+
+    await waitFor(() => {
+      expect(defaultProps.setError).toHaveBeenCalledWith(
+        'Please enter a valid email address.',
+      );
+      expect(mockCheckEmail).not.toHaveBeenCalled();
+    });
+  });
+
+  it('shows email format error for email missing @ symbol', async () => {
+    const user = userEvent.setup();
+    render(<SignupStep1 {...defaultProps} email="userexample.com" />);
+
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+
+    await waitFor(() => {
+      expect(defaultProps.setError).toHaveBeenCalledWith(
+        'Please enter a valid email address.',
+      );
+      expect(mockCheckEmail).not.toHaveBeenCalled();
+    });
+  });
 });

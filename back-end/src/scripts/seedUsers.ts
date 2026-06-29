@@ -3,7 +3,9 @@
  * Kinmeet `seedUsers` — data reference (indices 0–19 match `seedUsers` array order)
  * =============================================================================
  *
- * ## Users (index, name, email — password for all: `Password123`)
+ * ## Users (index, name, email, username — password for all: `Password123`)
+ *
+ * Each profile includes `dateOfBirth`, `gender`, and `currentCity` (required at signup).
  *
  * | Idx | First name | Last name   | Email                           |
  * |-----|------------|-------------|---------------------------------|
@@ -84,6 +86,42 @@ import { Block } from '../models/Block';
 import { IUser, User } from '../models/User';
 import { blockService } from '../services/blockService';
 
+type LookingForType = 'Friendship' | 'Networking' | 'Support';
+type SeedGender = 'female' | 'male' | 'other';
+
+type SeedUserData = {
+  email: string;
+  username: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  about: string;
+  jobTitle: string;
+  company?: string;
+  institution?: string;
+  graduationYear?: number;
+  homeCountry: string;
+  currentProvince: string;
+  currentCountry: string;
+  currentCity: string;
+  languages: string[];
+  interests: string[];
+  lookingFor: LookingForType[];
+  dateOfBirth: string;
+  gender: SeedGender;
+  profileComplete: boolean;
+};
+
+const toSeedDob = (iso: string): Date => {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (!match) {
+    throw new Error(`Invalid seed dateOfBirth: ${iso}`);
+  }
+  return new Date(
+    Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]), 12, 0, 0, 0),
+  );
+};
+
 /** Match `connectionService.acceptConnectionRequest` ordering for the unique index. */
 const orderedUserPair = (
   a: Types.ObjectId,
@@ -157,12 +195,15 @@ const MONGODB_URI = process.env.MONGODB_URI || process.env.MONGO_URL || 'mongodb
 /** When true (pass `--reset` on the CLI), drops the entire connected database before seeding. */
 const RESET_DB = process.argv.includes('--reset');
 
-const seedUsers = [
+const seedUsers: SeedUserData[] = [
   {
     email: 'lucia.martinez@example.com',
+    username: 'lucia_m',
     password: 'Password123',
     firstName: 'Lucia',
     lastName: 'Martinez',
+    dateOfBirth: '1997-05-14',
+    gender: 'female',
     about: 'Moved to Canada two years ago for work. Love exploring new cities and meeting people from back home.',
     jobTitle: 'UX Designer',
     company: 'Shopify',
@@ -174,14 +215,17 @@ const seedUsers = [
     currentCity: 'Toronto',
     languages: ['Spanish', 'English'],
     interests: ['Photography', 'Hiking', 'Cooking', 'Travel'],
-    lookingFor: ['Friendship', 'Networking'] as ('Friendship' | 'Networking' | 'Support')[],
+    lookingFor: ['Friendship', 'Networking'],
     profileComplete: true,
   },
   {
     email: 'mateo.gomez@example.com',
+    username: 'mateo_g',
     password: 'Password123',
     firstName: 'Mateo',
     lastName: 'Gomez',
+    dateOfBirth: '1995-11-02',
+    gender: 'male',
     about: 'Software developer from Córdoba. Always up for asado and fútbol on weekends.',
     jobTitle: 'Software Engineer',
     company: 'RBC',
@@ -190,16 +234,20 @@ const seedUsers = [
     homeCountry: 'Argentina',
     currentProvince: 'Ontario',
     currentCountry: 'Canada',
+    currentCity: 'Toronto',
     languages: ['Spanish', 'English', 'Portuguese'],
     interests: ['Sports', 'Gaming', 'Cooking', 'Technology'],
-    lookingFor: ['Friendship', 'Networking'] as ('Friendship' | 'Networking' | 'Support')[],
+    lookingFor: ['Friendship', 'Networking'],
     profileComplete: true,
   },
   {
     email: 'valentina.lopez@example.com',
+    username: 'valentina_l',
     password: 'Password123',
     firstName: 'Valentina',
     lastName: 'Lopez',
+    dateOfBirth: '1994-07-22',
+    gender: 'female',
     about: 'Nurse practitioner passionate about healthcare and community. Miss my family in Mendoza but love my life here.',
     jobTitle: 'Nurse Practitioner',
     company: 'SickKids Hospital',
@@ -208,16 +256,20 @@ const seedUsers = [
     homeCountry: 'Argentina',
     currentProvince: 'Ontario',
     currentCountry: 'Canada',
+    currentCity: 'Toronto',
     languages: ['Spanish', 'English'],
     interests: ['Yoga', 'Reading', 'Volunteering', 'Gardening'],
-    lookingFor: ['Friendship', 'Support'] as ('Friendship' | 'Networking' | 'Support')[],
+    lookingFor: ['Friendship', 'Support'],
     profileComplete: true,
   },
   {
     email: 'santiago.fernandez@example.com',
+    username: 'santiago_f',
     password: 'Password123',
     firstName: 'Santiago',
     lastName: 'Fernandez',
+    dateOfBirth: '1993-01-30',
+    gender: 'male',
     about: 'Entrepreneur building a fintech startup. Relocated from Rosario. Always looking to connect with fellow Argentines.',
     jobTitle: 'Co-Founder & CEO',
     company: 'PayLatam',
@@ -226,16 +278,20 @@ const seedUsers = [
     homeCountry: 'Argentina',
     currentProvince: 'Ontario',
     currentCountry: 'Canada',
+    currentCity: 'Toronto',
     languages: ['Spanish', 'English', 'Italian'],
     interests: ['Technology', 'Running', 'Reading', 'Wine Tasting'],
-    lookingFor: ['Networking', 'Friendship'] as ('Friendship' | 'Networking' | 'Support')[],
+    lookingFor: ['Networking', 'Friendship'],
     profileComplete: true,
   },
   {
     email: 'camila.ruiz@example.com',
+    username: 'camila_r',
     password: 'Password123',
     firstName: 'Camila',
     lastName: 'Ruiz',
+    dateOfBirth: '2001-09-08',
+    gender: 'female',
     about: 'Graduate student researching climate science. From Buenos Aires, adjusting to Canadian winters!',
     jobTitle: 'Research Assistant',
     company: 'University of Toronto',
@@ -244,32 +300,40 @@ const seedUsers = [
     homeCountry: 'Argentina',
     currentProvince: 'Ontario',
     currentCountry: 'Canada',
+    currentCity: 'Toronto',
     languages: ['Spanish', 'English', 'French'],
     interests: ['Science', 'Hiking', 'Photography', 'Cycling'],
-    lookingFor: ['Friendship', 'Support'] as ('Friendship' | 'Networking' | 'Support')[],
+    lookingFor: ['Friendship', 'Support'],
     profileComplete: true,
   },
   {
     email: 'nicolas.silva@example.com',
+    username: 'nicolas_s',
     password: 'Password123',
     firstName: 'Nicolas',
     lastName: 'Silva',
+    dateOfBirth: '1991-12-03',
+    gender: 'male',
     about: 'Data analyst who loves board games and craft beer. Proud porteño living in the GTA.',
     jobTitle: 'Senior Data Analyst',
     company: 'TD Bank',
     homeCountry: 'Argentina',
     currentProvince: 'Ontario',
     currentCountry: 'Canada',
+    currentCity: 'Toronto',
     languages: ['Spanish', 'English'],
     interests: ['Board Games', 'Technology', 'Cooking', 'Sports'],
-    lookingFor: ['Friendship'] as ('Friendship' | 'Networking' | 'Support')[],
+    lookingFor: ['Friendship'],
     profileComplete: true,
   },
   {
     email: 'sofia.moreno@example.com',
+    username: 'sofia_m',
     password: 'Password123',
     firstName: 'Sofia',
     lastName: 'Moreno',
+    dateOfBirth: '1996-04-17',
+    gender: 'female',
     about: 'Architect turned project manager. Love exploring art galleries and discovering hidden gems around Toronto.',
     jobTitle: 'Project Manager',
     company: 'AECOM',
@@ -278,32 +342,40 @@ const seedUsers = [
     homeCountry: 'Argentina',
     currentProvince: 'Ontario',
     currentCountry: 'Canada',
+    currentCity: 'Toronto',
     languages: ['Spanish', 'English'],
     interests: ['Arts & Culture', 'Photography', 'Travel', 'Theatre'],
-    lookingFor: ['Friendship', 'Networking'] as ('Friendship' | 'Networking' | 'Support')[],
+    lookingFor: ['Friendship', 'Networking'],
     profileComplete: true,
   },
   {
     email: 'joaquin.garcia@example.com',
+    username: 'joaquin_g',
     password: 'Password123',
     firstName: 'Joaquin',
     lastName: 'Garcia',
+    dateOfBirth: '1990-08-25',
+    gender: 'male',
     about: 'Personal trainer and fitness enthusiast from Mar del Plata. Helping people get strong, one rep at a time.',
     jobTitle: 'Personal Trainer',
     company: 'GoodLife Fitness',
     homeCountry: 'Argentina',
     currentProvince: 'Ontario',
     currentCountry: 'Canada',
+    currentCity: 'Toronto',
     languages: ['Spanish', 'English'],
     interests: ['Fitness', 'Running', 'Cooking', 'Music'],
-    lookingFor: ['Friendship', 'Networking', 'Support'] as ('Friendship' | 'Networking' | 'Support')[],
+    lookingFor: ['Friendship', 'Networking', 'Support'],
     profileComplete: true,
   },
   {
     email: 'martina.aguirre@example.com',
+    username: 'martina_a',
     password: 'Password123',
     firstName: 'Martina',
     lastName: 'Aguirre',
+    dateOfBirth: '1999-02-11',
+    gender: 'female',
     about: 'Marketing professional and tango dancer. Bringing a little bit of Buenos Aires everywhere I go.',
     jobTitle: 'Marketing Manager',
     company: 'Scotiabank',
@@ -312,16 +384,20 @@ const seedUsers = [
     homeCountry: 'Argentina',
     currentProvince: 'Ontario',
     currentCountry: 'Canada',
+    currentCity: 'Toronto',
     languages: ['Spanish', 'English', 'French'],
     interests: ['Dancing', 'Music', 'Fashion', 'Travel'],
-    lookingFor: ['Friendship', 'Networking'] as ('Friendship' | 'Networking' | 'Support')[],
+    lookingFor: ['Friendship', 'Networking'],
     profileComplete: true,
   },
   {
     email: 'tomas.perez@example.com',
+    username: 'tomas_p',
     password: 'Password123',
     firstName: 'Tomas',
     lastName: 'Perez',
+    dateOfBirth: '1989-06-19',
+    gender: 'male',
     about: 'Recently arrived in Canada. Working in construction management and looking to meet people from home.',
     jobTitle: 'Construction Manager',
     company: 'EllisDon',
@@ -330,16 +406,20 @@ const seedUsers = [
     homeCountry: 'Argentina',
     currentProvince: 'Ontario',
     currentCountry: 'Canada',
+    currentCity: 'Toronto',
     languages: ['Spanish', 'English'],
     interests: ['Sports', 'Camping', 'DIY Projects', 'Fishing'],
-    lookingFor: ['Friendship', 'Support'] as ('Friendship' | 'Networking' | 'Support')[],
+    lookingFor: ['Friendship', 'Support'],
     profileComplete: true,
   },
   {
     email: 'alejandro.vega@example.com',
+    username: 'alejandro_v',
     password: 'Password123',
     firstName: 'Alejandro',
     lastName: 'Vega',
+    dateOfBirth: '1994-10-05',
+    gender: 'male',
     about: 'Civil engineer who moved to Mississauga last year. Still looking for a good yerba mate supplier.',
     jobTitle: 'Structural Engineer',
     company: 'WSP',
@@ -350,15 +430,18 @@ const seedUsers = [
     currentCountry: 'Canada',
     currentCity: 'Mississauga',
     languages: ['Spanish', 'English'],
-    interests: ['Cycling', 'Cooking', 'Soccer', 'Podcasts'],
-    lookingFor: ['Friendship', 'Networking'] as ('Friendship' | 'Networking' | 'Support')[],
+    interests: ['Cycling', 'Cooking', 'Sports', 'Podcasts'],
+    lookingFor: ['Friendship', 'Networking'],
     profileComplete: true,
   },
   {
     email: 'florencia.diaz@example.com',
+    username: 'florencia_d',
     password: 'Password123',
     firstName: 'Florencia',
     lastName: 'Diaz',
+    dateOfBirth: '1997-03-28',
+    gender: 'female',
     about: "Elementary school teacher from La Plata. Love kids' books and weekend trips to Niagara.",
     jobTitle: 'Teacher',
     company: 'Peel District School Board',
@@ -367,16 +450,20 @@ const seedUsers = [
     homeCountry: 'Argentina',
     currentProvince: 'Ontario',
     currentCountry: 'Canada',
+    currentCity: 'Toronto',
     languages: ['Spanish', 'English', 'French'],
     interests: ['Reading', 'Hiking', 'Theatre', 'Volunteering'],
-    lookingFor: ['Friendship', 'Support'] as ('Friendship' | 'Networking' | 'Support')[],
+    lookingFor: ['Friendship', 'Support'],
     profileComplete: true,
   },
   {
     email: 'ricardo.soto@example.com',
+    username: 'ricardo_s',
     password: 'Password123',
     firstName: 'Ricardo',
     lastName: 'Soto',
+    dateOfBirth: '1988-07-14',
+    gender: 'male',
     about: 'Electrician and weekend DJ. Trying to build a small studio in my basement.',
     jobTitle: 'Licensed Electrician',
     company: 'IESO Contractor',
@@ -385,15 +472,18 @@ const seedUsers = [
     currentCountry: 'Canada',
     currentCity: 'Hamilton',
     languages: ['Spanish', 'English'],
-    interests: ['Music', 'DIY', 'Sports', 'Coffee'],
-    lookingFor: ['Friendship', 'Networking'] as ('Friendship' | 'Networking' | 'Support')[],
+    interests: ['Music', 'DIY Projects', 'Sports', 'Podcasts'],
+    lookingFor: ['Friendship', 'Networking'],
     profileComplete: true,
   },
   {
     email: 'julia.romero@example.com',
+    username: 'julia_r',
     password: 'Password123',
     firstName: 'Julia',
     lastName: 'Romero',
+    dateOfBirth: '1998-11-09',
+    gender: 'female',
     about: 'PhD student in neuroscience. Missing asados but not the humidity of BA summers.',
     jobTitle: 'Graduate Researcher',
     company: 'McMaster University',
@@ -404,15 +494,18 @@ const seedUsers = [
     currentCountry: 'Canada',
     currentCity: 'Hamilton',
     languages: ['Spanish', 'English'],
-    interests: ['Science', 'Running', 'Chess', 'Film'],
-    lookingFor: ['Friendship', 'Networking'] as ('Friendship' | 'Networking' | 'Support')[],
+    interests: ['Science', 'Running', 'Chess', 'Movies'],
+    lookingFor: ['Friendship', 'Networking'],
     profileComplete: true,
   },
   {
     email: 'facundo.castro@example.com',
+    username: 'facundo_c',
     password: 'Password123',
     firstName: 'Facundo',
     lastName: 'Castro',
+    dateOfBirth: '1992-05-20',
+    gender: 'male',
     about: 'Barista and aspiring roaster. Always happy to trade café tips with fellow porteños.',
     jobTitle: 'Head Barista',
     company: 'Pilot Coffee Roasters',
@@ -421,15 +514,18 @@ const seedUsers = [
     currentCountry: 'Canada',
     currentCity: 'Toronto',
     languages: ['Spanish', 'English', 'Italian'],
-    interests: ['Coffee', 'Cycling', 'Photography', 'Music'],
-    lookingFor: ['Friendship'] as ('Friendship' | 'Networking' | 'Support')[],
+    interests: ['Cooking', 'Cycling', 'Photography', 'Music'],
+    lookingFor: ['Friendship'],
     profileComplete: true,
   },
   {
     email: 'carolina.navarro@example.com',
+    username: 'carolina_n',
     password: 'Password123',
     firstName: 'Carolina',
     lastName: 'Navarro',
+    dateOfBirth: '1995-08-01',
+    gender: 'female',
     about: 'HR generalist at a tech startup. Organizing a Latinx professionals meetup in the GTA.',
     jobTitle: 'HR Business Partner',
     company: 'Wave Financial',
@@ -438,16 +534,20 @@ const seedUsers = [
     homeCountry: 'Argentina',
     currentProvince: 'Ontario',
     currentCountry: 'Canada',
+    currentCity: 'Toronto',
     languages: ['Spanish', 'English'],
-    interests: ['Networking', 'Yoga', 'Travel', 'Food'],
-    lookingFor: ['Networking', 'Friendship'] as ('Friendship' | 'Networking' | 'Support')[],
+    interests: ['Language Learning', 'Yoga', 'Travel', 'Cooking'],
+    lookingFor: ['Networking', 'Friendship'],
     profileComplete: true,
   },
   {
     email: 'bruno.acosta@example.com',
+    username: 'bruno_a',
     password: 'Password123',
     firstName: 'Bruno',
     lastName: 'Acosta',
+    dateOfBirth: '1993-12-12',
+    gender: 'male',
     about: 'Mechanic and rally fan. New to Ottawa, learning to skate like a true Canadian.',
     jobTitle: 'Automotive Technician',
     company: 'Canadian Tire',
@@ -456,15 +556,18 @@ const seedUsers = [
     currentCountry: 'Canada',
     currentCity: 'Ottawa',
     languages: ['Spanish', 'English'],
-    interests: ['Motorsport', 'Hockey', 'BBQ', 'Gaming'],
-    lookingFor: ['Friendship', 'Support'] as ('Friendship' | 'Networking' | 'Support')[],
+    interests: ['Sports', 'Outdoor Activities', 'Cooking', 'Gaming'],
+    lookingFor: ['Friendship', 'Support'],
     profileComplete: true,
   },
   {
     email: 'elena.vargas@example.com',
+    username: 'elena_v',
     password: 'Password123',
     firstName: 'Elena',
     lastName: 'Vargas',
+    dateOfBirth: '1994-06-06',
+    gender: 'female',
     about: 'Graphic designer freelancing for nonprofits. Collecting vintage posters from Latin America.',
     jobTitle: 'Freelance Designer',
     company: 'Self-employed',
@@ -475,31 +578,38 @@ const seedUsers = [
     currentCountry: 'Canada',
     currentCity: 'Toronto',
     languages: ['Spanish', 'English'],
-    interests: ['Design', 'Museums', 'Swimming', 'Travel'],
-    lookingFor: ['Friendship', 'Networking'] as ('Friendship' | 'Networking' | 'Support')[],
+    interests: ['Drawing', 'Museum Visits', 'Swimming', 'Travel'],
+    lookingFor: ['Friendship', 'Networking'],
     profileComplete: true,
   },
   {
     email: 'diego.morales@example.com',
+    username: 'diego_m',
     password: 'Password123',
     firstName: 'Diego',
     lastName: 'Morales',
+    dateOfBirth: '1987-04-03',
+    gender: 'male',
     about: 'Warehouse lead by day, guitar by night. Tango classes on Tuesdays in the west end.',
     jobTitle: 'Warehouse Supervisor',
     company: 'Amazon',
     homeCountry: 'Argentina',
     currentProvince: 'Ontario',
     currentCountry: 'Canada',
+    currentCity: 'Toronto',
     languages: ['Spanish', 'English'],
-    interests: ['Music', 'Dancing', 'Soccer', 'Cooking'],
-    lookingFor: ['Friendship'] as ('Friendship' | 'Networking' | 'Support')[],
+    interests: ['Music', 'Dancing', 'Sports', 'Cooking'],
+    lookingFor: ['Friendship'],
     profileComplete: true,
   },
   {
     email: 'patricia.flores@example.com',
+    username: 'patricia_f',
     password: 'Password123',
     firstName: 'Patricia',
     lastName: 'Flores',
+    dateOfBirth: '1960-01-15',
+    gender: 'female',
     about: 'Retired accountant, now volunteering with newcomers. Grandkids keep me on FaceTime daily.',
     jobTitle: 'Volunteer Tax Preparer',
     company: 'Community Centre',
@@ -510,8 +620,8 @@ const seedUsers = [
     currentCountry: 'Canada',
     currentCity: 'Toronto',
     languages: ['Spanish', 'English'],
-    interests: ['Volunteering', 'Gardening', 'Family', 'Walking'],
-    lookingFor: ['Support', 'Friendship'] as ('Friendship' | 'Networking' | 'Support')[],
+    interests: ['Volunteering', 'Gardening', 'Outdoor Activities', 'Reading'],
+    lookingFor: ['Support', 'Friendship'],
     profileComplete: true,
   },
 ];
@@ -532,12 +642,15 @@ const seed = async () => {
     const usersInOrder: IUser[] = [];
 
     for (const userData of seedUsers) {
+      const { dateOfBirth: dobIso, ...rest } = userData;
+      const payload = { ...rest, dateOfBirth: toSeedDob(dobIso) };
+
       let user = await User.findOne({ email: userData.email });
       if (user) {
         console.log(`Skipped (already exists): ${userData.email}`);
         skipped++;
       } else {
-        user = await User.create(userData);
+        user = await User.create(payload);
         console.log(`Created: ${userData.firstName} ${userData.lastName} (${userData.email})`);
         created++;
       }
