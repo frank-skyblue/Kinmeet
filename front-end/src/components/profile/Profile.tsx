@@ -6,7 +6,6 @@ import { getErrorMessage } from '../../utils/error';
 import type { UserProfile } from '../../types';
 import ProfileView from './ProfileView';
 import ProfileEditForm from './ProfileEditForm';
-import DeleteAccountModal from './DeleteAccountModal';
 
 const Profile: React.FC = () => {
   const { userId: routeUserId } = useParams<{ userId: string }>();
@@ -15,14 +14,11 @@ const Profile: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [isEditing, setIsEditing] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-
   const showManageActions =
     routeUserId === undefined || (user?.id !== undefined && routeUserId === user.id);
 
   useEffect(() => {
     setIsEditing(false);
-    setShowDeleteConfirm(false);
   }, [routeUserId]);
 
   useEffect(() => {
@@ -92,15 +88,8 @@ const Profile: React.FC = () => {
       <ProfileView
         profile={profile}
         onEdit={() => setIsEditing(true)}
-        onOpenDeleteConfirm={() => setShowDeleteConfirm(true)}
         showManageActions={showManageActions}
       />
-      {showManageActions && (
-        <DeleteAccountModal
-          isOpen={showDeleteConfirm}
-          onClose={() => setShowDeleteConfirm(false)}
-        />
-      )}
     </>
   );
 };

@@ -30,7 +30,7 @@ This document describes how the React SPA is structured: entry point, global sta
 
 - **Public:** `/login`, `/signup`.
 - **Protected:** `Route element={<ProtectedRoute />}` wraps an `Outlet`; child `Route element={<Layout />}` wraps dashboard pages. Unauthenticated users are redirected to `/login`; `ProtectedRoute` shows a loading state while auth hydrates from storage.
-- **Layout children:** `/discover`, `/connections` (tabbed hub: **My kins** and **Requests**, `?tab=requests` for the requests panel), legacy `/requests` redirects to `/connections?tab=requests`, `/profile`, `/profile/:userId` (read-only view of a member), `/chat`, `/chat/:userId` — all share `Layout` (nav, header chrome, chat entry).
+- **Layout children:** `/discover`, `/connections` (tabbed hub: **My kins** and **Requests**, `?tab=requests` for the requests panel), legacy `/requests` redirects to `/connections?tab=requests`, `/profile`, `/profile/:userId` (read-only view of a member), `/settings`, `/settings/account` (account management including delete account), `/chat`, `/chat/:userId` — all share `Layout` (nav, header chrome, chat entry).
 - **Fallbacks:** `/` and unknown paths `Navigate` to `/discover`.
 
 ---
@@ -45,7 +45,7 @@ This document describes how the React SPA is structured: entry point, global sta
 | **`services/api.ts`** | Axios instance with auth header interceptor; grouped exports: `authAPI`, `profileAPI`, `matchingAPI`, `connectionsAPI`, `chatAPI`, `blockAPI`; `getPhotoUrl()` for relative vs absolute image URLs; default `api` export. |
 | **`services/socketService.ts`** | Singleton-style Socket.io client: `connect` / `disconnect` / `getSocket`. |
 | **`contexts/`** | React context + providers. Some features split **context definition** (`.ts`) from **provider component** (`.tsx`) to satisfy Fast Refresh when the file exports both hooks and non-component values. |
-| **`components/`** | Feature UI, grouped by domain: `auth/`, `dashboard/`, `matching/`, `connections/`, `chat/`, `profile/`, `common/`. |
+| **`components/`** | Feature UI, grouped by domain: `auth/`, `dashboard/`, `matching/`, `connections/`, `chat/`, `profile/`, `settings/`, `common/`. |
 | **`test/setup.ts`** | Vitest: Testing Library cleanup, `localStorage` clear, common DOM mocks. |
 | **`test/mocks/wrappers.tsx`** | Shared test providers / router wrappers where needed. |
 

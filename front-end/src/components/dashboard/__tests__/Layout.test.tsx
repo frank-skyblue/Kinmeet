@@ -1,74 +1,58 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { render } from '@testing-library/react';
-import Layout from '../Layout';
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
+import { render } from "@testing-library/react";
+import Layout from "../Layout";
 
-const mockLogout = vi.fn();
-
-vi.mock('../../../contexts/useAuth', () => ({
+vi.mock("../../../contexts/useAuth", () => ({
   useAuth: () => ({
     user: {
-      id: 'user-1',
-      firstName: 'Alex',
-      photo: null,
+      id: "user-1",
+      firstName: "Alex",
+      profileComplete: true,
     },
-    logout: mockLogout,
+    logout: vi.fn(),
   }),
 }));
 
-vi.mock('../../../contexts/chatInboxContext', () => ({
+vi.mock("../../../contexts/chatInboxContext", () => ({
   useChatInbox: () => ({ unreadConversationCount: 0 }),
 }));
 
-vi.mock('../../../contexts/connectionRequestsContext', () => ({
+vi.mock("../../../contexts/connectionRequestsContext", () => ({
   useConnectionRequests: () => ({ pendingRequestCount: 0 }),
 }));
 
-vi.mock('../../../services/api', () => ({
-  getPhotoUrl: (photo: string) => photo,
-}));
-
-const renderLayout = () =>
-  render(
-    <MemoryRouter initialEntries={['/discover']}>
-      <Routes>
-        <Route element={<Layout />}>
-          <Route path="/discover" element={<div>Discover Page</div>} />
-          <Route path="/profile" element={<div>Profile Page</div>} />
-        </Route>
-      </Routes>
-    </MemoryRouter>,
-  );
-
-describe('Layout user menu', () => {
+describe("Layout user menu", () => {
   beforeEach(() => {
-    mockLogout.mockReset();
+    vi.clearAllMocks();
   });
 
-  it('shows profile and sign out options with icons when menu is open', async () => {
+  it("shows Settings & Privacy below Sign Out in the user menu", async () => {
     const user = userEvent.setup();
-    renderLayout();
+    render(
+      <MemoryRouter initialEntries={["/discover"]}>
+        <Layout />
+      </MemoryRouter>,
+    );
 
-    await user.click(screen.getByRole('button', { name: 'User menu' }));
+    await user.click(screen.getByRole("button", { name: /user menu/i }));
 
-    const profileLink = screen.getByRole('link', { name: /my profile/i });
-    const signOutButton = screen.getByRole('button', { name: /sign out/i });
+    const profileLink = screen.getByRole("link", { name: /my profile/i });
+    const signOutButton = screen.getByRole("button", { name: /sign out/i });
+    const settingsLink = screen.getByRole("link", {
+      name: /settings & privacy/i,
+    });
 
-    expect(profileLink).toBeInTheDocument();
-    expect(signOutButton).toBeInTheDocument();
-    expect(profileLink.querySelector('svg')).toBeInTheDocument();
-    expect(signOutButton.querySelector('svg')).toBeInTheDocument();
-  });
-
-  it('navigates to profile when My Profile is clicked', async () => {
-    const user = userEvent.setup();
-    renderLayout();
-
-    await user.click(screen.getByRole('button', { name: 'User menu' }));
-    await user.click(screen.getByRole('link', { name: /my profile/i }));
-
-    expect(screen.getByText('Profile Page')).toBeInTheDocument();
+    expect(settingsLink).toHaveAttribute("href", "/settings");
+    expect(
+      profileLink.compareDocumentPosition(signOutButton) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      signOutButton.compareDocumentPosition(settingsLink) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 });

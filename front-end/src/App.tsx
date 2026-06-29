@@ -11,6 +11,8 @@ import Discover from './components/matching/Discover';
 import ConnectionsHub from './components/connections/ConnectionsHub';
 import Chat from './components/chat/Chat';
 import Profile from './components/profile/Profile';
+import SettingsPrivacy from './components/settings/SettingsPrivacy';
+import AccountSettings from './components/settings/AccountSettings';
 
 const App = () => {
   return (
@@ -35,6 +37,8 @@ const App = () => {
                     />
                     <Route path="/profile" element={<Profile />} />
                     <Route path="/profile/:userId" element={<Profile />} />
+                    <Route path="/settings" element={<SettingsPrivacy />} />
+                    <Route path="/settings/account" element={<AccountSettings />} />
                     <Route path="/chat" element={<Chat />} />
                     <Route path="/chat/:userId" element={<Chat />} />
                   </Route>

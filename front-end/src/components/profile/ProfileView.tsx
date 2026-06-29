@@ -13,14 +13,12 @@ const genderLabel = (value: string | undefined) => {
 interface ProfileViewProps {
   profile: UserProfile;
   onEdit: () => void;
-  onOpenDeleteConfirm: () => void;
   showManageActions?: boolean;
 }
 
 const ProfileView: React.FC<ProfileViewProps> = ({
   profile,
   onEdit,
-  onOpenDeleteConfirm,
   showManageActions = true,
 }) => {
   return (
@@ -152,20 +150,13 @@ const ProfileView: React.FC<ProfileViewProps> = ({
             </div>
 
             {showManageActions && (
-              <div className="mt-8 space-y-4">
+              <div className="mt-8">
                 <button
                   type="button"
                   onClick={onEdit}
                   className="w-full bg-kin-teal text-white py-3 rounded-kin-sm font-semibold font-montserrat hover:bg-kin-teal-600 shadow-kin-soft hover:shadow-kin-medium transition"
                 >
                   Edit Profile
-                </button>
-                <button
-                  type="button"
-                  onClick={onOpenDeleteConfirm}
-                  className="w-full bg-kin-stone-200 text-kin-coral-700 py-3 rounded-kin-sm font-semibold font-montserrat hover:bg-kin-stone-300 transition"
-                >
-                  Delete Account
                 </button>
               </div>
             )}
