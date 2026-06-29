@@ -1,5 +1,7 @@
 import React from 'react';
 import { getPhotoUrl } from '../../services/api';
+import CountryFlag from '../common/CountryFlag';
+import CountryWithFlag from '../common/CountryWithFlag';
 import type { UserProfile } from '../../types';
 import { calculateAgeFromDateOfBirth } from '../../utils/age';
 
@@ -94,13 +96,19 @@ const ProfileView: React.FC<ProfileViewProps> = ({
 
               <div>
                 <h3 className="text-sm font-semibold font-inter text-kin-navy mb-2">Home Country</h3>
-                <p className="text-lg text-kin-navy font-montserrat">{profile.homeCountry}</p>
+                <CountryWithFlag
+                  country={profile.homeCountry}
+                  className="text-lg text-kin-navy font-montserrat"
+                />
               </div>
 
               <div>
                 <h3 className="text-sm font-semibold font-inter text-kin-navy mb-2">Current Location</h3>
-                <p className="text-lg text-kin-navy font-montserrat">
-                  {profile.currentProvince}, {profile.currentCountry}
+                <p className="text-lg text-kin-navy font-montserrat inline-flex items-center gap-2">
+                  <CountryFlag country={profile.currentCountry} />
+                  <span>
+                    {profile.currentProvince}, {profile.currentCountry}
+                  </span>
                 </p>
               </div>
 

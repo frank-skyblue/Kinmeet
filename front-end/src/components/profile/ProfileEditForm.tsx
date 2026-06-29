@@ -3,6 +3,8 @@ import { profileAPI, getPhotoUrl } from '../../services/api';
 import { useAuth } from '../../contexts/useAuth';
 import SearchableSelect from '../common/SearchableSelect';
 import CitySearchInput from '../common/CitySearchInput';
+import CountryFlag from '../common/CountryFlag';
+import CountryWithFlag from '../common/CountryWithFlag';
 import DynamicListField from '../common/DynamicListField';
 import LookingForCheckboxes from '../common/LookingForCheckboxes';
 import { validatePhotoFile } from '../../constants/validation';
@@ -486,6 +488,7 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
               required
               searchable="typeahead"
               helperText="The country where you were born or raised"
+              leadingContent={<CountryFlag country={homeCountry} />}
             />
 
             <div className="space-y-4 border-t border-kin-stone-200 pt-4">
@@ -523,7 +526,13 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
               {!manualCountryMode ? (
                 <div className="rounded-kin-sm border border-kin-stone-200 bg-kin-stone-50 px-4 py-3">
                   <p className="text-sm font-medium font-inter text-kin-navy mb-1">Country</p>
-                  <p className="text-kin-navy font-inter">{currentCountry || '—'}</p>
+                  <p className="text-kin-navy font-inter">
+                    {currentCountry ? (
+                      <CountryWithFlag country={currentCountry} />
+                    ) : (
+                      '—'
+                    )}
+                  </p>
                   <button
                     type="button"
                     onClick={() => setManualCountryMode(true)}
@@ -544,6 +553,7 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
                     placeholder="e.g., Canada"
                     required
                     searchable="typeahead"
+                    leadingContent={<CountryFlag country={currentCountry} />}
                   />
                   <button
                     type="button"
