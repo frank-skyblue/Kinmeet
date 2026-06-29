@@ -58,6 +58,19 @@ describe('authenticationService', () => {
       expect(user?.currentCity).toBe('Toronto');
     });
 
+    it('persists optional industry during registration', async () => {
+      const result = await authenticationService.register({
+        ...validData,
+        email: 'industry-user@example.com',
+        industry: 'Healthcare',
+      });
+      expect(result.success).toBe(true);
+      const user = await User.findOne({ email: 'industry-user@example.com' });
+      expect(user?.industry).toBe('Healthcare');
+      expect(user?.jobTitle).toBeUndefined();
+      expect(user?.company).toBeUndefined();
+    });
+
     it('rejects duplicate email', async () => {
       await authenticationService.register(validData);
       const result = await authenticationService.register(validData);
@@ -82,6 +95,56 @@ describe('authenticationService', () => {
       const result = await authenticationService.register({
         ...validData,
         email: ' new@example.com ',
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.message).toBe('This email is already registered. Please log in instead.');
+    });
+
+    it('rejects duplicate email with zero-width characters', async () => {
+      await authenticationService.register(validData);
+      const result = await authenticationService.register({
+        ...validData,
+        email: 'new@example.com\u200B',
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.message).toBe('This email is already registered. Please log in instead.');
+    });
+
+    it('rejects duplicate email with unicode equivalent forms', async () => {
+      await authenticationService.register({
+        ...validData,
+        email: 'caf\u00E9@example.com',
+      });
+      const result = await authenticationService.register({
+        ...validData,
+        email: 'cafe\u0301@example.com',
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.message).toBe('This email is already registered. Please log in instead.');
+    });
+
+    it('rejects duplicate email for legacy mixed-case records', async () => {
+      await User.collection.insertOne({
+        email: 'Legacy@Example.com',
+        password: 'hash',
+        firstName: 'Old',
+        lastName: 'User',
+        homeCountry: 'France',
+        currentProvince: 'Ontario',
+        currentCountry: 'Canada',
+        languages: ['English'],
+        lookingFor: ['Friendship'],
+        profileComplete: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      const result = await authenticationService.register({
+        ...validData,
+        email: 'legacy@example.com',
       });
 
       expect(result.success).toBe(false);
@@ -257,6 +320,33 @@ describe('authenticationService', () => {
       expect(result.success).toBe(true);
       expect(result.token).toBeDefined();
       expect(result.user?.email).toBe('login@test.com');
+    });
+
+    it('logs in with mixed-case email', async () => {
+      await createTestUser({ email: 'login@test.com', password: 'TestPass123' });
+      const result = await authenticationService.login({
+        email: 'Login@Test.com',
+        password: 'TestPass123',
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.token).toBeDefined();
+    });
+
+    it('logs in for legacy mixed-case stored email', async () => {
+      await createTestUser({ email: 'legacy-login@test.com', password: 'TestPass123' });
+      await User.collection.updateOne(
+        { email: 'legacy-login@test.com' },
+        { $set: { email: 'Legacy@Example.com' } },
+      );
+
+      const result = await authenticationService.login({
+        email: 'legacy@example.com',
+        password: 'TestPass123',
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.token).toBeDefined();
     });
 
     it('rejects wrong password', async () => {

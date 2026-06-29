@@ -48,9 +48,8 @@ const Signup: React.FC = () => {
   const [currentProvince, setCurrentProvince] = useState("");
   const [currentCity, setCurrentCity] = useState("");
   const [manualCountryMode, setManualCountryMode] = useState(false);
-  const [jobTitle, setJobTitle] = useState("");
-  const [company, setCompany] = useState("");
-  const [institution, setInstitution] = useState("");
+  const [industry, setIndustry] = useState("");
+  const [educationLevel, setEducationLevel] = useState("");
   const [graduationYear, setGraduationYear] = useState("");
   const [languages, setLanguages] = useState<string[]>([""]);
   const [interests, setInterests] = useState<string[]>([""]);
@@ -64,6 +63,12 @@ const Signup: React.FC = () => {
   useEffect(() => {
     setMaxReachedStep((m) => Math.max(m, step));
   }, [step]);
+
+  const handleClearResolvedLocation = () => {
+    setCurrentCountry("");
+    setCurrentCountryCode("");
+    setCurrentProvince("");
+  };
 
   const handlePickCityResolved = (r: ResolvedCityLocation) => {
     setCurrentCity(r.cityName);
@@ -168,15 +173,14 @@ const Signup: React.FC = () => {
         firstName,
         lastName,
         about: about.trim() || undefined,
-        jobTitle: jobTitle.trim() || undefined,
-        company: company.trim() || undefined,
-        institution: institution.trim() || undefined,
+        industry: industry.trim() || undefined,
+        educationLevel: educationLevel.trim() || undefined,
         graduationYear: graduationYear ? Number(graduationYear) : undefined,
         homeCountry,
         currentLocation: {
           province: currentProvince,
           country: currentCountry,
-          ...(currentCity.trim() ? { city: currentCity.trim() } : {}),
+          city: currentCity.trim(),
         },
         languages: validLanguages,
         interests: validInterests,
@@ -296,6 +300,7 @@ const Signup: React.FC = () => {
             manualCountryMode={manualCountryMode}
             setManualCountryMode={setManualCountryMode}
             onPickCityResolved={handlePickCityResolved}
+            onClearResolvedLocation={handleClearResolvedLocation}
             applyProvinceFromComposite={applyProvinceFromComposite}
             photoPreview={photoPreview}
             fileInputRef={fileInputRef}
@@ -314,12 +319,10 @@ const Signup: React.FC = () => {
 
         {step === 3 && (
           <SignupStep3
-            jobTitle={jobTitle}
-            setJobTitle={setJobTitle}
-            company={company}
-            setCompany={setCompany}
-            institution={institution}
-            setInstitution={setInstitution}
+            industry={industry}
+            setIndustry={setIndustry}
+            educationLevel={educationLevel}
+            setEducationLevel={setEducationLevel}
             graduationYear={graduationYear}
             setGraduationYear={setGraduationYear}
             graduationYears={GRADUATION_YEARS}

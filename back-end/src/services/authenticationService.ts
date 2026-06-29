@@ -1,6 +1,7 @@
-import { User } from '../models/User';
+import { User, IUser } from '../models/User';
 import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../config/env';
+import { escapeRegExp, normalizeEmail } from '../utils/email';
 
 const REGISTER_GENDER_VALUES = ['female', 'male', 'other'] as const;
 
@@ -27,6 +28,18 @@ const isPasswordSecure = (password: string) => {
 const slugForUsername = (value: string) =>
     value.toLowerCase().normalize('NFKD').replace(/[^a-z0-9_]/g, '');
 
+const findUserByEmail = async (email: string): Promise<IUser | null> => {
+    const normalized = normalizeEmail(email);
+    if (!normalized) return null;
+
+    const exact = await User.findOne({ email: normalized });
+    if (exact) return exact;
+
+    return User.findOne({
+        email: { $regex: new RegExp(`^${escapeRegExp(normalized)}$`, 'i') },
+    });
+};
+
 const generateUniqueUsername = async (firstName: string) => {
     const base = slugForUsername(firstName).slice(0, 26) || 'user';
     for (let attempt = 0; attempt < 10; attempt += 1) {
@@ -52,6 +65,7 @@ export interface RegisterData {
     about?: string;
     jobTitle?: string;
     company?: string;
+    industry?: string;
     institution?: string;
     graduationYear?: number;
     homeCountry: string;
@@ -97,8 +111,7 @@ export const authenticationService = {
                 };
             }
 
-            // Find user by email
-            const user = await User.findOne({ email });
+            const user = await findUserByEmail(email);
             if (!user) {
                 return {
                     success: false,
@@ -154,6 +167,7 @@ export const authenticationService = {
                 about,
                 jobTitle,
                 company,
+                industry,
                 institution,
                 graduationYear,
                 homeCountry, 
@@ -216,10 +230,9 @@ export const authenticationService = {
                 };
             }
 
-            const normalizedEmail = email.trim().toLowerCase();
+            const normalizedEmail = normalizeEmail(email);
 
-            // Check if user already exists
-            const existingUser = await User.findOne({ email: normalizedEmail });
+            const existingUser = await findUserByEmail(email);
             if (existingUser) {
                 return {
                     success: false,
@@ -306,6 +319,7 @@ export const authenticationService = {
                 about: about || undefined,
                 jobTitle: jobTitle || undefined,
                 company: company || undefined,
+                industry: industry || undefined,
                 institution: institution || undefined,
                 graduationYear: graduationYear || undefined,
                 homeCountry,
