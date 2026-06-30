@@ -123,4 +123,29 @@ test.describe('Auth Flow', () => {
     await expect(page.getByRole('heading', { name: /^account$/i })).toBeVisible();
     await expect(page.getByRole('button', { name: /delete account/i })).toBeVisible();
   });
+
+  test('Community & Safety page shows community guidelines', async ({ page }) => {
+    const email = `community-${Date.now()}@test.com`;
+    await seedTestUser({
+      email,
+      password: 'TestPass1',
+      firstName: 'Community',
+      lastName: 'User',
+    });
+
+    await loginAs(page, email, 'TestPass1');
+    await page.getByRole('button', { name: /user menu/i }).click();
+    await page.getByRole('link', { name: /settings & privacy/i }).click();
+
+    await expect(page).toHaveURL(/\/settings$/);
+    await page.getByRole('link', { name: /community & safety:/i }).click();
+
+    await expect(page).toHaveURL(/\/settings\/community-safety/);
+    await expect(page.getByRole('heading', { name: /community & safety/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /community guidelines/i })).toBeVisible();
+    await expect(page.getByText(/treat all members with respect and kindness/i)).toBeVisible();
+
+    await page.getByRole('link', { name: /back to settings and privacy/i }).click();
+    await expect(page).toHaveURL(/\/settings$/);
+  });
 });

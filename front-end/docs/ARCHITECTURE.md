@@ -30,7 +30,7 @@ This document describes how the React SPA is structured: entry point, global sta
 
 - **Public:** `/login`, `/signup`.
 - **Protected:** `Route element={<ProtectedRoute />}` wraps an `Outlet`; child `Route element={<Layout />}` wraps dashboard pages. Unauthenticated users are redirected to `/login`; `ProtectedRoute` shows a loading state while auth hydrates from storage.
-- **Layout children:** `/discover`, `/connections` (tabbed hub: **My kins** and **Requests**, `?tab=requests` for the requests panel), legacy `/requests` redirects to `/connections?tab=requests`, `/profile`, `/profile/:userId` (read-only view of a member), `/settings`, `/settings/account` (account management including delete account), `/chat`, `/chat/:userId` — all share `Layout` (nav, header chrome, chat entry).
+- **Layout children:** `/discover`, `/connections` (tabbed hub: **My kins** and **Requests**, `?tab=requests` for the requests panel), legacy `/requests` redirects to `/connections?tab=requests`, `/profile`, `/profile/:userId` (read-only view of a member), `/settings`, `/settings/account` (account management including delete account), `/settings/community-safety` (community guidelines and safety information), `/chat`, `/chat/:userId` — all share `Layout` (nav, header chrome, chat entry).
 - **Fallbacks:** `/` and unknown paths `Navigate` to `/discover`.
 
 ---
