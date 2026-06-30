@@ -170,18 +170,6 @@ const ProfileView: React.FC<ProfileViewProps> = ({
             )}
           </div>
         </div>
-
-        <div className="mt-8 bg-white rounded-kin-lg shadow-kin-medium p-6">
-          <h2 className="text-xl font-bold font-montserrat text-kin-navy mb-4">Community Guidelines</h2>
-          <div className="space-y-3 text-kin-navy font-inter">
-            <p>• Treat all members with respect and kindness</p>
-            <p>• Celebrate cultural diversity and inclusivity</p>
-            <p>• Be mindful of cultural sensitivities</p>
-            <p>• Report inappropriate behavior or content</p>
-            <p>• Last names are only visible to accepted kins</p>
-            <p>• City-level details are not shared for privacy</p>
-          </div>
-        </div>
       </div>
     </div>
   );
