@@ -18,7 +18,8 @@ vi.mock('../../models/PasswordResetToken', () => ({
     },
 }));
 
-const sendPasswordResetEmailMock = vi.fn();
+// vi.hoisted ensures this fn reference is available when the hoisted vi.mock factory runs
+const sendPasswordResetEmailMock = vi.hoisted(() => vi.fn());
 vi.mock('../../services/emailService', () => ({
     emailService: {
         sendPasswordResetEmail: sendPasswordResetEmailMock,

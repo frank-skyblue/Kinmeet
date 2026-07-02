@@ -84,7 +84,6 @@ const Login: React.FC = () => {
               <Link
                 to="/forgot-password"
                 className="text-xs font-inter text-kin-coral hover:text-kin-coral-600 transition"
-                aria-label="Forgot your password?"
               >
                 Forgot password?
               </Link>

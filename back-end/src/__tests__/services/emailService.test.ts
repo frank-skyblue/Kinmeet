@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const sendMock = vi.fn();
+const sendMock = vi.hoisted(() => vi.fn());
 
 vi.mock('resend', () => ({
     Resend: vi.fn().mockImplementation(() => ({
@@ -8,12 +8,12 @@ vi.mock('resend', () => ({
     })),
 }));
 
-// env mock is defined before the service import so the module picks it up
-const envMock = {
-    RESEND_API_KEY: 're_test_key',
+// vi.hoisted ensures the object is available when the hoisted vi.mock factory runs
+const envMock = vi.hoisted(() => ({
+    RESEND_API_KEY: 're_test_key' as string | null,
     EMAIL_FROM: 'KinMeet <noreply@kinmeet.ca>',
     ENABLE_DEVELOPMENT_EMAIL: false,
-};
+}));
 
 vi.mock('../../config/env', () => envMock);
 
