@@ -28,7 +28,7 @@ This document describes how the React SPA is structured: entry point, global sta
 
 ### Routing model
 
-- **Public:** `/login`, `/signup`.
+- **Public:** `/login`, `/signup`, `/forgot-password`, `/reset-password`.
 - **Protected:** `Route element={<ProtectedRoute />}` wraps an `Outlet`; child `Route element={<Layout />}` wraps dashboard pages. Unauthenticated users are redirected to `/login`; `ProtectedRoute` shows a loading state while auth hydrates from storage.
 - **Layout children:** `/discover`, `/connections` (tabbed hub: **My kins** and **Requests**, `?tab=requests` for the requests panel), legacy `/requests` redirects to `/connections?tab=requests`, `/profile`, `/profile/:userId` (read-only view of a member), `/settings`, `/settings/account` (account management including delete account), `/chat`, `/chat/:userId` — all share `Layout` (nav, header chrome, chat entry).
 - **Fallbacks:** `/` and unknown paths `Navigate` to `/discover`.
@@ -42,7 +42,7 @@ This document describes how the React SPA is structured: entry point, global sta
 | **`types/index.ts`** | Shared domain/API TypeScript types. Prefer adding here over inline interfaces in components. |
 | **`constants/`** | Static options and validation helpers (e.g. profile options). Must not import from `components/`. |
 | **`utils/`** | Pure helpers (e.g. `getErrorMessage` in `error.ts`). |
-| **`services/api.ts`** | Axios instance with auth header interceptor; grouped exports: `authAPI`, `profileAPI`, `matchingAPI`, `connectionsAPI`, `chatAPI`, `blockAPI`; `getPhotoUrl()` for relative vs absolute image URLs; default `api` export. |
+| **`services/api.ts`** | Axios instance with auth header interceptor; grouped exports: `authAPI` (login, register, checkEmail, logout, forgotPassword, resetPassword), `profileAPI`, `matchingAPI`, `connectionsAPI`, `chatAPI`, `blockAPI`; `getPhotoUrl()` for relative vs absolute image URLs; default `api` export. |
 | **`services/socketService.ts`** | Singleton-style Socket.io client: `connect` / `disconnect` / `getSocket`. |
 | **`contexts/`** | React context + providers. Some features split **context definition** (`.ts`) from **provider component** (`.tsx`) to satisfy Fast Refresh when the file exports both hooks and non-component values. |
 | **`components/`** | Feature UI, grouped by domain: `auth/`, `dashboard/`, `matching/`, `connections/`, `chat/`, `profile/`, `settings/`, `common/`. |

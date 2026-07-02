@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/useAuth';
 import { getErrorMessage } from '../../utils/error';
 import Logo from '../common/Logo';
@@ -11,6 +11,9 @@ const Login: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const flashMessage = (location.state as { flash?: string } | null)?.flash ?? '';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,8 +42,21 @@ const Login: React.FC = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {flashMessage && (
+            <div
+              role="status"
+              aria-live="polite"
+              className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-kin font-inter text-sm"
+            >
+              {flashMessage}
+            </div>
+          )}
+
           {error && (
-            <div className="bg-kin-coral-50 border border-kin-coral-200 text-kin-coral-700 px-4 py-3 rounded-kin font-inter">
+            <div
+              role="alert"
+              className="bg-kin-coral-50 border border-kin-coral-200 text-kin-coral-700 px-4 py-3 rounded-kin font-inter"
+            >
               {error}
             </div>
           )}
@@ -61,9 +77,18 @@ const Login: React.FC = () => {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium font-inter text-kin-navy mb-2">
-              Password
-            </label>
+            <div className="flex items-center justify-between mb-2">
+              <label htmlFor="password" className="block text-sm font-medium font-inter text-kin-navy">
+                Password
+              </label>
+              <Link
+                to="/forgot-password"
+                className="text-xs font-inter text-kin-coral hover:text-kin-coral-600 transition"
+                aria-label="Forgot your password?"
+              >
+                Forgot password?
+              </Link>
+            </div>
             <input
               type="password"
               id="password"

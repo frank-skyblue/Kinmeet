@@ -98,6 +98,15 @@ export const registerSchema = z.object({
     gender: genderSchema,
 });
 
+export const forgotPasswordSchema = z.object({
+    email: checkEmailSchema.shape.email,
+});
+
+export const resetPasswordSchema = z.object({
+    token: z.string().min(1, 'Token is required'),
+    newPassword: z.string().min(1, 'New password is required'),
+});
+
 export const userIdParams = objectIdParam('userId');
 export const requestIdParams = objectIdParam('requestId');
 
