@@ -3,9 +3,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const sendMock = vi.hoisted(() => vi.fn());
 
 vi.mock('resend', () => ({
-    Resend: vi.fn().mockImplementation(() => ({
-        emails: { send: sendMock },
-    })),
+    Resend: vi.fn().mockImplementation(function () {
+        return { emails: { send: sendMock } };
+    }),
 }));
 
 // vi.hoisted ensures the object is available when the hoisted vi.mock factory runs
