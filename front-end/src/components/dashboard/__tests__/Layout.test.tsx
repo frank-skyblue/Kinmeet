@@ -29,7 +29,7 @@ describe("Layout user menu", () => {
     vi.clearAllMocks();
   });
 
-  it("shows Settings & Privacy below Sign Out in the user menu", async () => {
+  it("shows Settings & Privacy with icon and Sign Out at the bottom of the user menu", async () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter initialEntries={["/discover"]}>
@@ -40,18 +40,19 @@ describe("Layout user menu", () => {
     await user.click(screen.getByRole("button", { name: /user menu/i }));
 
     const profileLink = screen.getByRole("link", { name: /my profile/i });
-    const signOutButton = screen.getByRole("button", { name: /sign out/i });
     const settingsLink = screen.getByRole("link", {
       name: /settings & privacy/i,
     });
+    const signOutButton = screen.getByRole("button", { name: /sign out/i });
 
     expect(settingsLink).toHaveAttribute("href", "/settings");
+    expect(settingsLink.querySelector("svg")).toBeInTheDocument();
     expect(
-      profileLink.compareDocumentPosition(signOutButton) &
+      profileLink.compareDocumentPosition(settingsLink) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
     expect(
-      signOutButton.compareDocumentPosition(settingsLink) &
+      settingsLink.compareDocumentPosition(signOutButton) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
   });

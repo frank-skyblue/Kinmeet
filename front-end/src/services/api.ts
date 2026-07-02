@@ -91,6 +91,16 @@ export const authAPI = {
     const response = await api.post('/auth/logout');
     return response.data;
   },
+
+  forgotPassword: async (email: string) => {
+    const response = await api.post('/auth/forgot-password', { email });
+    return response.data as { success: boolean; message: string };
+  },
+
+  resetPassword: async (token: string, newPassword: string) => {
+    const response = await api.post('/auth/reset-password', { token, newPassword });
+    return response.data as { success: boolean; message: string };
+  },
 };
 
 export const profileAPI = {

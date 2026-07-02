@@ -65,3 +65,15 @@ export const FIREBASE_SERVICE_ACCOUNT_JSON = loadFirebaseServiceAccount();
 
 /** Public SPA origin (no trailing slash). Used for FCM web push click links (HTTPS in production). */
 export const WEB_APP_URL = (process.env.WEB_APP_URL ?? '').replace(/\/$/, '');
+
+/**
+ * Resend transactional email.
+ *
+ * RESEND_API_KEY    — Required to send email. If absent, email sending is silently disabled.
+ * EMAIL_FROM        — Sender address (defaults to noreply@kinmeet.ca).
+ * ENABLE_DEVELOPMENT_EMAIL — Set to "true" to send real emails when NODE_ENV=development.
+ *                    In development without this flag, sends are skipped and logged instead.
+ */
+export const RESEND_API_KEY = process.env.RESEND_API_KEY?.trim() || null;
+export const EMAIL_FROM = process.env.EMAIL_FROM?.trim() || 'KinMeet <noreply@kinmeet.ca>';
+export const ENABLE_DEVELOPMENT_EMAIL = process.env.ENABLE_DEVELOPMENT_EMAIL?.trim() === 'true';
