@@ -7,6 +7,11 @@ const settingsSections = [
     title: 'Account',
     description: 'Manage your account and delete your profile',
   },
+  {
+    path: '/settings/community-safety',
+    title: 'Community & Safety',
+    description: 'Community guidelines and safety information',
+  },
 ] as const;
 
 const SettingsPrivacy: React.FC = () => {

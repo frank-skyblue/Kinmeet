@@ -18,4 +18,17 @@ describe('SettingsPrivacy', () => {
       '/settings/account',
     );
   });
+
+  it('renders Community & Safety section link', () => {
+    render(
+      <MemoryRouter>
+        <SettingsPrivacy />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole('link', { name: /community & safety:/i })).toHaveAttribute(
+      'href',
+      '/settings/community-safety',
+    );
+  });
 });
