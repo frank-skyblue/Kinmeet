@@ -5,6 +5,8 @@ import { ConnectionRequestsProvider } from './contexts/ConnectionRequestsProvide
 import { SocketProvider } from './contexts/SocketContext';
 import Login from './components/auth/Login';
 import Signup from './components/auth/Signup';
+import ForgotPassword from './components/auth/ForgotPassword';
+import ResetPassword from './components/auth/ResetPassword';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import Layout from './components/dashboard/Layout';
 import Discover from './components/matching/Discover';
@@ -26,6 +28,8 @@ const App = () => {
                 {/* Public Routes */}
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
 
                 {/* Protected Routes */}
                 <Route element={<ProtectedRoute />}>

@@ -145,6 +145,20 @@ export interface UpdateProfilePayload {
     dateOfBirth?: string;
 }
 
+export interface ChangeEmailPayload {
+    newEmail: string;
+    currentPassword: string;
+}
+
+export interface ChangeUsernamePayload {
+    newUsername: string;
+}
+
+export interface ChangePasswordPayload {
+    currentPassword: string;
+    newPassword: string;
+}
+
 export interface ApiResponse<T = unknown> {
     success: boolean;
     message?: string;
