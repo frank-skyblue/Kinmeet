@@ -13,6 +13,7 @@ const envMock = vi.hoisted(() => ({
     RESEND_API_KEY: 're_test_key' as string | null,
     EMAIL_FROM: 'KinMeet <noreply@kinmeet.ca>',
     ENABLE_DEVELOPMENT_EMAIL: false,
+    NODE_ENV: 'production' as 'development' | 'production' | 'test',
 }));
 
 vi.mock('../../config/env', () => envMock);
@@ -30,8 +31,7 @@ describe('emailService.send', () => {
     beforeEach(() => {
         sendMock.mockReset();
         sendMock.mockResolvedValue({ data: { id: 'msg_123' }, error: null });
-        // reset NODE_ENV to production default for most tests
-        vi.stubEnv('NODE_ENV', 'production');
+        envMock.NODE_ENV = 'production';
     });
 
     it('sends email in production', async () => {
@@ -56,7 +56,7 @@ describe('emailService.send', () => {
     });
 
     it('skips send in development when ENABLE_DEVELOPMENT_EMAIL is false', async () => {
-        vi.stubEnv('NODE_ENV', 'development');
+        envMock.NODE_ENV = 'development';
         envMock.ENABLE_DEVELOPMENT_EMAIL = false;
 
         await emailService.send(basePayload);
@@ -65,7 +65,7 @@ describe('emailService.send', () => {
     });
 
     it('sends real email in development when ENABLE_DEVELOPMENT_EMAIL is true', async () => {
-        vi.stubEnv('NODE_ENV', 'development');
+        envMock.NODE_ENV = 'development';
         envMock.ENABLE_DEVELOPMENT_EMAIL = true;
 
         await emailService.send(basePayload);
