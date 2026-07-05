@@ -1,4 +1,9 @@
 import React from "react";
+import { authAPI } from "../../services/api";
+import { getErrorMessage } from "../../utils/error";
+
+const DUPLICATE_EMAIL_MESSAGE =
+  "This email is already registered. Please log in instead.";
 
 interface SignupStep1Props {
   email: string;
@@ -50,9 +55,24 @@ const SignupStep1: React.FC<SignupStep1Props> = ({
     return true;
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     setError("");
-    if (validate()) onNext();
+    if (!validate()) return;
+
+    try {
+      const result = await authAPI.checkEmail(email);
+      if (!result.success || result.available === undefined) {
+        setError("Unable to verify email. Please try again.");
+        return;
+      }
+      if (!result.available) {
+        setError(DUPLICATE_EMAIL_MESSAGE);
+        return;
+      }
+      onNext();
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, "Unable to verify email. Please try again."));
+    }
   };
 
   return (

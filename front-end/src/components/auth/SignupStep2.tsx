@@ -2,6 +2,8 @@ import React from "react";
 import SearchableSelect from "../common/SearchableSelect";
 import CitySearchInput from "../common/CitySearchInput";
 import BirthdaySelect from "../common/BirthdaySelect";
+import CountryFlag from "../common/CountryFlag";
+import CountryWithFlag from "../common/CountryWithFlag";
 import {
   HOME_COUNTRY_OPTIONS,
   COUNTRY_OPTIONS,
@@ -287,6 +289,7 @@ const SignupStep2: React.FC<SignupStep2Props> = ({
         required
         searchable="typeahead"
         helperText="The country where you were born or raised"
+        leadingContent={<CountryFlag country={homeCountry} />}
       />
 
       <div className="border-t border-kin-stone-200 pt-6 space-y-4">
@@ -333,7 +336,11 @@ const SignupStep2: React.FC<SignupStep2Props> = ({
               Country
             </p>
             <p className="text-kin-navy font-inter">
-              {currentCountry || "—"}
+              {currentCountry ? (
+                <CountryWithFlag country={currentCountry} />
+              ) : (
+                "—"
+              )}
             </p>
             <button
               type="button"
@@ -355,6 +362,7 @@ const SignupStep2: React.FC<SignupStep2Props> = ({
               placeholder="e.g., Canada"
               required
               searchable="typeahead"
+              leadingContent={<CountryFlag country={currentCountry} />}
             />
             <button
               type="button"

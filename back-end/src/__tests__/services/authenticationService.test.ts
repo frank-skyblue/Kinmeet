@@ -58,6 +58,19 @@ describe('authenticationService', () => {
       expect(user?.currentCity).toBe('Toronto');
     });
 
+    it('persists optional industry during registration', async () => {
+      const result = await authenticationService.register({
+        ...validData,
+        email: 'industry-user@example.com',
+        industry: 'Healthcare',
+      });
+      expect(result.success).toBe(true);
+      const user = await User.findOne({ email: 'industry-user@example.com' });
+      expect(user?.industry).toBe('Healthcare');
+      expect(user?.jobTitle).toBeUndefined();
+      expect(user?.company).toBeUndefined();
+    });
+
     it('rejects duplicate email', async () => {
       await authenticationService.register(validData);
       const result = await authenticationService.register(validData);

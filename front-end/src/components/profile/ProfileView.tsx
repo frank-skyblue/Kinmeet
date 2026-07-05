@@ -1,5 +1,7 @@
 import React from 'react';
 import { getPhotoUrl } from '../../services/api';
+import CountryFlag from '../common/CountryFlag';
+import CountryWithFlag from '../common/CountryWithFlag';
 import type { UserProfile } from '../../types';
 import { calculateAgeFromDateOfBirth } from '../../utils/age';
 
@@ -13,14 +15,12 @@ const genderLabel = (value: string | undefined) => {
 interface ProfileViewProps {
   profile: UserProfile;
   onEdit: () => void;
-  onOpenDeleteConfirm: () => void;
   showManageActions?: boolean;
 }
 
 const ProfileView: React.FC<ProfileViewProps> = ({
   profile,
   onEdit,
-  onOpenDeleteConfirm,
   showManageActions = true,
 }) => {
   return (
@@ -76,14 +76,10 @@ const ProfileView: React.FC<ProfileViewProps> = ({
                 </div>
               )}
 
-              {(profile.jobTitle || profile.company) && (
+              {profile.industry && (
                 <div>
                   <h3 className="text-sm font-semibold font-inter text-kin-navy mb-2">Work</h3>
-                  <p className="text-lg text-kin-navy font-montserrat">
-                    {profile.jobTitle}
-                    {profile.jobTitle && profile.company && ' at '}
-                    {profile.company}
-                  </p>
+                  <p className="text-lg text-kin-navy font-montserrat">{profile.industry}</p>
                 </div>
               )}
 
@@ -100,13 +96,19 @@ const ProfileView: React.FC<ProfileViewProps> = ({
 
               <div>
                 <h3 className="text-sm font-semibold font-inter text-kin-navy mb-2">Home Country</h3>
-                <p className="text-lg text-kin-navy font-montserrat">{profile.homeCountry}</p>
+                <CountryWithFlag
+                  country={profile.homeCountry}
+                  className="text-lg text-kin-navy font-montserrat"
+                />
               </div>
 
               <div>
                 <h3 className="text-sm font-semibold font-inter text-kin-navy mb-2">Current Location</h3>
-                <p className="text-lg text-kin-navy font-montserrat">
-                  {profile.currentProvince}, {profile.currentCountry}
+                <p className="text-lg text-kin-navy font-montserrat inline-flex items-center gap-2">
+                  <CountryFlag country={profile.currentCountry} />
+                  <span>
+                    {profile.currentProvince}, {profile.currentCountry}
+                  </span>
                 </p>
               </div>
 
@@ -156,7 +158,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({
             </div>
 
             {showManageActions && (
-              <div className="mt-8 space-y-4">
+              <div className="mt-8">
                 <button
                   type="button"
                   onClick={onEdit}
@@ -164,27 +166,8 @@ const ProfileView: React.FC<ProfileViewProps> = ({
                 >
                   Edit Profile
                 </button>
-                <button
-                  type="button"
-                  onClick={onOpenDeleteConfirm}
-                  className="w-full bg-kin-stone-200 text-kin-coral-700 py-3 rounded-kin-sm font-semibold font-montserrat hover:bg-kin-stone-300 transition"
-                >
-                  Delete Account
-                </button>
               </div>
             )}
-          </div>
-        </div>
-
-        <div className="mt-8 bg-white rounded-kin-lg shadow-kin-medium p-6">
-          <h2 className="text-xl font-bold font-montserrat text-kin-navy mb-4">Community Guidelines</h2>
-          <div className="space-y-3 text-kin-navy font-inter">
-            <p>• Treat all members with respect and kindness</p>
-            <p>• Celebrate cultural diversity and inclusivity</p>
-            <p>• Be mindful of cultural sensitivities</p>
-            <p>• Report inappropriate behavior or content</p>
-            <p>• Last names are only visible to accepted kins</p>
-            <p>• City-level details are not shared for privacy</p>
           </div>
         </div>
       </div>

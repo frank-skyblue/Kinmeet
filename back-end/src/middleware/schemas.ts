@@ -60,7 +60,7 @@ export const sendMeetRequestSchema = z.object({
     receiverId: objectId,
 });
 
-export const registerSchema = z.object({
+export const checkEmailSchema = z.object({
     email: z
         .string()
         .transform((value) => normalizeEmail(value))
@@ -71,6 +71,10 @@ export const registerSchema = z.object({
                 .max(254, 'Email is too long')
                 .email('Invalid email address'),
         ),
+});
+
+export const registerSchema = z.object({
+    email: checkEmailSchema.shape.email,
     username: z.string().trim().toLowerCase().min(3, 'Username must be 3-30 characters using lowercase letters, numbers, or underscores').max(30, 'Username must be 3-30 characters using lowercase letters, numbers, or underscores').regex(/^[a-z0-9_]+$/, 'Username must be 3-30 characters using lowercase letters, numbers, or underscores').optional(),
     password: z.string(),
     firstName: requiredString('First name', 50),
@@ -94,6 +98,15 @@ export const registerSchema = z.object({
     gender: genderSchema,
 });
 
+export const forgotPasswordSchema = z.object({
+    email: checkEmailSchema.shape.email,
+});
+
+export const resetPasswordSchema = z.object({
+    token: z.string().min(1, 'Token is required'),
+    newPassword: z.string().min(1, 'New password is required'),
+});
+
 export const userIdParams = objectIdParam('userId');
 export const requestIdParams = objectIdParam('requestId');
 
@@ -105,3 +118,35 @@ export const registerNotificationDeviceSchema = z.object({
 });
 
 export const unregisterNotificationDeviceSchema = registerNotificationDeviceSchema;
+
+export const changeEmailSchema = z.object({
+    newEmail: z
+        .string()
+        .transform((value) => normalizeEmail(value))
+        .pipe(
+            z
+                .string()
+                .min(1, 'Email is required')
+                .max(254, 'Email is too long')
+                .email('Invalid email address'),
+        ),
+    currentPassword: z.string().min(1, 'Current password is required'),
+});
+
+export const changeUsernameSchema = z.object({
+    newUsername: z
+        .string()
+        .trim()
+        .toLowerCase()
+        .min(3, 'Username must be 3-30 characters using lowercase letters, numbers, or underscores')
+        .max(30, 'Username must be 3-30 characters using lowercase letters, numbers, or underscores')
+        .regex(
+            /^[a-z0-9_]+$/,
+            'Username must be 3-30 characters using lowercase letters, numbers, or underscores',
+        ),
+});
+
+export const changePasswordSchema = z.object({
+    currentPassword: z.string().min(1, 'Current password is required'),
+    newPassword: z.string().min(1, 'New password is required'),
+});

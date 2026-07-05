@@ -5,12 +5,17 @@ import { ConnectionRequestsProvider } from './contexts/ConnectionRequestsProvide
 import { SocketProvider } from './contexts/SocketContext';
 import Login from './components/auth/Login';
 import Signup from './components/auth/Signup';
+import ForgotPassword from './components/auth/ForgotPassword';
+import ResetPassword from './components/auth/ResetPassword';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import Layout from './components/dashboard/Layout';
 import Discover from './components/matching/Discover';
 import ConnectionsHub from './components/connections/ConnectionsHub';
 import Chat from './components/chat/Chat';
 import Profile from './components/profile/Profile';
+import SettingsPrivacy from './components/settings/SettingsPrivacy';
+import AccountSettings from './components/settings/AccountSettings';
+import CommunitySafety from './components/settings/CommunitySafety';
 
 const App = () => {
   return (
@@ -23,6 +28,8 @@ const App = () => {
                 {/* Public Routes */}
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
 
                 {/* Protected Routes */}
                 <Route element={<ProtectedRoute />}>
@@ -35,6 +42,9 @@ const App = () => {
                     />
                     <Route path="/profile" element={<Profile />} />
                     <Route path="/profile/:userId" element={<Profile />} />
+                    <Route path="/settings" element={<SettingsPrivacy />} />
+                    <Route path="/settings/account" element={<AccountSettings />} />
+                    <Route path="/settings/community-safety" element={<CommunitySafety />} />
                     <Route path="/chat" element={<Chat />} />
                     <Route path="/chat/:userId" element={<Chat />} />
                   </Route>

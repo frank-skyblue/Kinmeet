@@ -7,14 +7,46 @@ alwaysApply: false
 
 When the user asks for a **commit message**, **commit note**, or **PR / changelog summary** from current work:
 
-1. **Inspect the tree** — Run `git status --short` and, if needed, `git diff --stat` and targeted `git diff` for unclear areas. Base the message only on what is actually changed; do not invent files or behavior.
+1. **Inspect the tree** — Run `git branch --show-current`, `git status --short`, and staged diffs (`git diff --cached --stat`, `git diff --cached`). Use unstaged or branch-wide diffs only when nothing is staged or the user asks. Base the message only on what is actually changed; do not invent files or behavior.
 
 2. **Scope** — If unrelated changes are mixed (e.g. docs + feature), say so and offer **two commit messages** (split by concern) or one combined message, whichever fits the user’s likely intent.
 
-3. **Format** — Prefer [Conventional Commits](https://www.conventionalcommits.org/): `type(scope): subject`  
-   Common types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `build`, `ci`.  
-   **Subject:** imperative mood (“add”, not “added”), ~50–72 characters, no trailing period, no vague “updates” unless unavoidable.
+3. **Branch prefix & title** — Parse the current branch name:
+   - **Prefix:** leading ticket segment — `FE-034`, `BE-012`, `FE-BE-034`, etc. (matches `FE-`, `BE-`, or `FE-BE-` followed by digits).
+   - **Title:** infer from the remainder of the branch name (slug after the prefix). Convert kebab-case to a readable title in Title Case; expand common abbreviations (`auth`, `api`, `e2e`, `ui`) when helpful. The title should summarize intent, not list files.
+   - If the branch has no ticket prefix, use only the inferred title on the first line (no prefix).
 
-4. **Body** — Optional second paragraph (or bullet list) for non-obvious **why**, breaking changes, or areas touched (`front-end`, `back-end`, `.cursor/rules`, etc.). Keep it readable; avoid dumping raw file lists unless the change is tiny.
+4. **Output format** — Reply with **only** the commit message body, ready to paste into the commit message field. No markdown headings, fences, or wrapper text unless the user asks for commentary.
 
-5. **Tone** — Complete sentences in the body; match project preference for clear, technical prose without filler.
+```
+{PREFIX}: {Title inferred from branch}
+
+{One short paragraph: what changed and why — complete sentences, plain language.}
+
+- {Imperative bullet: concrete change}
+- {Another bullet}
+- …
+```
+
+**Example** (branch `FE-034-move-community-guidelines-to-settings`):
+
+```
+FE-034: Move Community Guidelines to Settings & Privacy > Community & Safety
+
+Relocates Community Guidelines from the profile view into a dedicated
+Community & Safety settings page, keeping the profile section cleaner
+and grouping safety content with other settings.
+
+- Remove Community Guidelines block from ProfileView
+- Add Community & Safety entry to SettingsPrivacy section list
+- Create CommunitySafety page at /settings/community-safety with
+  guidelines rendered as an accessible list
+- Register new route in App.tsx
+- Update ARCHITECTURE.md routing docs
+- Add/update unit tests for SettingsPrivacy and CommunitySafety
+- Add E2E test covering Community & Safety navigation flow
+```
+
+5. **Bullets** — One idea per bullet; imperative mood (“Add”, “Remove”, “Update”). Mention areas (`front-end`, `back-end`, tests, config, docs) when relevant. Wrap long bullets at ~72 characters. Skip noise (lockfile-only, formatting-only) unless that is the whole change.
+
+6. **Tone** — Clear, technical prose without filler. Every bullet must map to something in the diff.

@@ -137,4 +137,27 @@ describe('Profile', () => {
     expect(screen.getByText(String(expectedAge))).toBeInTheDocument();
     expect(screen.queryByText('1990-06-15')).not.toBeInTheDocument();
   });
+
+  it('shows country flags for home and current country', async () => {
+    vi.mocked(profileAPI.getProfile).mockResolvedValue({ success: true, user: fullProfile });
+    const { container } = renderProfileAt('/profile');
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /edit profile/i })).toBeInTheDocument();
+    });
+    expect(container.querySelector('.fi-ca')).toBeInTheDocument();
+    expect(screen.getByText('ON, Canada')).toBeInTheDocument();
+  });
+
+  it('shows flags for legacy USA country values', async () => {
+    vi.mocked(profileAPI.getUserProfile).mockResolvedValue({
+      success: true,
+      user: otherProfile,
+      isConnected: true,
+    });
+    const { container } = renderProfileAt('/profile/other-9');
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /sam lee/i })).toBeInTheDocument();
+    });
+    expect(container.querySelectorAll('.fi-us').length).toBeGreaterThanOrEqual(1);
+  });
 });
