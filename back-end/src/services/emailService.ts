@@ -25,7 +25,7 @@ const getClient = (): Resend | null => {
  * - No RESEND_API_KEY: logs a warning and skips.
  */
 const send = async (payload: EmailPayload): Promise<void> => {
-    if (process.env.NODE_ENV === 'development' && !config.ENABLE_DEVELOPMENT_EMAIL) {
+    if (config.NODE_ENV === 'development' && !config.ENABLE_DEVELOPMENT_EMAIL) {
         console.log('[emailService] Dev mode — email skipped (set ENABLE_DEVELOPMENT_EMAIL=true to send for real)');
         console.log('[emailService] Would have sent:', {
             to: payload.to,

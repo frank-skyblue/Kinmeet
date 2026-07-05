@@ -1,5 +1,5 @@
 import { Server as HTTPServer } from 'http';
-import { Server, Socket } from 'socket.io';
+import { Server } from 'socket.io';
 import { socketAuthMiddleware } from './socketMiddleware';
 import { registerChatHandlers } from './socketHandlers';
 import { corsConfig } from '../config/cors';
@@ -16,7 +16,7 @@ export const initializeSocket = (httpServer: HTTPServer) => {
   io.use(socketAuthMiddleware);
 
   // Connection handler
-  io.on('connection', (socket: Socket) => {
+  io.on('connection', (socket) => {
     const userId = socket.data.userId;
     console.log(`✅ Socket connected: User ${userId} (${socket.id})`);
 

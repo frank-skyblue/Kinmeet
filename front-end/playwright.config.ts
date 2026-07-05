@@ -25,6 +25,7 @@ export default defineConfig({
         CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME || 'test',
         CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY || 'test',
         CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET || 'test',
+        WEB_APP_URL: process.env.WEB_APP_URL || 'http://localhost:5173',
         PORT: '8080',
       },
     },

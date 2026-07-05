@@ -277,6 +277,15 @@ describe('Auth Routes', () => {
       expect(res.status).toBe(400);
       expect(res.body.success).toBe(false);
     });
+
+    it('returns 400 for invalid email format', async () => {
+      const res = await request(app)
+        .post('/api/auth/login')
+        .send({ email: 'not-an-email', password: 'TestPass123' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+    });
   });
 
   describe('POST /api/auth/logout', () => {

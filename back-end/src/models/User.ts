@@ -13,6 +13,7 @@ export interface IUser extends Document {
     jobTitle?: string;
     company?: string;
     industry?: string;
+    educationLevel?: string;
     institution?: string;
     graduationYear?: number;
     homeCountry: string;
@@ -51,6 +52,20 @@ const UserSchema: Schema<IUser> = new Schema({
     jobTitle: { type: String, trim: true },
     company: { type: String, trim: true },
     industry: { type: String, trim: true },
+    educationLevel: {
+        type: String,
+        enum: [
+            'High School',
+            'Some College/University',
+            'College Diploma',
+            "Bachelor's Degree",
+            "Master's Degree",
+            'Doctorate / PhD',
+            'Trade School',
+            'Other',
+        ],
+        trim: true,
+    },
     institution: { type: String, trim: true },
     graduationYear: { type: Number, min: 1950, max: 2100 },
     homeCountry: { type: String, required: true },
