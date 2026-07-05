@@ -23,11 +23,11 @@ test.describe('Auth Flow', () => {
     await page.locator('#firstName').fill('Edu');
     await page.locator('#lastName').fill('Demo');
     await selectTypeaheadOption(page, 'Your Home Country', 'France', 'France');
+    await selectCityOption(page, 'Toronto', /Toronto, Ontario, Canada/);
+    await selectTypeaheadOption(page, /Province\/State/, 'Ontario', 'Ontario, Canada');
     await selectDropdownOption(page, 'Month', 'January');
     await selectDropdownOption(page, 'Day', '15');
     await selectDropdownOption(page, 'Year', '1990');
-    await selectCityOption(page, 'Toronto', /Toronto, Ontario, Canada/);
-    await selectTypeaheadOption(page, /Province\/State/, 'Ontario', 'Ontario, Canada');
     await selectDropdownOption(page, 'Gender', 'Female');
     await page.getByRole('button', { name: 'Next' }).click();
 
@@ -59,7 +59,9 @@ test.describe('Auth Flow', () => {
     await selectTypeaheadOption(page, 'Your Home Country', 'France', 'France');
     await selectCityOption(page, 'Toronto', /Toronto, Ontario, Canada/);
     await selectTypeaheadOption(page, /Province\/State/, 'Ontario', 'Ontario, Canada');
-    await page.locator('#dateOfBirth').fill('1995-01-15');
+    await selectDropdownOption(page, 'Month', 'January');
+    await selectDropdownOption(page, 'Day', '15');
+    await selectDropdownOption(page, 'Year', '1995');
     await selectDropdownOption(page, 'Gender', 'Female');
     await page.getByRole('button', { name: 'Next' }).click();
 

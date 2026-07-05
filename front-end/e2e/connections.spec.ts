@@ -63,6 +63,6 @@ test.describe('Connection Request Flow', () => {
       expectedAge -= 1;
     }
 
-    await expect(page.getByText(String(expectedAge))).toBeVisible();
+    await expect(page.getByText(String(expectedAge), { exact: true })).toBeVisible();
   });
 });
