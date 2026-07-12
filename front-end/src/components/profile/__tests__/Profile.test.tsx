@@ -122,6 +122,21 @@ describe('Profile', () => {
     expect(screen.queryByText(/birthday/i)).not.toBeInTheDocument();
   });
 
+  it('shows education level without graduation year on profile view', async () => {
+    const profileWithEducation = {
+      ...fullProfile,
+      educationLevel: "Bachelor's Degree",
+      graduationYear: 2020,
+    };
+    vi.mocked(profileAPI.getProfile).mockResolvedValue({ success: true, user: profileWithEducation });
+    renderProfileAt('/profile');
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /^education$/i })).toBeInTheDocument();
+    });
+    expect(screen.getByText("Bachelor's Degree")).toBeInTheDocument();
+    expect(screen.queryByText(/class of 2020/i)).not.toBeInTheDocument();
+  });
+
   it('shows age instead of raw date of birth on another user profile', async () => {
     const userWithDob = { ...otherProfile, dateOfBirth: '1990-06-15' };
     vi.mocked(profileAPI.getUserProfile).mockResolvedValue({
