@@ -168,7 +168,7 @@ Kinmeet/
 MONGODB_URI=mongodb://localhost:27017/kinmeet
 JWT_SECRET=your_secret_key_here
 PORT=8080
-REACT_FRONTEND_URL=http://localhost:5173
+WEB_APP_URL=http://localhost:5173
 ```
 
 **Frontend (.env)** (optional):

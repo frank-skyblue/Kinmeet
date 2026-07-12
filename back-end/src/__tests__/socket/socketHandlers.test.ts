@@ -1,9 +1,9 @@
 import { describe, it, expect, afterAll, beforeAll, beforeEach, vi } from 'vitest';
 
 vi.mock('../../services/notificationService', () => ({
-    notificationService: {
-        notifyChatMessage: vi.fn().mockResolvedValue(undefined),
-    },
+  notificationService: {
+    notifyChatMessage: vi.fn().mockResolvedValue(undefined),
+  },
 }));
 
 import { createServer, Server as HTTPServer } from 'http';
@@ -131,6 +131,114 @@ describe('Socket.IO Handlers', () => {
       clientA.disconnect();
       clientB.disconnect();
     }
+  });
+
+  describe('SEND_MESSAGE content validation', () => {
+    const emitSendMessage = (
+      client: ClientSocket,
+      payload: ChatSendMessagePayload,
+    ): Promise<ChatSendMessageAck> =>
+      new Promise((resolve) => {
+        client.emit(CHAT_SOCKET_EVENTS.SEND_MESSAGE, payload, resolve);
+      });
+
+    it('rejects empty content', async () => {
+      const userA = await createTestUser({ email: 'emptya@test.com' });
+      const userB = await createTestUser({ email: 'emptyb@test.com' });
+      await Connection.create({ user1: userA._id, user2: userB._id });
+
+      const clientA = await connectClient(getAuthToken(userA));
+
+      try {
+        const ack = await emitSendMessage(clientA, {
+          receiverId: userB._id.toString(),
+          content: '',
+        });
+
+        expect(ack.success).toBe(false);
+        if (!ack.success) {
+          expect(ack.message).toBe('Content is required');
+        }
+
+        const saved = await Message.countDocuments({ sender: userA._id, receiver: userB._id });
+        expect(saved).toBe(0);
+      } finally {
+        clientA.disconnect();
+      }
+    });
+
+    it('rejects whitespace-only content', async () => {
+      const userA = await createTestUser({ email: 'wsa@test.com' });
+      const userB = await createTestUser({ email: 'wsb@test.com' });
+      await Connection.create({ user1: userA._id, user2: userB._id });
+
+      const clientA = await connectClient(getAuthToken(userA));
+
+      try {
+        const ack = await emitSendMessage(clientA, {
+          receiverId: userB._id.toString(),
+          content: '   ',
+        });
+
+        expect(ack.success).toBe(false);
+        if (!ack.success) {
+          expect(ack.message).toBe('Content is required');
+        }
+
+        const saved = await Message.countDocuments({ sender: userA._id, receiver: userB._id });
+        expect(saved).toBe(0);
+      } finally {
+        clientA.disconnect();
+      }
+    });
+
+    it('rejects content over 2000 characters', async () => {
+      const userA = await createTestUser({ email: 'longa@test.com' });
+      const userB = await createTestUser({ email: 'longb@test.com' });
+      await Connection.create({ user1: userA._id, user2: userB._id });
+
+      const clientA = await connectClient(getAuthToken(userA));
+
+      try {
+        const ack = await emitSendMessage(clientA, {
+          receiverId: userB._id.toString(),
+          content: 'x'.repeat(2001),
+        });
+
+        expect(ack.success).toBe(false);
+        if (!ack.success) {
+          expect(ack.message).toBe('Message too long');
+        }
+
+        const saved = await Message.countDocuments({ sender: userA._id, receiver: userB._id });
+        expect(saved).toBe(0);
+      } finally {
+        clientA.disconnect();
+      }
+    });
+
+    it('accepts content at the 2000 character limit', async () => {
+      const userA = await createTestUser({ email: 'limita@test.com' });
+      const userB = await createTestUser({ email: 'limitb@test.com' });
+      await Connection.create({ user1: userA._id, user2: userB._id });
+
+      const clientA = await connectClient(getAuthToken(userA));
+      const content = 'x'.repeat(2000);
+
+      try {
+        const ack = await emitSendMessage(clientA, {
+          receiverId: userB._id.toString(),
+          content,
+        });
+
+        expect(ack.success).toBe(true);
+        if (ack.success) {
+          expect(ack.message.content).toBe(content);
+        }
+      } finally {
+        clientA.disconnect();
+      }
+    });
   });
 
   it('schedules push notification when receiver has no active socket', async () => {

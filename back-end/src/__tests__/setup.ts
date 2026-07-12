@@ -7,6 +7,7 @@ process.env.MONGODB_URI = 'unused-inmemory';
 process.env.CLOUDINARY_CLOUD_NAME = 'test-cloud';
 process.env.CLOUDINARY_API_KEY = 'test-key';
 process.env.CLOUDINARY_API_SECRET = 'test-secret';
+process.env.WEB_APP_URL = 'http://localhost:5173';
 
 let mongoServer: MongoMemoryServer;
 

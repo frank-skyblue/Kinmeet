@@ -95,7 +95,7 @@ Create a `back-end/.env` file:
 PORT=8080
 MONGODB_URI=mongodb://localhost:27017/kinmeet
 JWT_SECRET=your_super_secret_jwt_key_change_this_in_production
-REACT_FRONTEND_URL=http://localhost:5173
+WEB_APP_URL=http://localhost:5173
 
 CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key

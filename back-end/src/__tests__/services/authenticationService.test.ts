@@ -58,7 +58,20 @@ describe('authenticationService', () => {
       expect(user?.currentCity).toBe('Toronto');
     });
 
-    it('persists education level during registration', async () => {
+    it('persists optional industry during registration', async () => {
+      const result = await authenticationService.register({
+        ...validData,
+        email: 'industry-user@example.com',
+        industry: 'Healthcare',
+      });
+      expect(result.success).toBe(true);
+      const user = await User.findOne({ email: 'industry-user@example.com' });
+      expect(user?.industry).toBe('Healthcare');
+      expect(user?.jobTitle).toBeUndefined();
+      expect(user?.company).toBeUndefined();
+    });
+
+    it('persists optional educationLevel during registration', async () => {
       const result = await authenticationService.register({
         ...validData,
         email: 'education-user@example.com',

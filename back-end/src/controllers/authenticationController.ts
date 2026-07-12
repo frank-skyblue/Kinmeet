@@ -4,14 +4,6 @@ import { asyncHandler } from "../middleware/errorHandler";
 
 export const login = asyncHandler(async (req: Request, res: Response) => {
     const { email, password } = req.body;
-
-    if (!email || !password) {
-        return res.status(400).json({
-            success: false,
-            message: "Email and password are required"
-        });
-    }
-
     const result = await authenticationService.login({ email, password });
 
     if (result.success) {
@@ -30,6 +22,12 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
     } else {
         return res.status(400).json(result);
     }
+});
+
+export const checkEmail = asyncHandler(async (req: Request, res: Response) => {
+    const { email } = req.body;
+    const result = await authenticationService.checkEmailAvailability(email);
+    return res.status(200).json(result);
 });
 
 export const logout = asyncHandler(async (req: Request, res: Response) => {

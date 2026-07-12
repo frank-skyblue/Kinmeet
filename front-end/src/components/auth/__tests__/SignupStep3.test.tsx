@@ -6,10 +6,8 @@ import SignupStep3 from '../SignupStep3';
 const GRADUATION_YEARS = [2026, 2025, 2024];
 
 const defaultProps = {
-  jobTitle: '',
-  setJobTitle: vi.fn(),
-  company: '',
-  setCompany: vi.fn(),
+  industry: '',
+  setIndustry: vi.fn(),
   educationLevel: '',
   setEducationLevel: vi.fn(),
   graduationYear: '',
@@ -23,6 +21,14 @@ describe('SignupStep3', () => {
   it('renders Work & Education heading', () => {
     render(<SignupStep3 {...defaultProps} />);
     expect(screen.getByText('Work & Education')).toBeInTheDocument();
+  });
+
+  it('shows industry field instead of job title and company', () => {
+    render(<SignupStep3 {...defaultProps} />);
+
+    expect(screen.getByLabelText(/industry or field of work/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/job title/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/company name/i)).not.toBeInTheDocument();
   });
 
   it('renders the Education Level dropdown with all options', async () => {

@@ -65,6 +65,8 @@ export interface RegisterData {
     about?: string;
     jobTitle?: string;
     company?: string;
+    industry?: string;
+    educationLevel?: string;
     institution?: string;
     educationLevel?: string;
     graduationYear?: number;
@@ -167,6 +169,8 @@ export const authenticationService = {
                 about,
                 jobTitle,
                 company,
+                industry,
+                educationLevel,
                 institution,
                 educationLevel,
                 graduationYear,
@@ -319,6 +323,8 @@ export const authenticationService = {
                 about: about || undefined,
                 jobTitle: jobTitle || undefined,
                 company: company || undefined,
+                industry: industry || undefined,
+                educationLevel: educationLevel || undefined,
                 institution: institution || undefined,
                 educationLevel: educationLevel || undefined,
                 graduationYear: graduationYear || undefined,
@@ -368,6 +374,13 @@ export const authenticationService = {
                 message: "Registration failed"
             };
         }
+    },
+
+    checkEmailAvailability: async (
+        email: string,
+    ): Promise<{ success: true; available: boolean }> => {
+        const existingUser = await findUserByEmail(email);
+        return { success: true, available: !existingUser };
     },
 
     logout: async (token: string): Promise<{ success: boolean; message: string }> => {
