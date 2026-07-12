@@ -68,7 +68,6 @@ export interface RegisterData {
     industry?: string;
     educationLevel?: string;
     institution?: string;
-    educationLevel?: string;
     graduationYear?: number;
     homeCountry: string;
     currentLocation?: {
@@ -172,7 +171,6 @@ export const authenticationService = {
                 industry,
                 educationLevel,
                 institution,
-                educationLevel,
                 graduationYear,
                 homeCountry, 
                 currentLocation,
@@ -326,7 +324,6 @@ export const authenticationService = {
                 industry: industry || undefined,
                 educationLevel: educationLevel || undefined,
                 institution: institution || undefined,
-                educationLevel: educationLevel || undefined,
                 graduationYear: graduationYear || undefined,
                 homeCountry,
                 currentProvince: province,

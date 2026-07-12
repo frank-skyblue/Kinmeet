@@ -102,7 +102,6 @@ export const registerSchema = z.object({
     industry: z.string().trim().max(100, 'Industry is too long').optional(),
     educationLevel: educationLevelSchema.optional(),
     institution: z.string().trim().max(100, 'Institution is too long').optional(),
-    educationLevel: z.string().trim().max(100, 'Education level is too long').optional(),
     graduationYear: z.number().int().min(1950).max(2100).optional(),
     homeCountry: requiredString('Home country', 100),
     currentLocation: z.object({
