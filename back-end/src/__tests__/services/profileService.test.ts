@@ -63,10 +63,12 @@ describe('profileService', () => {
       const updated = await profileService.updateProfile(user._id.toString(), {
         firstName: 'Updated',
         about: 'New bio',
+        educationLevel: "Bachelor's Degree",
       });
 
       expect(updated.firstName).toBe('Updated');
       expect(updated.about).toBe('New bio');
+      expect(updated.educationLevel).toBe("Bachelor's Degree");
     });
 
     it('strips sensitive fields (email, password, _id)', async () => {

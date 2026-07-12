@@ -66,6 +66,7 @@ export interface RegisterData {
     jobTitle?: string;
     company?: string;
     institution?: string;
+    educationLevel?: string;
     graduationYear?: number;
     homeCountry: string;
     currentLocation?: {
@@ -167,6 +168,7 @@ export const authenticationService = {
                 jobTitle,
                 company,
                 institution,
+                educationLevel,
                 graduationYear,
                 homeCountry, 
                 currentLocation,
@@ -318,6 +320,7 @@ export const authenticationService = {
                 jobTitle: jobTitle || undefined,
                 company: company || undefined,
                 institution: institution || undefined,
+                educationLevel: educationLevel || undefined,
                 graduationYear: graduationYear || undefined,
                 homeCountry,
                 currentProvince: province,

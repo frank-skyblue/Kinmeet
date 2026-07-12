@@ -58,6 +58,17 @@ describe('authenticationService', () => {
       expect(user?.currentCity).toBe('Toronto');
     });
 
+    it('persists education level during registration', async () => {
+      const result = await authenticationService.register({
+        ...validData,
+        email: 'education-user@example.com',
+        educationLevel: "Bachelor's Degree",
+      });
+      expect(result.success).toBe(true);
+      const user = await User.findOne({ email: 'education-user@example.com' });
+      expect(user?.educationLevel).toBe("Bachelor's Degree");
+    });
+
     it('rejects duplicate email', async () => {
       await authenticationService.register(validData);
       const result = await authenticationService.register(validData);
