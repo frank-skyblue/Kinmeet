@@ -7,6 +7,7 @@ import CountryFlag from '../common/CountryFlag';
 import CountryWithFlag from '../common/CountryWithFlag';
 import DynamicListField from '../common/DynamicListField';
 import LookingForCheckboxes from '../common/LookingForCheckboxes';
+import BirthdaySelect from '../common/BirthdaySelect';
 import { validatePhotoFile } from '../../constants/validation';
 import { getErrorMessage } from '../../utils/error';
 import {
@@ -392,25 +393,15 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
               </div>
             </div>
 
-            <div>
-              <label
-                htmlFor="dateOfBirth"
-                className="block text-sm font-medium font-inter text-kin-navy mb-2"
-              >
-                Birthday
-              </label>
-              <input
-                type="date"
-                id="dateOfBirth"
-                value={dateOfBirth}
-                min={minIsoUtc}
-                max={todayIsoUtc}
-                onChange={(e) => setDateOfBirth(e.target.value)}
-                className="w-full min-h-[48px] px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
-                required
-                aria-label="Birthday"
-              />
-            </div>
+            <BirthdaySelect
+              idPrefix="dateOfBirth"
+              label="Date of Birth"
+              value={dateOfBirth}
+              minIsoDate={minIsoUtc}
+              maxIsoDate={todayIsoUtc}
+              onChange={setDateOfBirth}
+              required
+            />
 
             <SearchableSelect
               id="gender"
@@ -451,16 +442,23 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
               searchable={true}
             />
 
+            <SearchableSelect
+              id="educationLevel"
+              label="Education Level"
+              options={EDUCATION_LEVEL_OPTIONS}
+              value={educationLevel}
+              onChange={setEducationLevel}
+              placeholder="Select education level"
+            />
+
+            {/*
+              FE-030: Graduation Year UI hidden for now.
+              To show again: use grid grid-cols-2 for Education Level + Graduation Year,
+              then uncomment the block below (state/submit logic in this file is unchanged).
+
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <SearchableSelect
-                  id="educationLevel"
-                  label="Education Level"
-                  options={EDUCATION_LEVEL_OPTIONS}
-                  value={educationLevel}
-                  onChange={setEducationLevel}
-                  placeholder="Select education level"
-                />
+                ... keep Education Level SearchableSelect in left column ...
               </div>
               <div>
                 <label htmlFor="graduationYear" className="block text-sm font-medium font-inter text-kin-navy mb-2">
@@ -477,6 +475,7 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
                 />
               </div>
             </div>
+            */}
 
             <SearchableSelect
               id="homeCountry"

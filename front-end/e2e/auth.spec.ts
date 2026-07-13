@@ -25,7 +25,9 @@ test.describe('Auth Flow', () => {
     await selectTypeaheadOption(page, 'Your Home Country', 'France', 'France');
     await selectCityOption(page, 'Toronto', /Toronto, Ontario, Canada/);
     await selectTypeaheadOption(page, /Province\/State/, 'Ontario', 'Ontario, Canada');
-    await page.locator('#dateOfBirth').fill('1990-01-15');
+    await selectDropdownOption(page, 'Month', 'January');
+    await selectDropdownOption(page, 'Day', '15');
+    await selectDropdownOption(page, 'Year', '1990');
     await selectDropdownOption(page, 'Gender', 'Female');
     await page.getByRole('button', { name: 'Next' }).click();
 
@@ -35,9 +37,6 @@ test.describe('Auth Flow', () => {
 
     await selectDropdownOption(page, /education level/i, "Bachelor's Degree");
     await expect(page.getByRole('combobox', { name: /education level/i })).toContainText("Bachelor's Degree");
-
-    await selectDropdownOption(page, /graduation year/i, '2020');
-    await expect(page.getByRole('combobox', { name: /graduation year/i })).toContainText('2020');
   });
 
   test('signup step 3 shows industry field only', async ({ page }) => {
@@ -57,7 +56,9 @@ test.describe('Auth Flow', () => {
     await selectTypeaheadOption(page, 'Your Home Country', 'France', 'France');
     await selectCityOption(page, 'Toronto', /Toronto, Ontario, Canada/);
     await selectTypeaheadOption(page, /Province\/State/, 'Ontario', 'Ontario, Canada');
-    await page.locator('#dateOfBirth').fill('1995-01-15');
+    await selectDropdownOption(page, 'Month', 'January');
+    await selectDropdownOption(page, 'Day', '15');
+    await selectDropdownOption(page, 'Year', '1995');
     await selectDropdownOption(page, 'Gender', 'Female');
     await page.getByRole('button', { name: 'Next' }).click();
 

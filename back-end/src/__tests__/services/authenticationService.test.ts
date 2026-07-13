@@ -75,11 +75,11 @@ describe('authenticationService', () => {
       const result = await authenticationService.register({
         ...validData,
         email: 'education-user@example.com',
-        educationLevel: "Master's Degree",
+        educationLevel: "Bachelor's Degree",
       });
       expect(result.success).toBe(true);
       const user = await User.findOne({ email: 'education-user@example.com' });
-      expect(user?.educationLevel).toBe("Master's Degree");
+      expect(user?.educationLevel).toBe("Bachelor's Degree");
     });
 
     it('rejects duplicate email', async () => {
