@@ -125,6 +125,46 @@ describe('Profile Routes', () => {
       expect(res.body.success).toBe(false);
       expect(res.body.message).toBe('Invalid date of birth');
     });
+
+    it('returns 400 for invalid gender', async () => {
+      const user = await createTestUser({ email: 'bad-gender@test.com' });
+      const token = getAuthToken(user);
+
+      const res = await request(app)
+        .put('/api/profile/me')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ gender: 'invalid' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+    });
+
+    it('does not update email when sent in the body', async () => {
+      const user = await createTestUser({ email: 'protected@test.com' });
+      const token = getAuthToken(user);
+
+      const res = await request(app)
+        .put('/api/profile/me')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ email: 'hacked@test.com', firstName: 'Safe' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.user.email).toBe('protected@test.com');
+      expect(res.body.user.firstName).toBe('Safe');
+    });
+
+    it('persists educationLevel', async () => {
+      const user = await createTestUser({ email: 'education@test.com' });
+      const token = getAuthToken(user);
+
+      const res = await request(app)
+        .put('/api/profile/me')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ educationLevel: "Bachelor's Degree" });
+
+      expect(res.status).toBe(200);
+      expect(res.body.user.educationLevel).toBe("Bachelor's Degree");
+    });
   });
 
   describe('DELETE /api/profile/me', () => {

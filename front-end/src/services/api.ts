@@ -1,6 +1,9 @@
 import axios from 'axios';
 import { normalizeEmail } from '../utils/email';
 import type {
+  ChangeEmailPayload,
+  ChangePasswordPayload,
+  ChangeUsernamePayload,
   GetConnectionRequestsResponse,
   GetConversationsResponse,
   RegisterPayload,
@@ -90,6 +93,16 @@ export const authAPI = {
   logout: async () => {
     const response = await api.post('/auth/logout');
     return response.data;
+  },
+
+  forgotPassword: async (email: string) => {
+    const response = await api.post('/auth/forgot-password', { email });
+    return response.data as { success: boolean; message: string };
+  },
+
+  resetPassword: async (token: string, newPassword: string) => {
+    const response = await api.post('/auth/reset-password', { token, newPassword });
+    return response.data as { success: boolean; message: string };
   },
 };
 
@@ -221,6 +234,23 @@ export const blockAPI = {
   reportUser: async (userId: string, reason: string) => {
     const response = await api.post('/block/report', { userId, reason });
     return response.data;
+  },
+};
+
+export const settingsAPI = {
+  changeEmail: async (payload: ChangeEmailPayload) => {
+    const response = await api.patch('/settings/email', payload);
+    return response.data as { success: boolean; message: string; email?: string };
+  },
+
+  changeUsername: async (payload: ChangeUsernamePayload) => {
+    const response = await api.patch('/settings/username', payload);
+    return response.data as { success: boolean; message: string; username?: string };
+  },
+
+  changePassword: async (payload: ChangePasswordPayload) => {
+    const response = await api.patch('/settings/password', payload);
+    return response.data as { success: boolean; message: string };
   },
 };
 

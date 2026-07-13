@@ -179,6 +179,36 @@ const SEED_MESSAGES: readonly { senderIdx: number; receiverIdx: number; content:
   { senderIdx: 0, receiverIdx: 8, content: 'Amazing — I will send details this weekend.', read: false },
 ];
 
+/**
+ * Demographics merged into each seed user at creation time (index-aligned with `seedUsers`).
+ * These are intentionally kept out of the `seedUsers` objects so the connection/request/message/
+ * block narrative above stays unchanged while still giving QA real `age` (computed from
+ * `dateOfBirth`) and `gender` values to verify on profile cards and profile views.
+ * Age spread (relative to a 2026 "today"): ~25 (Camila) up to ~63 (Patricia).
+ */
+const SEED_DEMOGRAPHICS: readonly { gender: 'female' | 'male' | 'other'; dateOfBirth: string }[] = [
+  { gender: 'female', dateOfBirth: '1997-03-14' }, // 0  Lucia
+  { gender: 'male', dateOfBirth: '1994-08-22' },   // 1  Mateo
+  { gender: 'female', dateOfBirth: '1992-11-05' }, // 2  Valentina
+  { gender: 'male', dateOfBirth: '1990-02-18' },   // 3  Santiago
+  { gender: 'female', dateOfBirth: '2001-06-30' }, // 4  Camila
+  { gender: 'male', dateOfBirth: '1993-09-12' },   // 5  Nicolas
+  { gender: 'female', dateOfBirth: '1996-01-27' }, // 6  Sofia
+  { gender: 'male', dateOfBirth: '1998-05-09' },   // 7  Joaquin
+  { gender: 'female', dateOfBirth: '1998-10-03' }, // 8  Martina
+  { gender: 'male', dateOfBirth: '1990-04-16' },   // 9  Tomas
+  { gender: 'male', dateOfBirth: '1992-07-21' },   // 10 Alejandro
+  { gender: 'female', dateOfBirth: '1997-12-01' }, // 11 Florencia
+  { gender: 'male', dateOfBirth: '1988-03-25' },   // 12 Ricardo
+  { gender: 'female', dateOfBirth: '2000-08-19' }, // 13 Julia
+  { gender: 'male', dateOfBirth: '1999-02-11' },   // 14 Facundo
+  { gender: 'female', dateOfBirth: '1994-10-30' }, // 15 Carolina
+  { gender: 'male', dateOfBirth: '1996-06-06' },   // 16 Bruno
+  { gender: 'female', dateOfBirth: '1990-09-15' }, // 17 Elena
+  { gender: 'other', dateOfBirth: '1993-01-08' },  // 18 Diego (gender 'other' for display coverage)
+  { gender: 'female', dateOfBirth: '1962-05-20' }, // 19 Patricia
+];
+
 const undirectedPairKey = (a: Types.ObjectId, b: Types.ObjectId): string => {
   const sa = a.toString();
   const sb = b.toString();
@@ -641,16 +671,20 @@ const seed = async () => {
     let skipped = 0;
     const usersInOrder: IUser[] = [];
 
-    for (const userData of seedUsers) {
-      const { dateOfBirth: dobIso, ...rest } = userData;
-      const payload = { ...rest, dateOfBirth: toSeedDob(dobIso) };
-
+    for (let i = 0; i < seedUsers.length; i += 1) {
+      const userData = seedUsers[i]!;
       let user = await User.findOne({ email: userData.email });
       if (user) {
         console.log(`Skipped (already exists): ${userData.email}`);
         skipped++;
       } else {
-        user = await User.create(payload);
+        const demo = SEED_DEMOGRAPHICS[i];
+        user = await User.create({
+          ...userData,
+          ...(demo
+            ? { gender: demo.gender, dateOfBirth: new Date(demo.dateOfBirth) }
+            : {}),
+        });
         console.log(`Created: ${userData.firstName} ${userData.lastName} (${userData.email})`);
         created++;
       }
@@ -792,9 +826,9 @@ const seed = async () => {
 
       console.log(
         `\nConnection requests (pending incoming): created ${requestsCreated}.` +
-          (requestsSkippedCap > 0
-            ? ` (${requestsSkippedCap} fewer than targets — not enough eligible sender pairs.)`
-            : ''),
+        (requestsSkippedCap > 0
+          ? ` (${requestsSkippedCap} fewer than targets — not enough eligible sender pairs.)`
+          : ''),
       );
       for (let r = 0; r < n; r += 1) {
         const u = usersInOrder[r]!;

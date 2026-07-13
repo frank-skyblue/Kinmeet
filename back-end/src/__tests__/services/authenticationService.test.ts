@@ -71,6 +71,17 @@ describe('authenticationService', () => {
       expect(user?.company).toBeUndefined();
     });
 
+    it('persists optional educationLevel during registration', async () => {
+      const result = await authenticationService.register({
+        ...validData,
+        email: 'education-user@example.com',
+        educationLevel: "Master's Degree",
+      });
+      expect(result.success).toBe(true);
+      const user = await User.findOne({ email: 'education-user@example.com' });
+      expect(user?.educationLevel).toBe("Master's Degree");
+    });
+
     it('rejects duplicate email', async () => {
       await authenticationService.register(validData);
       const result = await authenticationService.register(validData);

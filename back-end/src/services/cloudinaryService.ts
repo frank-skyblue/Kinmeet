@@ -1,5 +1,10 @@
 import { v2 as cloudinary } from 'cloudinary';
-import { CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET } from '../config/env';
+import {
+    CLOUDINARY_CLOUD_NAME,
+    CLOUDINARY_API_KEY,
+    CLOUDINARY_API_SECRET,
+    NODE_ENV,
+} from '../config/env';
 
 cloudinary.config({
     cloud_name: CLOUDINARY_CLOUD_NAME,
@@ -8,7 +13,7 @@ cloudinary.config({
 });
 
 const getFolder = (subfolder: string) =>
-    process.env.NODE_ENV === 'production'
+    NODE_ENV === 'production'
         ? `kinmeet/${subfolder}`
         : `kinmeet-dev/${subfolder}`;
 

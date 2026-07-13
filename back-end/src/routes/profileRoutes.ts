@@ -2,7 +2,7 @@ import express, { Request, Response, NextFunction } from 'express';
 import multer from 'multer';
 import { authenticateJWT } from '../middleware/authMiddleware';
 import { validate } from '../middleware/validate';
-import { userIdParams } from '../middleware/schemas';
+import { updateProfileSchema, userIdParams } from '../middleware/schemas';
 import { getProfile, getUserProfile, updateProfile, deleteProfile, uploadPhoto, deletePhoto, avatarUpload } from '../controllers/profileController';
 
 const router = express.Router();
@@ -11,7 +11,7 @@ router.use(authenticateJWT);
 
 router.get('/me', getProfile);
 router.get('/:userId', validate(userIdParams, 'params'), getUserProfile);
-router.put('/me', updateProfile);
+router.put('/me', validate(updateProfileSchema), updateProfile);
 router.delete('/me', deleteProfile);
 
 router.post('/photo', (req: Request, res: Response, next: NextFunction) => {
