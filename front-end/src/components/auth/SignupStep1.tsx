@@ -50,6 +50,10 @@ const SignupStep1: React.FC<SignupStep1Props> = ({
       setError("Please confirm your password.");
       return false;
     }
+    if (!EMAIL_PATTERN.test(email.trim())) {
+      setError("Please enter a valid email address.");
+      return false;
+    }
     const trimmedUsername = username.trim();
     if (trimmedUsername !== "" && !USERNAME_PATTERN.test(trimmedUsername.toLowerCase())) {
       setError(
