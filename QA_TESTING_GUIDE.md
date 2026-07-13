@@ -60,7 +60,7 @@ Real-time chat, connection requests, and blocking need **two logged-in users at 
 
 ## 2. Seed data reference & test-account cheat sheet
 
-**Every account password: `Password123`.** All 20 users are **Argentina → Canada**, so they are all eligible to match each other. Ages/gender were added to the seed so profile **age** and **gender** render (age spread ≈ 25–63; user 18 Diego has gender `other`).
+**Every account password: `Password123`.** All 20 users are **Argentina → Canada**, so they are all eligible to match each other. Every seed user has its own `dateOfBirth` and `gender` so profile **age** and **gender** render (age spread ≈ 24–66; user 18 Diego has gender `other`, everyone else is `female`/`male`).
 
 ### 2.1 Users
 
