@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { loginSchema, updateProfileSchema } from '../../middleware/schemas';
+import { loginSchema, submitFeedbackSchema, updateProfileSchema } from '../../middleware/schemas';
 
 describe('loginSchema', () => {
   it('accepts valid credentials', () => {
@@ -106,6 +106,52 @@ describe('updateProfileSchema', () => {
   it('rejects invalid educationLevel', () => {
     const result = updateProfileSchema.safeParse({
       educationLevel: 'PhD in Everything',
+    });
+
+    expect(result.success).toBe(false);
+  });
+});
+
+describe('submitFeedbackSchema', () => {
+  it('accepts valid feedback and defaults followUp to false', () => {
+    const result = submitFeedbackSchema.safeParse({
+      category: 'General App Experience',
+      message: '  The app feels friendly.  ',
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.message).toBe('The app feels friendly.');
+      expect(result.data.followUp).toBe(false);
+    }
+  });
+
+  it('coerces multipart followUp strings', () => {
+    const result = submitFeedbackSchema.safeParse({
+      category: 'Feature Suggestion',
+      message: 'Saved filters would help.',
+      followUp: 'true',
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.followUp).toBe(true);
+    }
+  });
+
+  it('rejects missing message', () => {
+    const result = submitFeedbackSchema.safeParse({
+      category: 'Messaging Feedback',
+      message: '   ',
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects invalid category', () => {
+    const result = submitFeedbackSchema.safeParse({
+      category: 'Other',
+      message: 'This category is not allowed.',
     });
 
     expect(result.success).toBe(false);

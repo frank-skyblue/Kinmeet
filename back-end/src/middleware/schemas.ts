@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { normalizeEmail } from '../utils/email';
+import { FEEDBACK_CATEGORIES } from '../models/Feedback';
 
 const objectId = z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid ID format');
 const requiredString = (field: string, maxLength: number) =>
@@ -43,6 +44,17 @@ const educationLevelSchema = z.enum([
     'Trade School',
     'Other',
 ]);
+const feedbackCategorySchema = z.enum(FEEDBACK_CATEGORIES);
+const followUpField = z.preprocess((value) => {
+    if (value === undefined || value === '') return false;
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return value;
+}, z.boolean());
+const feedbackMessageField = z.preprocess(
+    (value) => value === undefined ? '' : value,
+    z.string().trim().min(1, 'Message is required').max(2000, 'Message is too long'),
+);
 
 export const objectIdParam = (name: string) =>
     z.object({ [name]: objectId });
@@ -64,6 +76,12 @@ export const blockUserSchema = z.object({
 export const reportUserSchema = z.object({
     userId: objectId,
     reason: z.string().min(1, 'Reason is required'),
+});
+
+export const submitFeedbackSchema = z.object({
+    category: feedbackCategorySchema,
+    message: feedbackMessageField,
+    followUp: followUpField,
 });
 
 export const sendMeetRequestSchema = z.object({

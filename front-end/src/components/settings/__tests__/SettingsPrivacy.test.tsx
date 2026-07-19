@@ -31,4 +31,17 @@ describe('SettingsPrivacy', () => {
       '/settings/community-safety',
     );
   });
+
+  it('renders Support section link', () => {
+    render(
+      <MemoryRouter>
+        <SettingsPrivacy />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole('link', { name: /support:/i })).toHaveAttribute(
+      'href',
+      '/settings/support',
+    );
+  });
 });

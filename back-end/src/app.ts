@@ -15,6 +15,7 @@ import chatRoutes from './routes/chatRoutes';
 import blockRoutes from './routes/blockRoutes';
 import notificationsRoutes from './routes/notificationsRoutes';
 import settingsRoutes from './routes/settingsRoutes';
+import feedbackRoutes from './routes/feedbackRoutes';
 
 const app: Express = express()
 const httpServer = createServer(app) // Wrap Express with HTTP server for Socket.io
@@ -64,6 +65,7 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/block', blockRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/feedback', feedbackRoutes);
 
 app.use(errorHandler);
 
