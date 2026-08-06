@@ -159,6 +159,28 @@ export interface ChangePasswordPayload {
     newPassword: string;
 }
 
+export type FeedbackCategory =
+    | 'Bug or Technical Issue'
+    | 'Feature Suggestion'
+    | 'Profile or Account Feedback'
+    | 'Messaging Feedback'
+    | 'Discovery / Matching Feedback'
+    | 'Community or Safety Feedback'
+    | 'General App Experience';
+
+export interface SubmitFeedbackPayload {
+    category: FeedbackCategory;
+    message: string;
+    followUp?: boolean;
+    screenshots?: File[];
+}
+
+export interface SubmitFeedbackResponse {
+    success: boolean;
+    message: string;
+    feedbackId: string;
+}
+
 export interface ApiResponse<T = unknown> {
     success: boolean;
     message?: string;

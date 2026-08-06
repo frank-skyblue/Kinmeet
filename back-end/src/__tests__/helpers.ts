@@ -13,6 +13,7 @@ import chatRoutes from '../routes/chatRoutes';
 import blockRoutes from '../routes/blockRoutes';
 import notificationsRoutes from '../routes/notificationsRoutes';
 import settingsRoutes from '../routes/settingsRoutes';
+import feedbackRoutes from '../routes/feedbackRoutes';
 
 export const createTestApp = () => {
   const app = express();
@@ -27,6 +28,7 @@ export const createTestApp = () => {
   app.use('/api/block', blockRoutes);
   app.use('/api/notifications', notificationsRoutes);
   app.use('/api/settings', settingsRoutes);
+  app.use('/api/feedback', feedbackRoutes);
 
   app.use(errorHandler);
   return app;

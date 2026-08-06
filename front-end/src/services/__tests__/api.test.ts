@@ -1,13 +1,17 @@
 import { describe, expect, it, beforeEach } from 'vitest';
-import api from '../api';
+import api, { feedbackAPI } from '../api';
 
 const postWithAdapter = async (data: unknown, headers?: Record<string, string>) => {
+  let capturedUrl: string | undefined;
   let capturedData: unknown;
   let capturedAuthorization: string | undefined;
+  let capturedContentType: string | undefined;
 
   api.defaults.adapter = (config) => {
+    capturedUrl = config.url;
     capturedData = config.data;
     capturedAuthorization = config.headers.Authorization as string | undefined;
+    capturedContentType = config.headers['Content-Type'] as string | undefined;
     return Promise.resolve({
       data: {},
       status: 200,
@@ -20,7 +24,7 @@ const postWithAdapter = async (data: unknown, headers?: Record<string, string>) 
   await api.post('/test-sanitize', data, headers ? { headers } : undefined);
   api.defaults.adapter = undefined;
 
-  return { capturedData, capturedAuthorization };
+  return { capturedUrl, capturedData, capturedAuthorization, capturedContentType };
 };
 
 const parsedBody = (data: unknown) => {
@@ -111,5 +115,43 @@ describe('api', () => {
     const body = parsedBody(capturedData) as { email: string; password: string };
     expect(body.email).toBe('new@example.com');
     expect(body.password).toBe('  Secret1  ');
+  });
+
+  it('submits feedback as multipart FormData', async () => {
+    const screenshotOne = new File(['x'], 'screenshot-1.png', { type: 'image/png' });
+    const screenshotTwo = new File(['y'], 'screenshot-2.png', { type: 'image/png' });
+    let capturedUrl: string | undefined;
+    let capturedData: unknown;
+    let capturedContentType: string | undefined;
+
+    api.defaults.adapter = (config) => {
+      capturedUrl = config.url;
+      capturedData = config.data;
+      capturedContentType = config.headers['Content-Type'] as string | undefined;
+      return Promise.resolve({
+        data: { success: true, message: 'ok', feedbackId: 'feedback-1' },
+        status: 201,
+        statusText: 'Created',
+        headers: {},
+        config,
+      });
+    };
+
+    await feedbackAPI.submitFeedback({
+      category: 'Bug or Technical Issue',
+      message: 'Something broke.',
+      followUp: true,
+      screenshots: [screenshotOne, screenshotTwo],
+    });
+    api.defaults.adapter = undefined;
+
+    expect(capturedUrl).toBe('/feedback');
+    expect(capturedContentType).toBe('multipart/form-data');
+    expect(capturedData).toBeInstanceOf(FormData);
+    const formData = capturedData as FormData;
+    expect(formData.get('category')).toBe('Bug or Technical Issue');
+    expect(formData.get('message')).toBe('Something broke.');
+    expect(formData.get('followUp')).toBe('true');
+    expect(formData.getAll('screenshots')).toEqual([screenshotOne, screenshotTwo]);
   });
 });

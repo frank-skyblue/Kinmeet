@@ -7,6 +7,8 @@ import type {
   GetConnectionRequestsResponse,
   GetConversationsResponse,
   RegisterPayload,
+  SubmitFeedbackPayload,
+  SubmitFeedbackResponse,
   UpdateProfilePayload,
   RegisterNotificationDevicePayload,
 } from '../types';
@@ -251,6 +253,23 @@ export const settingsAPI = {
   changePassword: async (payload: ChangePasswordPayload) => {
     const response = await api.patch('/settings/password', payload);
     return response.data as { success: boolean; message: string };
+  },
+};
+
+export const feedbackAPI = {
+  submitFeedback: async (payload: SubmitFeedbackPayload) => {
+    const formData = new FormData();
+    formData.append('category', payload.category);
+    formData.append('message', payload.message);
+    formData.append('followUp', String(payload.followUp ?? false));
+    payload.screenshots?.forEach((screenshot) => {
+      formData.append('screenshots', screenshot);
+    });
+
+    const response = await api.post('/feedback', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data as SubmitFeedbackResponse;
   },
 };
 

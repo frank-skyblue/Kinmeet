@@ -16,6 +16,8 @@ import Profile from './components/profile/Profile';
 import SettingsPrivacy from './components/settings/SettingsPrivacy';
 import AccountSettings from './components/settings/AccountSettings';
 import CommunitySafety from './components/settings/CommunitySafety';
+import Support from './components/settings/Support';
+import GiveFeedback from './components/settings/GiveFeedback';
 
 const App = () => {
   return (
@@ -45,6 +47,8 @@ const App = () => {
                     <Route path="/settings" element={<SettingsPrivacy />} />
                     <Route path="/settings/account" element={<AccountSettings />} />
                     <Route path="/settings/community-safety" element={<CommunitySafety />} />
+                    <Route path="/settings/support" element={<Support />} />
+                    <Route path="/settings/support/feedback" element={<GiveFeedback />} />
                     <Route path="/chat" element={<Chat />} />
                     <Route path="/chat/:userId" element={<Chat />} />
                   </Route>

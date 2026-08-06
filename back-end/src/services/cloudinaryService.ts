@@ -33,13 +33,18 @@ export interface UploadOptions {
     transformation?: Record<string, unknown>[];
 }
 
-export const uploadImage = async (
+export interface UploadedImage {
+    url: string;
+    publicId: string;
+}
+
+const uploadToCloudinary = async (
     fileBuffer: Buffer,
     { subfolder, publicId, transformation }: UploadOptions,
-): Promise<string> => {
+): Promise<UploadedImage> => {
     const folder = getFolder(subfolder);
 
-    const result = await new Promise<{ secure_url: string }>((resolve, reject) => {
+    const result = await new Promise<{ secure_url: string; public_id: string }>((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
             {
                 folder,
@@ -54,7 +59,29 @@ export const uploadImage = async (
         stream.end(fileBuffer);
     });
 
-    return result.secure_url;
+    return {
+        url: result.secure_url,
+        publicId: result.public_id,
+    };
+};
+
+export const uploadImage = async (
+    fileBuffer: Buffer,
+    options: UploadOptions,
+): Promise<string> => {
+    const { url } = await uploadToCloudinary(fileBuffer, options);
+    return url;
+};
+
+export const uploadImageAsset = async (
+    fileBuffer: Buffer,
+    options: UploadOptions,
+): Promise<UploadedImage> => {
+    return uploadToCloudinary(fileBuffer, options);
+};
+
+export const destroyImageByPublicId = async (publicId: string): Promise<void> => {
+    await cloudinary.uploader.destroy(publicId);
 };
 
 export const destroyImage = async (url: string, subfolder: string): Promise<void> => {
@@ -63,7 +90,7 @@ export const destroyImage = async (url: string, subfolder: string): Promise<void
     if (!publicId) return;
 
     try {
-        await cloudinary.uploader.destroy(publicId);
+        await destroyImageByPublicId(publicId);
     } catch {
         // non-critical — image may already be gone
     }
