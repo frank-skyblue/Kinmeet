@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { normalizeEmail } from '../utils/email';
 import { FEEDBACK_CATEGORIES } from '../models/Feedback';
+import { SUPPORT_ISSUE_TYPES } from '../models/SupportRequest';
 
 const objectId = z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid ID format');
 const requiredString = (field: string, maxLength: number) =>
@@ -81,6 +82,25 @@ export const reportUserSchema = z.object({
 export const submitFeedbackSchema = z.object({
     category: feedbackCategorySchema,
     message: feedbackMessageField,
+    followUp: followUpField,
+});
+
+const supportIssueTypeSchema = z.enum(SUPPORT_ISSUE_TYPES);
+const supportSubjectField = z.preprocess((value) => {
+    if (value === undefined || value === '') return undefined;
+    if (typeof value !== 'string') return value;
+    const trimmed = value.trim();
+    return trimmed === '' ? undefined : trimmed;
+}, z.string().max(100, 'Subject is too long').optional());
+const supportMessageField = z.preprocess(
+    (value) => value === undefined ? '' : value,
+    z.string().trim().min(1, 'Message is required').max(2000, 'Message is too long'),
+);
+
+export const submitSupportRequestSchema = z.object({
+    issueType: supportIssueTypeSchema,
+    subject: supportSubjectField,
+    message: supportMessageField,
     followUp: followUpField,
 });
 

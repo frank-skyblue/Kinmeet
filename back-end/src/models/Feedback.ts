@@ -21,6 +21,7 @@ export interface IFeedbackScreenshot {
 
 export interface IFeedback extends Document {
     userId: Types.ObjectId;
+    email: string;
     category: FeedbackCategory;
     message: string;
     screenshots: IFeedbackScreenshot[];
@@ -38,6 +39,7 @@ const FeedbackScreenshotSchema = new Schema<IFeedbackScreenshot>({
 
 const FeedbackSchema: Schema<IFeedback> = new Schema({
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    email: { type: String, required: true, lowercase: true, trim: true },
     category: { type: String, enum: FEEDBACK_CATEGORIES, required: true },
     message: { type: String, required: true, trim: true, maxlength: 2000 },
     screenshots: [FeedbackScreenshotSchema],

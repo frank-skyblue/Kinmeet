@@ -3,6 +3,11 @@ import { Link } from 'react-router-dom';
 
 const supportSections = [
   {
+    path: '/settings/support/contact',
+    title: 'Contact Support',
+    description: 'Get help with your account or a technical issue',
+  },
+  {
     path: '/settings/support/feedback',
     title: 'Give Feedback',
     description: 'Share feedback about your KinMeet experience',

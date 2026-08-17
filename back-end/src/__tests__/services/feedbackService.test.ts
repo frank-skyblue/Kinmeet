@@ -35,6 +35,7 @@ describe('feedbackService', () => {
       expect(feedback?.category).toBe('General App Experience');
       expect(feedback?.message).toBe('KinMeet feels welcoming.');
       expect(feedback?.followUp).toBe(false);
+      expect(feedback?.email).toBe('feedback-service@example.com');
       expect(feedback?.status).toBe('new');
       expect(feedback?.screenshots).toEqual([]);
       expect(uploadImageAsset).not.toHaveBeenCalled();
@@ -58,6 +59,7 @@ describe('feedbackService', () => {
       );
 
       const feedback = await Feedback.findById(result.feedbackId);
+      expect(feedback?.email).toBe('feedback-screenshot@example.com');
       expect(feedback?.followUp).toBe(true);
       expect(feedback?.screenshots).toHaveLength(2);
       expect(feedback?.screenshots[0]).toEqual(expect.objectContaining({

@@ -19,16 +19,21 @@ describe('Support', () => {
     );
   });
 
-  it('renders Give Feedback section link', () => {
+  it('renders Contact Support and Give Feedback section links', () => {
     render(
       <MemoryRouter>
         <Support />
       </MemoryRouter>,
     );
 
+    expect(screen.getByRole('link', { name: /contact support:/i })).toHaveAttribute(
+      'href',
+      '/settings/support/contact',
+    );
     expect(screen.getByRole('link', { name: /give feedback:/i })).toHaveAttribute(
       'href',
       '/settings/support/feedback',
     );
   });
 });
+
