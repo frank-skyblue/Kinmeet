@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach } from 'vitest';
-import api, { feedbackAPI } from '../api';
+import api, { feedbackAPI, supportAPI } from '../api';
 
 const postWithAdapter = async (data: unknown, headers?: Record<string, string>) => {
   let capturedUrl: string | undefined;
@@ -153,5 +153,76 @@ describe('api', () => {
     expect(formData.get('message')).toBe('Something broke.');
     expect(formData.get('followUp')).toBe('true');
     expect(formData.getAll('screenshots')).toEqual([screenshotOne, screenshotTwo]);
+    expect(formData.get('email')).toBeNull();
+    expect([...formData.keys()]).not.toContain('email');
+  });
+
+  it('submits support requests as multipart FormData without email', async () => {
+    const screenshot = new File(['x'], 'screenshot.png', { type: 'image/png' });
+    let capturedUrl: string | undefined;
+    let capturedData: unknown;
+    let capturedContentType: string | undefined;
+
+    api.defaults.adapter = (config) => {
+      capturedUrl = config.url;
+      capturedData = config.data;
+      capturedContentType = config.headers['Content-Type'] as string | undefined;
+      return Promise.resolve({
+        data: { success: true, message: 'ok', supportRequestId: 'support-1' },
+        status: 201,
+        statusText: 'Created',
+        headers: {},
+        config,
+      });
+    };
+
+    await supportAPI.submitSupportRequest({
+      issueType: 'Technical problem',
+      subject: 'App crash',
+      message: 'Something broke.',
+      followUp: true,
+      screenshots: [screenshot],
+    });
+    api.defaults.adapter = undefined;
+
+    expect(capturedUrl).toBe('/support');
+    expect(capturedContentType).toBe('multipart/form-data');
+    expect(capturedData).toBeInstanceOf(FormData);
+    const formData = capturedData as FormData;
+    expect(formData.get('issueType')).toBe('Technical problem');
+    expect(formData.get('subject')).toBe('App crash');
+    expect(formData.get('message')).toBe('Something broke.');
+    expect(formData.get('followUp')).toBe('true');
+    expect(formData.getAll('screenshots')).toEqual([screenshot]);
+    expect(formData.get('email')).toBeNull();
+    expect([...formData.keys()]).not.toContain('email');
+  });
+
+  it('omits support subject from FormData when it is not provided', async () => {
+    let capturedData: unknown;
+
+    api.defaults.adapter = (config) => {
+      capturedData = config.data;
+      return Promise.resolve({
+        data: { success: true, message: 'ok', supportRequestId: 'support-2' },
+        status: 201,
+        statusText: 'Created',
+        headers: {},
+        config,
+      });
+    };
+
+    await supportAPI.submitSupportRequest({
+      issueType: 'Other',
+      message: 'Need help with no subject.',
+    });
+    api.defaults.adapter = undefined;
+
+    const formData = capturedData as FormData;
+    expect(formData.get('issueType')).toBe('Other');
+    expect(formData.get('message')).toBe('Need help with no subject.');
+    expect(formData.get('subject')).toBeNull();
+    expect([...formData.keys()]).not.toContain('subject');
   });
 });
+

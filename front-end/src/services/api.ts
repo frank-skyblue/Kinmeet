@@ -9,6 +9,8 @@ import type {
   RegisterPayload,
   SubmitFeedbackPayload,
   SubmitFeedbackResponse,
+  SubmitSupportRequestPayload,
+  SubmitSupportRequestResponse,
   UpdateProfilePayload,
   RegisterNotificationDevicePayload,
 } from '../types';
@@ -270,6 +272,26 @@ export const feedbackAPI = {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
     return response.data as SubmitFeedbackResponse;
+  },
+};
+
+export const supportAPI = {
+  submitSupportRequest: async (payload: SubmitSupportRequestPayload) => {
+    const formData = new FormData();
+    formData.append('issueType', payload.issueType);
+    if (payload.subject) {
+      formData.append('subject', payload.subject);
+    }
+    formData.append('message', payload.message);
+    formData.append('followUp', String(payload.followUp ?? false));
+    payload.screenshots?.forEach((screenshot) => {
+      formData.append('screenshots', screenshot);
+    });
+
+    const response = await api.post('/support', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data as SubmitSupportRequestResponse;
   },
 };
 

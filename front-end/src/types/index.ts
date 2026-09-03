@@ -181,6 +181,28 @@ export interface SubmitFeedbackResponse {
     feedbackId: string;
 }
 
+export type SupportIssueType =
+    | 'Account issue'
+    | 'Login/password issue'
+    | 'Profile issue'
+    | 'Technical problem'
+    | 'Safety concern'
+    | 'Other';
+
+export interface SubmitSupportRequestPayload {
+    issueType: SupportIssueType;
+    subject?: string;
+    message: string;
+    followUp?: boolean;
+    screenshots?: File[];
+}
+
+export interface SubmitSupportRequestResponse {
+    success: boolean;
+    message: string;
+    supportRequestId: string;
+}
+
 export interface ApiResponse<T = unknown> {
     success: boolean;
     message?: string;

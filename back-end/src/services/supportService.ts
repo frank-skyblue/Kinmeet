@@ -1,11 +1,12 @@
+import crypto from 'crypto';
 import multer, { FileFilterCallback } from 'multer';
-import { Feedback, FeedbackCategory, IFeedbackScreenshot } from '../models/Feedback';
+import { SupportRequest, SupportIssueType, ISupportRequestScreenshot } from '../models/SupportRequest';
 import { User } from '../models/User';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { AppError } from '../middleware/errorHandler';
 import { destroyImageByPublicId, uploadImageAsset } from './cloudinaryService';
 
-const FEEDBACK_SCREENSHOTS_SUBFOLDER = 'feedback-screenshots';
+const SUPPORT_SCREENSHOTS_SUBFOLDER = 'support-screenshots';
 
 const fileFilter = (_req: AuthRequest, file: Express.Multer.File, cb: FileFilterCallback) => {
     const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
@@ -16,45 +17,45 @@ const fileFilter = (_req: AuthRequest, file: Express.Multer.File, cb: FileFilter
     }
 };
 
-export const feedbackUpload = multer({
+export const supportUpload = multer({
     storage: multer.memoryStorage(),
     fileFilter,
     limits: { fileSize: 5 * 1024 * 1024 },
 });
 
-interface SubmitFeedbackInput {
-    category: FeedbackCategory;
+interface SubmitSupportRequestInput {
+    issueType: SupportIssueType;
+    subject?: string;
     message: string;
     followUp: boolean;
     screenshotBuffers?: Buffer[];
 }
 
-const cleanupUploadedScreenshots = async (screenshots: IFeedbackScreenshot[]) => {
+const cleanupUploadedScreenshots = async (screenshots: ISupportRequestScreenshot[]) => {
     await Promise.all(screenshots.map(async ({ publicId }) => {
         try {
             await destroyImageByPublicId(publicId);
         } catch (error) {
-            console.error(`[feedbackService] Failed to clean up screenshot ${publicId}:`, error);
+            console.error(`[supportService] Failed to clean up screenshot ${publicId}:`, error);
         }
     }));
 };
 
-export const feedbackService = {
-    submitFeedback: async (
+export const supportService = {
+    submitSupportRequest: async (
         userId: string,
-        { category, message, followUp, screenshotBuffers = [] }: SubmitFeedbackInput,
+        { issueType, subject, message, followUp, screenshotBuffers = [] }: SubmitSupportRequestInput,
     ) => {
         const user = await User.findById(userId);
         if (!user) throw new AppError(404, 'User not found');
 
-        const screenshots: IFeedbackScreenshot[] = [];
-        const uploadTimestamp = Date.now();
+        const screenshots: ISupportRequestScreenshot[] = [];
 
         try {
-            for (let index = 0; index < screenshotBuffers.length; index++) {
-                const uploaded = await uploadImageAsset(screenshotBuffers[index], {
-                    subfolder: FEEDBACK_SCREENSHOTS_SUBFOLDER,
-                    publicId: `${userId}-${uploadTimestamp}-${index + 1}`,
+            for (const buffer of screenshotBuffers) {
+                const uploaded = await uploadImageAsset(buffer, {
+                    subfolder: SUPPORT_SCREENSHOTS_SUBFOLDER,
+                    publicId: `${userId}-${crypto.randomUUID()}`,
                     transformation: [
                         { quality: 'auto', fetch_format: 'auto' },
                     ],
@@ -67,16 +68,17 @@ export const feedbackService = {
         }
 
         try {
-            const feedback = new Feedback({
+            const supportRequest = new SupportRequest({
                 userId,
                 email: user.email,
-                category,
+                issueType,
+                ...(subject ? { subject } : {}),
                 message,
                 screenshots,
                 followUp,
             });
-            await feedback.save();
-            return { feedbackId: feedback._id.toString() };
+            await supportRequest.save();
+            return { supportRequestId: supportRequest._id.toString() };
         } catch (error) {
             await cleanupUploadedScreenshots(screenshots);
             throw error;

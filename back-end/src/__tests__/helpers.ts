@@ -14,6 +14,7 @@ import blockRoutes from '../routes/blockRoutes';
 import notificationsRoutes from '../routes/notificationsRoutes';
 import settingsRoutes from '../routes/settingsRoutes';
 import feedbackRoutes from '../routes/feedbackRoutes';
+import supportRoutes from '../routes/supportRoutes';
 
 export const createTestApp = () => {
   const app = express();
@@ -29,6 +30,7 @@ export const createTestApp = () => {
   app.use('/api/notifications', notificationsRoutes);
   app.use('/api/settings', settingsRoutes);
   app.use('/api/feedback', feedbackRoutes);
+  app.use('/api/support', supportRoutes);
 
   app.use(errorHandler);
   return app;

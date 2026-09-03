@@ -49,6 +49,7 @@ describe('Feedback Routes', () => {
 
       const feedback = await Feedback.findById(res.body.feedbackId);
       expect(feedback?.userId.toString()).toBe(user._id.toString());
+      expect(feedback?.email).toBe('feedback-route@example.com');
       expect(feedback?.followUp).toBe(false);
       expect(feedback?.message).toBe('I like the clean design.');
       expect(feedback?.screenshots).toEqual([]);
@@ -67,7 +68,25 @@ describe('Feedback Routes', () => {
 
       expect(res.status).toBe(201);
       const feedback = await Feedback.findById(res.body.feedbackId);
+      expect(feedback?.email).toBe('feedback-followup@example.com');
       expect(feedback?.followUp).toBe(true);
+    });
+
+    it('ignores a client-provided email and stores the authenticated user email', async () => {
+      const user = await createTestUser({ email: 'feedback-real@example.com' });
+      const token = getAuthToken(user);
+
+      const res = await request(app)
+        .post('/api/feedback')
+        .set('Authorization', `Bearer ${token}`)
+        .field('category', 'General App Experience')
+        .field('message', 'Please ignore the forged email.')
+        .field('email', 'forged@example.com');
+
+      expect(res.status).toBe(201);
+      const feedback = await Feedback.findById(res.body.feedbackId);
+      expect(feedback?.email).toBe('feedback-real@example.com');
+      expect(feedback?.followUp).toBe(false);
     });
 
     it('uploads optional screenshots', async () => {
