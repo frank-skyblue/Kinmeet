@@ -107,6 +107,9 @@ export const loginAs = async (page: Page, email: string, password: string) => {
   await page.waitForURL('**/discover');
 };
 
+/** Fake 19-character Admin password. Matches Playwright webServer env; not a production value. */
+export const ADMIN_E2E_PASSWORD = 'test-admin-pass-key';
+
 /**
  * E2E tests use unique timestamps in emails to avoid collisions,
  * so explicit DB cleanup between tests is not required.

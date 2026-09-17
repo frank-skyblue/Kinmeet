@@ -1,6 +1,7 @@
 import express from 'express';
 import { createServer } from 'http';
 import jwt from 'jsonwebtoken';
+import cookieParser from 'cookie-parser';
 import { User, IUser } from '../models/User';
 import { errorHandler } from '../middleware/errorHandler';
 import { corsConfig } from '../config/cors';
@@ -15,11 +16,13 @@ import notificationsRoutes from '../routes/notificationsRoutes';
 import settingsRoutes from '../routes/settingsRoutes';
 import feedbackRoutes from '../routes/feedbackRoutes';
 import supportRoutes from '../routes/supportRoutes';
+import { createAdminRouter } from '../routes/adminRoutes';
 
 export const createTestApp = () => {
   const app = express();
   app.use(cors(corsConfig));
   app.use(express.json());
+  app.use(cookieParser());
 
   app.use('/api/auth', authRoutes);
   app.use('/api/profile', profileRoutes);
@@ -31,6 +34,7 @@ export const createTestApp = () => {
   app.use('/api/settings', settingsRoutes);
   app.use('/api/feedback', feedbackRoutes);
   app.use('/api/support', supportRoutes);
+  app.use('/api/admin', createAdminRouter());
 
   app.use(errorHandler);
   return app;

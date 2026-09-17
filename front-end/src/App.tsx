@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { ChatInboxProvider } from './contexts/ChatInboxProvider';
 import { ConnectionRequestsProvider } from './contexts/ConnectionRequestsProvider';
@@ -19,51 +19,57 @@ import CommunitySafety from './components/settings/CommunitySafety';
 import Support from './components/settings/Support';
 import GiveFeedback from './components/settings/GiveFeedback';
 import ContactSupport from './components/settings/ContactSupport';
+import AdminPage from './components/admin/AdminPage';
+
+const UserProviders = () => (
+  <AuthProvider>
+    <SocketProvider>
+      <ChatInboxProvider>
+        <ConnectionRequestsProvider>
+          <Outlet />
+        </ConnectionRequestsProvider>
+      </ChatInboxProvider>
+    </SocketProvider>
+  </AuthProvider>
+);
 
 const App = () => {
   return (
-    <AuthProvider>
-      <SocketProvider>
-        <ChatInboxProvider>
-          <ConnectionRequestsProvider>
-            <Router>
-              <Routes>
-                {/* Public Routes */}
-                <Route path="/login" element={<Login />} />
-                <Route path="/signup" element={<Signup />} />
-                <Route path="/forgot-password" element={<ForgotPassword />} />
-                <Route path="/reset-password" element={<ResetPassword />} />
+    <Router>
+      <Routes>
+        <Route path="/admin" element={<AdminPage />} />
+        <Route element={<UserProviders />}>
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
-                {/* Protected Routes */}
-                <Route element={<ProtectedRoute />}>
-                  <Route element={<Layout />}>
-                    <Route path="/discover" element={<Discover />} />
-                    <Route path="/connections" element={<ConnectionsHub />} />
-                    <Route
-                      path="/requests"
-                      element={<Navigate to="/connections?tab=requests" replace />}
-                    />
-                    <Route path="/profile" element={<Profile />} />
-                    <Route path="/profile/:userId" element={<Profile />} />
-                    <Route path="/settings" element={<SettingsPrivacy />} />
-                    <Route path="/settings/account" element={<AccountSettings />} />
-                    <Route path="/settings/community-safety" element={<CommunitySafety />} />
-                    <Route path="/settings/support" element={<Support />} />
-                    <Route path="/settings/support/contact" element={<ContactSupport />} />
-                    <Route path="/settings/support/feedback" element={<GiveFeedback />} />
-                    <Route path="/chat" element={<Chat />} />
-                    <Route path="/chat/:userId" element={<Chat />} />
-                  </Route>
-                </Route>
+          <Route element={<ProtectedRoute />}>
+            <Route element={<Layout />}>
+              <Route path="/discover" element={<Discover />} />
+              <Route path="/connections" element={<ConnectionsHub />} />
+              <Route
+                path="/requests"
+                element={<Navigate to="/connections?tab=requests" replace />}
+              />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/profile/:userId" element={<Profile />} />
+              <Route path="/settings" element={<SettingsPrivacy />} />
+              <Route path="/settings/account" element={<AccountSettings />} />
+              <Route path="/settings/community-safety" element={<CommunitySafety />} />
+              <Route path="/settings/support" element={<Support />} />
+              <Route path="/settings/support/contact" element={<ContactSupport />} />
+              <Route path="/settings/support/feedback" element={<GiveFeedback />} />
+              <Route path="/chat" element={<Chat />} />
+              <Route path="/chat/:userId" element={<Chat />} />
+            </Route>
+          </Route>
 
-                <Route path="/" element={<Navigate to="/discover" replace />} />
-                <Route path="*" element={<Navigate to="/discover" replace />} />
-              </Routes>
-            </Router>
-          </ConnectionRequestsProvider>
-        </ChatInboxProvider>
-      </SocketProvider>
-    </AuthProvider>
+          <Route path="/" element={<Navigate to="/discover" replace />} />
+          <Route path="*" element={<Navigate to="/discover" replace />} />
+        </Route>
+      </Routes>
+    </Router>
   );
 };
 

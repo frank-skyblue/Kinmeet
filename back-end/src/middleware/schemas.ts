@@ -228,3 +228,19 @@ export const changePasswordSchema = z.object({
     currentPassword: z.string().min(1, 'Current password is required'),
     newPassword: z.string().min(1, 'New password is required'),
 });
+
+export const adminLoginSchema = z.object({
+    password: z.string().refine((value) => value.trim().length > 0, 'Password is required').max(256, 'Password is too long'),
+});
+
+export const listAdminFeedbackQuerySchema = z.object({
+    page: z.preprocess((value) => {
+        if (value === undefined || value === '') return 1;
+        return value;
+    }, z.union([z.string(), z.number()]).refine(
+        (value) => typeof value === 'number' ? Number.isInteger(value) : /^\d+$/.test(value),
+        'Page must be an integer',
+    ).transform((value) => typeof value === 'number' ? value : Number(value)).pipe(
+        z.number().int().min(1, 'Page must be at least 1').max(100000, 'Page is too large'),
+    )),
+});

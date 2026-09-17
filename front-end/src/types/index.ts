@@ -181,6 +181,46 @@ export interface SubmitFeedbackResponse {
     feedbackId: string;
 }
 
+export type AdminFeedbackStatus = 'new';
+
+export interface AdminFeedbackScreenshot {
+    url: string;
+}
+
+export interface AdminFeedbackItem {
+    id: string;
+    email: string;
+    category: FeedbackCategory;
+    message: string;
+    screenshots: AdminFeedbackScreenshot[];
+    followUp: boolean;
+    status: AdminFeedbackStatus;
+    createdAt: string;
+}
+
+export interface AdminFeedbackPagination {
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+}
+
+export interface AdminFeedbackListResponse {
+    success: boolean;
+    feedback: AdminFeedbackItem[];
+    pagination: AdminFeedbackPagination;
+}
+
+export interface AdminSessionResponse {
+    success: boolean;
+    authenticated: boolean;
+}
+
+export interface AdminAuthResponse {
+    success: boolean;
+    message: string;
+}
+
 export type SupportIssueType =
     | 'Account issue'
     | 'Login/password issue'

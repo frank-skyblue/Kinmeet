@@ -1,8 +1,9 @@
 import 'dotenv/config';
-import { NODE_ENV, PORT } from './config/env';
+import { NODE_ENV, PORT, TRUST_PROXY_HOPS } from './config/env';
 import express, { Express } from 'express';
 import { createServer } from 'http';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import { connectToDatabase } from './services/mongooseService';
 import { initializeSocket } from './socket/socketServer';
 import { errorHandler } from './middleware/errorHandler';
@@ -17,12 +18,17 @@ import notificationsRoutes from './routes/notificationsRoutes';
 import settingsRoutes from './routes/settingsRoutes';
 import feedbackRoutes from './routes/feedbackRoutes';
 import supportRoutes from './routes/supportRoutes';
+import { createAdminRouter } from './routes/adminRoutes';
 
 const app: Express = express()
 const httpServer = createServer(app) // Wrap Express with HTTP server for Socket.io
 const router = express.Router()
+if (TRUST_PROXY_HOPS > 0) {
+    app.set('trust proxy', TRUST_PROXY_HOPS);
+}
 app.use(cors(corsConfig))
 app.use(express.json())
+app.use(cookieParser())
 
 // Request logging middleware
 app.use((req, res, next) => {
@@ -68,6 +74,7 @@ app.use('/api/notifications', notificationsRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/support', supportRoutes);
+app.use('/api/admin', createAdminRouter());
 
 app.use(errorHandler);
 

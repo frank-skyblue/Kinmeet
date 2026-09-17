@@ -27,6 +27,8 @@ export default defineConfig({
         CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET || 'test',
         WEB_APP_URL: process.env.WEB_APP_URL || 'http://localhost:5173',
         PORT: '8080',
+        // Fake 19-character test secret for local/CI Admin E2E. Never read a production value.
+        ADMIN_PASS_KEY: 'test-admin-pass-key',
       },
     },
     {
