@@ -292,7 +292,7 @@ const GiveFeedback: React.FC = () => {
                         ? 'cursor-not-allowed border-kin-stone-300 bg-kin-stone-100 opacity-50'
                         : isDragActive
                           ? 'border-kin-teal bg-kin-beige'
-                          : 'border-kin-stone-300 bg-kin-stone-100 hover:border-kin-teal hover:bg-kin-beige'
+                          : 'border-kin-stone-300 bg-kin-stone-100 hover:border-kin-teal hover:bg-kin-beige cursor-pointer'
                     }`}
                   >
                     <span
@@ -351,7 +351,7 @@ const GiveFeedback: React.FC = () => {
                               type="button"
                               onClick={() => handleRemoveScreenshot(index)}
                               disabled={loading}
-                              className="shrink-0 text-sm font-semibold font-inter text-kin-coral-700 hover:text-kin-coral transition disabled:opacity-50"
+                              className="shrink-0 text-sm font-semibold font-inter text-kin-coral-700 hover:text-kin-coral cursor-pointer transition disabled:opacity-50"
                               aria-label={`Remove ${file.name}`}
                             >
                               Remove
@@ -369,12 +369,12 @@ const GiveFeedback: React.FC = () => {
                   )}
                 </div>
 
-                <label className="flex items-center gap-3 text-sm font-inter text-kin-navy">
+                <label className="flex items-center gap-3 text-sm font-inter text-kin-navy hover:cursor-pointer">
                   <input
                     type="checkbox"
                     checked={followUp}
                     onChange={(e) => setFollowUp(e.target.checked)}
-                    className="h-5 w-5 shrink-0 rounded border-kin-stone-300 text-kin-coral focus:ring-kin-coral"
+                    className="h-5 w-5 shrink-0 rounded border-kin-stone-300 text-kin-coral focus:ring-kin-coral hover:cursor-pointer"
                   />
                   <span>Allow KinMeet to follow up about this feedback</span>
                 </label>
@@ -388,7 +388,7 @@ const GiveFeedback: React.FC = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-5 py-3 bg-kin-teal text-white rounded-kin-sm font-semibold font-inter hover:bg-kin-teal-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-5 py-3 bg-kin-teal text-white rounded-kin-sm font-semibold font-inter hover:bg-kin-teal-700 cursor-pointer transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? 'Submitting...' : 'Submit Feedback'}
                 </button>

@@ -160,7 +160,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({
                 <button
                   type="button"
                   onClick={onEdit}
-                  className="w-full bg-kin-teal text-white py-3 rounded-kin-sm font-semibold font-montserrat hover:bg-kin-teal-600 shadow-kin-soft hover:shadow-kin-medium transition"
+                  className="w-full bg-kin-teal text-white py-3 rounded-kin-sm font-semibold font-montserrat hover:bg-kin-teal-600 cursor-pointer shadow-kin-soft hover:shadow-kin-medium transition"
                 >
                   Edit Profile
                 </button>

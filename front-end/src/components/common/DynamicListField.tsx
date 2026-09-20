@@ -55,7 +55,7 @@ const DynamicListField: React.FC<DynamicListFieldProps> = ({
                         <button
                             type="button"
                             onClick={() => onRemove(index)}
-                            className="px-4 py-3 bg-kin-coral-100 text-kin-coral-700 rounded-kin-sm font-inter font-medium hover:bg-kin-coral-200 transition shrink-0"
+                            className="px-4 py-3 bg-kin-coral-100 text-kin-coral-700 rounded-kin-sm font-inter font-medium hover:bg-kin-coral-200 cursor-pointer transition shrink-0"
                             aria-label={`Remove ${idPrefix}`}
                         >
                             Remove

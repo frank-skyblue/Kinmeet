@@ -191,7 +191,7 @@ const AccountSettings: React.FC = () => {
                       <button
                         type="button"
                         onClick={handleEmailEdit}
-                        className="shrink-0 text-sm font-semibold font-inter text-kin-teal hover:text-kin-teal-700 transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral"
+                        className="shrink-0 text-sm font-semibold font-inter text-kin-teal hover:text-kin-teal-700 cursor-pointer transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral"
                         aria-label="Edit email address"
                       >
                         Edit
@@ -246,7 +246,7 @@ const AccountSettings: React.FC = () => {
                         <button
                           type="submit"
                           disabled={emailSection.loading}
-                          className="bg-kin-teal text-white px-4 py-2 rounded-kin-sm text-sm font-semibold font-montserrat hover:bg-kin-teal-700 transition disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral"
+                          className="bg-kin-teal text-white px-4 py-2 rounded-kin-sm text-sm font-semibold font-montserrat hover:bg-kin-teal-700 cursor-pointer transition disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral"
                         >
                           {emailSection.loading ? 'Saving…' : 'Save'}
                         </button>
@@ -254,7 +254,7 @@ const AccountSettings: React.FC = () => {
                           type="button"
                           onClick={handleEmailCancel}
                           disabled={emailSection.loading}
-                          className="px-4 py-2 rounded-kin-sm text-sm font-semibold font-montserrat text-kin-navy hover:bg-kin-stone-100 transition disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral"
+                          className="px-4 py-2 rounded-kin-sm text-sm font-semibold font-montserrat text-kin-navy hover:bg-kin-stone-100 cursor-pointer transition disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral"
                         >
                           Cancel
                         </button>
@@ -288,7 +288,7 @@ const AccountSettings: React.FC = () => {
                       <button
                         type="button"
                         onClick={handleUsernameEdit}
-                        className="shrink-0 text-sm font-semibold font-inter text-kin-teal hover:text-kin-teal-700 transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral"
+                        className="shrink-0 text-sm font-semibold font-inter text-kin-teal hover:text-kin-teal-700 cursor-pointer transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral"
                         aria-label="Edit username"
                       >
                         Edit
@@ -325,7 +325,7 @@ const AccountSettings: React.FC = () => {
                         <button
                           type="submit"
                           disabled={usernameSection.loading}
-                          className="bg-kin-teal text-white px-4 py-2 rounded-kin-sm text-sm font-semibold font-montserrat hover:bg-kin-teal-700 transition disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral"
+                          className="bg-kin-teal text-white px-4 py-2 rounded-kin-sm text-sm font-semibold font-montserrat hover:bg-kin-teal-700 cursor-pointer transition disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral"
                         >
                           {usernameSection.loading ? 'Saving…' : 'Save'}
                         </button>
@@ -333,7 +333,7 @@ const AccountSettings: React.FC = () => {
                           type="button"
                           onClick={handleUsernameCancel}
                           disabled={usernameSection.loading}
-                          className="px-4 py-2 rounded-kin-sm text-sm font-semibold font-montserrat text-kin-navy hover:bg-kin-stone-100 transition disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral"
+                          className="px-4 py-2 rounded-kin-sm text-sm font-semibold font-montserrat text-kin-navy hover:bg-kin-stone-100 cursor-pointer transition disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral"
                         >
                           Cancel
                         </button>
@@ -367,7 +367,7 @@ const AccountSettings: React.FC = () => {
                       <button
                         type="button"
                         onClick={handlePasswordEdit}
-                        className="shrink-0 text-sm font-semibold font-inter text-kin-teal hover:text-kin-teal-700 transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral"
+                        className="shrink-0 text-sm font-semibold font-inter text-kin-teal hover:text-kin-teal-700 cursor-pointer transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral"
                         aria-label="Change password"
                       >
                         Change
@@ -440,7 +440,7 @@ const AccountSettings: React.FC = () => {
                         <button
                           type="submit"
                           disabled={passwordSection.loading}
-                          className="bg-kin-teal text-white px-4 py-2 rounded-kin-sm text-sm font-semibold font-montserrat hover:bg-kin-teal-700 transition disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral"
+                          className="bg-kin-teal text-white px-4 py-2 rounded-kin-sm text-sm font-semibold font-montserrat hover:bg-kin-teal-700 cursor-pointer transition disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral"
                         >
                           {passwordSection.loading ? 'Saving…' : 'Save'}
                         </button>
@@ -448,7 +448,7 @@ const AccountSettings: React.FC = () => {
                           type="button"
                           onClick={handlePasswordCancel}
                           disabled={passwordSection.loading}
-                          className="px-4 py-2 rounded-kin-sm text-sm font-semibold font-montserrat text-kin-navy hover:bg-kin-stone-100 transition disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral"
+                          className="px-4 py-2 rounded-kin-sm text-sm font-semibold font-montserrat text-kin-navy hover:bg-kin-stone-100 cursor-pointer transition disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral"
                         >
                           Cancel
                         </button>
@@ -472,7 +472,7 @@ const AccountSettings: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowDeleteConfirm(true)}
-                  className="w-full sm:w-auto bg-kin-stone-200 text-kin-coral-700 px-6 py-3 rounded-kin-sm font-semibold font-montserrat hover:bg-kin-stone-300 transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral"
+                  className="w-full sm:w-auto bg-kin-stone-200 text-kin-coral-700 px-6 py-3 rounded-kin-sm font-semibold font-montserrat hover:bg-kin-stone-300 cursor-pointer transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral"
                 >
                   Delete Account
                 </button>
