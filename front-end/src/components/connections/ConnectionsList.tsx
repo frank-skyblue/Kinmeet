@@ -295,7 +295,7 @@ const ConnectionsList: React.FC<ConnectionsListProps> = ({
                           <button
                             type="button"
                             onClick={() => handleOpenChat(connection._id)}
-                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-kin-sm bg-kin-coral text-white shadow-kin-soft transition hover:bg-kin-coral-600 hover:shadow-kin-medium sm:h-auto sm:w-auto sm:px-4 sm:py-2 sm:text-sm sm:font-semibold font-montserrat"
+                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-kin-sm bg-kin-coral text-white shadow-kin-soft transition hover:bg-kin-coral-600 cursor-pointer hover:shadow-kin-medium sm:h-auto sm:w-auto sm:px-4 sm:py-2 sm:text-sm sm:font-semibold font-montserrat"
                             aria-label={`Message ${fullName}`}
                           >
                             <svg
@@ -324,7 +324,7 @@ const ConnectionsList: React.FC<ConnectionsListProps> = ({
                             aria-controls={menuId}
                             tabIndex={0}
                             onClick={() => handleToggleMenu(connection._id)}
-                            className="flex h-10 w-10 items-center justify-center rounded-kin-sm text-kin-navy transition hover:bg-kin-stone-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral"
+                            className="flex h-10 w-10 items-center justify-center rounded-kin-sm text-kin-navy transition hover:bg-kin-stone-100 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral"
                           >
                             <span className="sr-only">Open menu</span>
                             <svg

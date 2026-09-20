@@ -250,7 +250,7 @@ const Discover: React.FC = () => {
             <div className="shrink-0 flex gap-3 p-3 md:p-4 border-t border-kin-stone-200 bg-white">
               <button
                 onClick={handlePass}
-                className="flex-1 bg-kin-stone-200 text-kin-navy py-3 rounded-kin-sm font-semibold font-montserrat hover:bg-kin-stone-300 shadow-kin-soft hover:shadow-kin-medium transition flex items-center justify-center"
+                className="flex-1 bg-kin-stone-200 text-kin-navy py-3 rounded-kin-sm font-semibold font-montserrat hover:bg-kin-stone-300 shadow-kin-soft hover:shadow-kin-medium cursor-pointer transition flex items-center justify-center"
                 aria-label="Pass on this match"
               >
                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -260,7 +260,7 @@ const Discover: React.FC = () => {
               </button>
               <button
                 onClick={handleMeet}
-                className="flex-1 bg-kin-coral text-white py-3 rounded-kin-sm font-semibold font-montserrat hover:bg-kin-coral-600 shadow-kin-soft hover:shadow-kin-medium transition flex items-center justify-center"
+                className="flex-1 bg-kin-coral text-white py-3 rounded-kin-sm font-semibold font-montserrat hover:bg-kin-coral-600 shadow-kin-soft hover:shadow-kin-medium cursor-pointer transition flex items-center justify-center"
                 aria-label="Send meet request"
               >
                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

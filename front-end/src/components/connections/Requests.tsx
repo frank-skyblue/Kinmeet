@@ -281,7 +281,7 @@ const Requests: React.FC<RequestsProps> = ({ embedded = false }) => {
                     <button
                       type="button"
                       onClick={() => handleAccept(request._id)}
-                      className="flex min-h-10 min-w-0 flex-1 items-center justify-center gap-0 rounded-kin-sm bg-kin-coral px-2 py-2 text-center text-xs font-semibold leading-none font-montserrat text-white shadow-kin-soft transition hover:bg-kin-coral-600 hover:shadow-kin-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral sm:gap-1.5 sm:px-3"
+                      className="flex min-h-10 min-w-0 flex-1 items-center justify-center gap-0 rounded-kin-sm bg-kin-coral px-2 py-2 text-center text-xs font-semibold leading-none font-montserrat text-white shadow-kin-soft transition hover:bg-kin-coral-600 hover:shadow-kin-medium cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral sm:gap-1.5 sm:px-3"
                       aria-label="Accept kin request"
                     >
                       <svg
@@ -303,7 +303,7 @@ const Requests: React.FC<RequestsProps> = ({ embedded = false }) => {
                     <button
                       type="button"
                       onClick={() => handleIgnore(request._id)}
-                      className="flex min-h-10 min-w-0 flex-1 items-center justify-center gap-0 rounded-kin-sm bg-kin-stone-200 px-2 py-2 text-center text-xs font-semibold leading-none font-montserrat text-kin-navy shadow-kin-soft transition hover:bg-kin-stone-300 hover:shadow-kin-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral sm:gap-1.5 sm:px-3"
+                      className="flex min-h-10 min-w-0 flex-1 items-center justify-center gap-0 rounded-kin-sm bg-kin-stone-200 px-2 py-2 text-center text-xs font-semibold leading-none font-montserrat text-kin-navy shadow-kin-soft transition hover:bg-kin-stone-300 hover:shadow-kin-medium cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral sm:gap-1.5 sm:px-3"
                       aria-label="Ignore kin request"
                     >
                       <svg
