@@ -1,4 +1,5 @@
 import { Message } from '../models/Message';
+import { Block } from '../models/Block';
 import { Connection } from '../models/Connection';
 import { User } from '../models/User';
 import { AppError } from '../middleware/errorHandler';
@@ -8,6 +9,14 @@ export const chatService = {
         if (!receiverId || !content?.trim()) {
             throw new AppError(400, 'Receiver ID and content are required');
         }
+
+        const block = await Block.findOne({
+            $or: [
+                { blocker: senderId, blocked: receiverId },
+                { blocker: receiverId, blocked: senderId },
+            ],
+        });
+        if (block) throw new AppError(403, 'Can only message connected users');
 
         const connection = await Connection.findOne({
             $or: [

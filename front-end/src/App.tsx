@@ -19,6 +19,8 @@ import CommunitySafety from './components/settings/CommunitySafety';
 import Support from './components/settings/Support';
 import GiveFeedback from './components/settings/GiveFeedback';
 import ContactSupport from './components/settings/ContactSupport';
+import PrivacyManagement from './components/settings/PrivacyManagement'
+import BlockedAccounts from './components/settings/BlockedAccounts';
 
 const App = () => {
   return (
@@ -51,6 +53,8 @@ const App = () => {
                     <Route path="/settings/support" element={<Support />} />
                     <Route path="/settings/support/contact" element={<ContactSupport />} />
                     <Route path="/settings/support/feedback" element={<GiveFeedback />} />
+                    <Route path="/settings/privacy" element={<PrivacyManagement />} />
+                    <Route path="/settings/privacy/blocked-accounts" element={<BlockedAccounts />} />
                     <Route path="/chat" element={<Chat />} />
                     <Route path="/chat/:userId" element={<Chat />} />
                   </Route>

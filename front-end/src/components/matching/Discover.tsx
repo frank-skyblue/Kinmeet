@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { matchingAPI, getPhotoUrl } from '../../services/api';
+import { useNavigate } from 'react-router-dom';
+import { blockAPI, matchingAPI, getPhotoUrl } from '../../services/api';
 import { getErrorMessage } from '../../utils/error';
+import ActionMenu from '../common/ActionMenu';
 
 interface Match {
   _id: string;
@@ -25,6 +27,8 @@ const Discover: React.FC = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isBlocking, setIsBlocking] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadMatches();
@@ -52,6 +56,30 @@ const Discover: React.FC = () => {
       moveToNext();
     } catch (err: unknown) {
       setError(getErrorMessage(err, 'Failed to send Meet request'));
+    }
+  };
+
+  const handleViewProfile = (userId: string) => {
+    navigate(`/profile/${userId}`);
+  };
+
+  const handleBlock = async (userId: string, displayName: string) => {
+    const ok = window.confirm(
+      `Block ${displayName}? They won’t be able to message you or see you in Discover. ` +
+        'You can unblock them in Settings & Privacy.',
+    );
+    if (!ok) return;
+
+    setIsBlocking(true);
+    setError('');
+    try {
+      await blockAPI.blockUser(userId);
+      // Dropping the card keeps currentIndex pointing at the next person.
+      setMatches((prev) => prev.filter((match) => match._id !== userId));
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, `Failed to block ${displayName}`));
+    } finally {
+      setIsBlocking(false);
     }
   };
 
@@ -95,7 +123,7 @@ const Discover: React.FC = () => {
           </p>
           <button
             onClick={loadMatches}
-            className="bg-kin-coral text-white px-6 py-3 rounded-kin-sm font-semibold font-montserrat hover:bg-kin-coral-600 shadow-kin-soft hover:shadow-kin-medium transition"
+            className="bg-kin-coral text-white px-6 py-3 rounded-kin-sm font-semibold font-montserrat hover:bg-kin-coral-600 shadow-kin-soft hover:shadow-kin-medium cursor-pointer transition"
           >
             Refresh
           </button>
@@ -146,11 +174,32 @@ const Discover: React.FC = () => {
           {/* Info + Buttons */}
           <div className="flex flex-col">
             <div className="overflow-hidden p-4 md:p-5 flex flex-col gap-2">
-              <div>
-                <h2 className="text-xl md:text-2xl font-bold font-montserrat text-kin-navy leading-tight">
-                  {currentMatch.firstName}
-                </h2>
+              <div className="flex flex-col">
+                <div className="flex items-center justify-between gap-2">
 
+                  <h2 className="min-w-0 truncate text-xl md:text-2xl font-bold font-montserrat text-kin-navy leading-tight">
+                    {currentMatch.firstName}
+                  </h2>
+
+                  <ActionMenu
+                    key={currentMatch._id}
+                    label={`More actions for ${currentMatch.firstName}`}
+                    items={[
+                      {
+                        label: 'View Profile',
+                        onSelect: () => handleViewProfile(currentMatch._id),
+                      },
+                      {
+                        label: isBlocking ? 'Blocking…' : 'Block',
+                        onSelect: () =>
+                          void handleBlock(currentMatch._id, currentMatch.firstName),
+                        variant: 'destructive',
+                        disabled: isBlocking,
+                      },
+                    ]}
+                  />
+
+                </div>
                 {currentMatch.industry && (
                   <p className="text-kin-teal font-inter text-xs md:text-sm line-clamp-1">
                     {currentMatch.industry}

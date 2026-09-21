@@ -1,7 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useConnectionRequests } from "../../contexts/connectionRequestsContext";
-import { connectionsAPI, getPhotoUrl } from "../../services/api";
+import { blockAPI, connectionsAPI, getPhotoUrl } from "../../services/api";
 import { getErrorMessage } from "../../utils/error";
+import ActionMenu from "../common/ActionMenu";
 import type { ConnectionRequestItem } from "../../types";
 import ConnectionsPaginationNav from "./ConnectionsPaginationNav";
 
@@ -55,7 +57,9 @@ const Requests: React.FC<RequestsProps> = ({ embedded = false }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [blockingUserId, setBlockingUserId] = useState<string | null>(null);
   const pageSize = useRequestsPageSize();
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadRequests();
@@ -114,6 +118,34 @@ const Requests: React.FC<RequestsProps> = ({ embedded = false }) => {
       void refetchConnectionRequests();
     } catch (err: unknown) {
       setError(getErrorMessage(err, "Failed to ignore request"));
+    }
+  };
+
+  const handleViewProfile = (senderId: string) => {
+    navigate(`/profile/${senderId}`);
+  };
+
+  const handleBlock = async (
+    senderId: string,
+    requestId: string,
+    displayName: string,
+  ) => {
+    const ok = window.confirm(
+      `Block ${displayName}? Their request will be removed and they won’t be able to ` +
+        "message you or see you in Discover. You can unblock them in Settings & Privacy.",
+    );
+    if (!ok) return;
+
+    setBlockingUserId(senderId);
+    setError("");
+    try {
+      await blockAPI.blockUser(senderId);
+      setRequests((prev) => prev.filter((req) => req._id !== requestId));
+      void refetchConnectionRequests();
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, `Failed to block ${displayName}`));
+    } finally {
+      setBlockingUserId(null);
     }
   };
 
@@ -207,6 +239,32 @@ const Requests: React.FC<RequestsProps> = ({ embedded = false }) => {
                         Meet request
                       </p>
                     </div>
+
+                    <ActionMenu
+                      size="sm"
+                      className="self-start"
+                      label={`More actions for ${request.sender.firstName}`}
+                      items={[
+                        {
+                          label: "View Profile",
+                          onSelect: () => handleViewProfile(request.sender._id),
+                        },
+                        {
+                          label:
+                            blockingUserId === request.sender._id
+                              ? "Blocking…"
+                              : "Block",
+                          onSelect: () =>
+                            void handleBlock(
+                              request.sender._id,
+                              request._id,
+                              request.sender.firstName,
+                            ),
+                          variant: "destructive",
+                          disabled: blockingUserId === request.sender._id,
+                        },
+                      ]}
+                    />
                   </div>
 
                   <div className="flex min-w-0 flex-1 flex-col gap-2.5 text-left">
