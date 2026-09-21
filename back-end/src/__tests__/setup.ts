@@ -8,6 +8,10 @@ process.env.CLOUDINARY_CLOUD_NAME = 'test-cloud';
 process.env.CLOUDINARY_API_KEY = 'test-key';
 process.env.CLOUDINARY_API_SECRET = 'test-secret';
 process.env.WEB_APP_URL = 'http://localhost:5173';
+// Fake 19-character test secret; production ADMIN_PASS_KEY must be ≥15 chars and is not trimmed.
+process.env.ADMIN_PASS_KEY = 'test-admin-pass-key';
+process.env.ADMIN_COOKIE_SAME_SITE = 'lax';
+process.env.TRUST_PROXY_HOPS = '0';
 
 let mongoServer: MongoMemoryServer;
 
