@@ -4,6 +4,7 @@ import { CONNECTIONS_PAGE_SIZE } from "../../constants/connectionsPagination";
 import { connectionsAPI, getPhotoUrl, blockAPI } from "../../services/api";
 import { getErrorMessage } from "../../utils/error";
 import ActionMenu from "../common/ActionMenu";
+import ReportUserModal from "../common/ReportUserModal";
 import ConnectionsPaginationNav from "./ConnectionsPaginationNav";
 
 interface Connection {
@@ -59,6 +60,9 @@ const ConnectionsList: React.FC<ConnectionsListProps> = ({
   const [error, setError] = useState("");
   const [removingUserId, setRemovingUserId] = useState<string | null>(null);
   const [blockingUserId, setBlockingUserId] = useState<string | null>(null);
+  const [reportTarget, setReportTarget] = useState<{ userId: string; name: string } | null>(
+    null,
+  );
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -306,6 +310,15 @@ const ConnectionsList: React.FC<ConnectionsListProps> = ({
                                 disabled: isRemoving,
                               },
                               {
+                                label: "Report",
+                                onSelect: () =>
+                                  setReportTarget({
+                                    userId: connection._id,
+                                    name: fullName,
+                                  }),
+                                variant: "destructive",
+                              },
+                              {
                                 label: isBlocking ? "Blocking…" : "Block",
                                 onSelect: () =>
                                   void handleBlockConnectionsClick(
@@ -334,6 +347,17 @@ const ConnectionsList: React.FC<ConnectionsListProps> = ({
           </div>
         )}
       </div>
+      {reportTarget && (
+        <ReportUserModal
+          isOpen
+          userId={reportTarget.userId}
+          displayName={reportTarget.name}
+          onClose={() => setReportTarget(null)}
+          onBlocked={() =>
+            setConnections((prev) => prev.filter((c) => c._id !== reportTarget.userId))
+          }
+        />
+      )}
     </div>
   );
 };

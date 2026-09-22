@@ -19,6 +19,8 @@ interface ProfileViewProps {
   showManageActions?: boolean;
   /** Omitted on your own profile; opens the block confirmation. */
   onBlock?: () => void;
+  /** Omitted on your own profile; opens the report form. */
+  onReport?: () => void;
 }
 
 const ProfileView: React.FC<ProfileViewProps> = ({
@@ -26,6 +28,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({
   onEdit,
   showManageActions = true,
   onBlock,
+  onReport,
 }) => {
   const showActionsMenu = !showManageActions && Boolean(onBlock);
 
@@ -64,6 +67,11 @@ const ProfileView: React.FC<ProfileViewProps> = ({
                 <ActionMenu
                   label={`More actions for ${profile.firstName}`}
                   items={[
+                    {
+                      label: 'Report',
+                      onSelect: () => onReport?.(),
+                      variant: 'destructive',
+                    },
                     {
                       label: 'Block',
                       onSelect: () => onBlock?.(),

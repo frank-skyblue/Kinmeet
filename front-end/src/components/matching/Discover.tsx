@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { blockAPI, matchingAPI, getPhotoUrl } from '../../services/api';
 import { getErrorMessage } from '../../utils/error';
 import ActionMenu from '../common/ActionMenu';
+import ReportUserModal from '../common/ReportUserModal';
 
 interface Match {
   _id: string;
@@ -28,6 +29,7 @@ const Discover: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [isBlocking, setIsBlocking] = useState(false);
+  const [isReportOpen, setIsReportOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -190,6 +192,11 @@ const Discover: React.FC = () => {
                         onSelect: () => handleViewProfile(currentMatch._id),
                       },
                       {
+                        label: 'Report',
+                        onSelect: () => setIsReportOpen(true),
+                        variant: 'destructive',
+                      },
+                      {
                         label: isBlocking ? 'Blocking…' : 'Block',
                         onSelect: () =>
                           void handleBlock(currentMatch._id, currentMatch.firstName),
@@ -321,6 +328,16 @@ const Discover: React.FC = () => {
           </div>
         </div>
       </div>
+
+      <ReportUserModal
+        isOpen={isReportOpen}
+        userId={currentMatch._id}
+        displayName={currentMatch.firstName}
+        onClose={() => setIsReportOpen(false)}
+        onBlocked={() =>
+          setMatches((prev) => prev.filter((match) => match._id !== currentMatch._id))
+        }
+      />
     </div>
   );
 };

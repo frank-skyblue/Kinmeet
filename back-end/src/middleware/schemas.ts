@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { normalizeEmail } from '../utils/email';
 import { FEEDBACK_CATEGORIES } from '../models/Feedback';
+import { REPORT_REASONS } from '../models/Report';
 import { SUPPORT_ISSUE_TYPES } from '../models/SupportRequest';
 
 const objectId = z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid ID format');
@@ -74,10 +75,20 @@ export const blockUserSchema = z.object({
     reason: z.string().optional(),
 });
 
-export const reportUserSchema = z.object({
-    userId: objectId,
-    reason: z.string().min(1, 'Reason is required'),
-});
+export const reportUserSchema = z
+    .object({
+        userId: objectId,
+        reason: z.enum(REPORT_REASONS, { message: 'Please choose a valid reason' }),
+        details: z
+            .string()
+            .trim()
+            .max(2000, 'Details must be 2000 characters or fewer')
+            .optional(),
+    })
+    .refine((data) => data.reason !== 'Other' || Boolean(data.details?.trim()), {
+        message: 'Please describe the issue when choosing Other',
+        path: ['details'],
+    });
 
 export const submitFeedbackSchema = z.object({
     category: feedbackCategorySchema,

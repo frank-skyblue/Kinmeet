@@ -4,6 +4,7 @@ import { blockAPI, profileAPI } from '../../services/api';
 import { useAuth } from '../../contexts/useAuth';
 import { getErrorMessage } from '../../utils/error';
 import type { UserProfile } from '../../types';
+import ReportUserModal from '../common/ReportUserModal';
 import ProfileView from './ProfileView';
 import ProfileEditForm from './ProfileEditForm';
 
@@ -14,6 +15,7 @@ const Profile: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+  const [isReportOpen, setIsReportOpen] = useState(false);
   const navigate = useNavigate();
   const showManageActions =
     routeUserId === undefined || (user?.id !== undefined && routeUserId === user.id);
@@ -122,6 +124,15 @@ const Profile: React.FC = () => {
         onEdit={() => setIsEditing(true)}
         showManageActions={showManageActions}
         onBlock={showManageActions ? undefined : () => void handleBlock()}
+        onReport={showManageActions ? undefined : () => setIsReportOpen(true)}
+      />
+
+      <ReportUserModal
+        isOpen={isReportOpen}
+        userId={profile._id}
+        displayName={profile.firstName}
+        onClose={() => setIsReportOpen(false)}
+        onBlocked={() => navigate('/discover')}
       />
     </>
   );

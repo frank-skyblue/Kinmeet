@@ -235,8 +235,8 @@ export const blockAPI = {
     return response.data;
   },
 
-  reportUser: async (userId: string, reason: string) => {
-    const response = await api.post('/block/report', { userId, reason });
+  reportUser: async (userId: string, reason: string, details?: string) => {
+    const response = await api.post('/block/report', { userId, reason, details });
     return response.data;
   },
 };

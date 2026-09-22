@@ -4,6 +4,7 @@ import { useConnectionRequests } from "../../contexts/connectionRequestsContext"
 import { blockAPI, connectionsAPI, getPhotoUrl } from "../../services/api";
 import { getErrorMessage } from "../../utils/error";
 import ActionMenu from "../common/ActionMenu";
+import ReportUserModal from "../common/ReportUserModal";
 import type { ConnectionRequestItem } from "../../types";
 import ConnectionsPaginationNav from "./ConnectionsPaginationNav";
 
@@ -58,6 +59,11 @@ const Requests: React.FC<RequestsProps> = ({ embedded = false }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [blockingUserId, setBlockingUserId] = useState<string | null>(null);
+  const [reportTarget, setReportTarget] = useState<{
+    userId: string;
+    requestId: string;
+    name: string;
+  } | null>(null);
   const pageSize = useRequestsPageSize();
   const navigate = useNavigate();
 
@@ -250,6 +256,16 @@ const Requests: React.FC<RequestsProps> = ({ embedded = false }) => {
                           onSelect: () => handleViewProfile(request.sender._id),
                         },
                         {
+                          label: "Report",
+                          onSelect: () =>
+                            setReportTarget({
+                              userId: request.sender._id,
+                              requestId: request._id,
+                              name: request.sender.firstName,
+                            }),
+                          variant: "destructive",
+                        },
+                        {
                           label:
                             blockingUserId === request.sender._id
                               ? "Blocking…"
@@ -395,6 +411,18 @@ const Requests: React.FC<RequestsProps> = ({ embedded = false }) => {
           </div>
         )}
       </div>
+      {reportTarget && (
+        <ReportUserModal
+          isOpen
+          userId={reportTarget.userId}
+          displayName={reportTarget.name}
+          onClose={() => setReportTarget(null)}
+          onBlocked={() => {
+            setRequests((prev) => prev.filter((req) => req._id !== reportTarget.requestId));
+            void refetchConnectionRequests();
+          }}
+        />
+      )}
     </div>
   );
 };
