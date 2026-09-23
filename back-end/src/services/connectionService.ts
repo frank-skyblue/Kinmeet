@@ -1,3 +1,4 @@
+import { Block } from '../models/Block';
 import { Connection } from '../models/Connection';
 import { ConnectionRequest } from '../models/ConnectionRequest';
 import { User } from '../models/User';
@@ -46,6 +47,14 @@ export const acceptConnectionRequest = async (userId: string, requestId: string)
     if (request.receiver.toString() !== userId) {
         throw new AppError(403, 'Not authorized');
     }
+
+    const block = await Block.findOne({
+        $or: [
+            { blocker: userId, blocked: request.sender },
+            { blocker: request.sender, blocked: userId },
+        ],
+    });
+    if (block) throw new AppError(403, 'Not authorized');
 
     if (request.status !== 'pending') {
         throw new AppError(400, 'Request already processed');

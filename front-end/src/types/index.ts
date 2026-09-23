@@ -264,3 +264,30 @@ export type {
     ChatTypingPayload,
     ChatUserTypingPayload,
 } from './chatSocket';
+
+export type AdminReportStatus = 'new' | 'reviewing' | 'resolved';
+
+export interface AdminReportItem {
+    id: string;
+    reporterEmail: string;
+    reportedEmail: string;
+    reportedName: string;
+    reason: string;
+    details?: string;
+    status: AdminReportStatus;
+    createdAt: string;
+}
+
+/** Same shape as feedback pagination; aliased so the reports code reads on its own terms. */
+export type AdminReportPagination = AdminFeedbackPagination;
+
+export interface AdminReportUpdateResponse {
+    success: boolean;
+    report: AdminReportItem;
+}
+
+export interface AdminReportListResponse {
+    success: boolean;
+    reports: AdminReportItem[];
+    pagination: AdminReportPagination;
+}

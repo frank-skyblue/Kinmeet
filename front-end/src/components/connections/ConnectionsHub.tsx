@@ -17,7 +17,7 @@ const tabTriggerBase =
   "inline-flex w-full min-h-11 items-center justify-center gap-1.5 rounded-t-kin-sm border-b-2 px-4 py-3 text-center text-sm font-semibold font-inter transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral sm:w-auto";
 
 const tabTriggerInactive =
-  "border-transparent text-kin-navy hover:border-kin-coral/35 hover:text-kin-coral";
+  "border-transparent text-kin-navy hover:border-kin-coral/35 hover:text-kin-coral cursor-pointer";
 
 const tabTriggerActive = "border-kin-coral text-kin-coral";
 

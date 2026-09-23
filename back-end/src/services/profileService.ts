@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import multer, { FileFilterCallback } from 'multer';
 import { User } from '../models/User';
+import { Block } from '../models/Block';
 import { Connection } from '../models/Connection';
 import { ConnectionRequest } from '../models/ConnectionRequest';
 import { Message } from '../models/Message';
@@ -33,6 +34,16 @@ export const getProfile = async (userId: string) => {
 };
 
 export const getUserProfile = async (requesterId: string, targetUserId: string) => {
+    // Blocks hide the pair from each other in both directions. Reported as 404 so a
+    // blocked viewer cannot tell a block apart from a deleted account.
+    const block = await Block.findOne({
+        $or: [
+            { blocker: requesterId, blocked: targetUserId },
+            { blocker: targetUserId, blocked: requesterId },
+        ],
+    });
+    if (block) throw new AppError(404, 'User not found');
+
     const connection = await Connection.findOne({
         $or: [
             { user1: requesterId, user2: targetUserId },

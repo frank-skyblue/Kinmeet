@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { asyncHandler } from '../middleware/errorHandler';
 import { blockService } from '../services/blockService';
+import { reportService } from '../services/reportService';
 
 export const blockUser = asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user!.id;
@@ -31,9 +32,9 @@ export const getBlockedUsers = asyncHandler(async (req: AuthRequest, res: Respon
 
 export const reportUser = asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user!.id;
-    const { userId: reportedUserId, reason } = req.body;
+    const { userId: reportedUserId, reason, details } = req.body;
 
-    await blockService.reportUser(userId, reportedUserId, reason);
+    await reportService.submitReport(userId, reportedUserId, reason, details);
 
-    return res.status(201).json({ success: true, message: 'User reported and blocked successfully' });
+    return res.status(201).json({ success: true, message: 'Report submitted successfully' });
 });

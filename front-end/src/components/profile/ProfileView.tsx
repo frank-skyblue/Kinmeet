@@ -1,5 +1,6 @@
 import React from 'react';
 import { getPhotoUrl } from '../../services/api';
+import ActionMenu from '../common/ActionMenu';
 import CountryFlag from '../common/CountryFlag';
 import CountryWithFlag from '../common/CountryWithFlag';
 import type { UserProfile } from '../../types';
@@ -16,13 +17,21 @@ interface ProfileViewProps {
   profile: UserProfile;
   onEdit: () => void;
   showManageActions?: boolean;
+  /** Omitted on your own profile; opens the block confirmation. */
+  onBlock?: () => void;
+  /** Omitted on your own profile; opens the report form. */
+  onReport?: () => void;
 }
 
 const ProfileView: React.FC<ProfileViewProps> = ({
   profile,
   onEdit,
   showManageActions = true,
+  onBlock,
+  onReport,
 }) => {
+  const showActionsMenu = !showManageActions && Boolean(onBlock);
+
   return (
     <div className="bg-kin-beige py-8 px-4">
       <div className="max-w-3xl mx-auto">
@@ -44,12 +53,32 @@ const ProfileView: React.FC<ProfileViewProps> = ({
               )}
             </div>
 
-            <div className="mb-6">
-              <h1 className="text-3xl font-bold font-montserrat text-kin-navy mb-2">
-                {profile.firstName} {profile.lastName}
-              </h1>
-              {profile.username && (
-                <p className="text-kin-teal font-inter">@{profile.username}</p>
+            <div className="mb-6 flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <h1 className="truncate text-3xl font-bold font-montserrat text-kin-navy mb-2">
+                  {profile.firstName} {profile.lastName}
+                </h1>
+                {profile.username && (
+                  <p className="truncate text-kin-teal font-inter">@{profile.username}</p>
+                )}
+              </div>
+
+              {showActionsMenu && (
+                <ActionMenu
+                  label={`More actions for ${profile.firstName}`}
+                  items={[
+                    {
+                      label: 'Report',
+                      onSelect: () => onReport?.(),
+                      variant: 'destructive',
+                    },
+                    {
+                      label: 'Block',
+                      onSelect: () => onBlock?.(),
+                      variant: 'destructive',
+                    },
+                  ]}
+                />
               )}
             </div>
 
@@ -160,7 +189,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({
                 <button
                   type="button"
                   onClick={onEdit}
-                  className="w-full bg-kin-teal text-white py-3 rounded-kin-sm font-semibold font-montserrat hover:bg-kin-teal-600 shadow-kin-soft hover:shadow-kin-medium transition"
+                  className="w-full bg-kin-teal text-white py-3 rounded-kin-sm font-semibold font-montserrat hover:bg-kin-teal-600 cursor-pointer shadow-kin-soft hover:shadow-kin-medium transition"
                 >
                   Edit Profile
                 </button>

@@ -32,6 +32,19 @@ describe('SettingsPrivacy', () => {
     );
   });
 
+  it('renders Privacy section link', () => {
+    render(
+      <MemoryRouter>
+        <SettingsPrivacy />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole('link', { name: /privacy:/i })).toHaveAttribute(
+      'href',
+      '/settings/privacy',
+    );
+  });
+
   it('renders Support section link', () => {
     render(
       <MemoryRouter>

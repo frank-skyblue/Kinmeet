@@ -333,7 +333,7 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isSaving}
-                  className="px-4 py-2 text-sm font-semibold font-inter text-kin-teal border border-kin-teal rounded-kin-sm hover:bg-kin-teal hover:text-white transition disabled:opacity-50"
+                  className="px-4 py-2 text-sm font-semibold font-inter text-kin-teal border border-kin-teal rounded-kin-sm hover:bg-kin-teal hover:text-white cursor-pointer transition disabled:opacity-50"
                   aria-label="Upload profile photo"
                 >
                   {photoPreview || (!pendingPhotoRemoval && profile.photo) ? 'Change Photo' : 'Upload Photo'}
@@ -343,7 +343,7 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
                     type="button"
                     onClick={handleRemovePhoto}
                     disabled={isSaving}
-                    className="px-4 py-2 text-sm font-semibold font-inter text-kin-coral-700 border border-kin-coral-200 rounded-kin-sm hover:bg-kin-coral-50 transition disabled:opacity-50"
+                    className="px-4 py-2 text-sm font-semibold font-inter text-kin-coral-700 border border-kin-coral-200 rounded-kin-sm hover:bg-kin-coral-50 cursor-pointer transition disabled:opacity-50"
                     aria-label="Remove profile photo"
                   >
                     Remove
@@ -535,7 +535,7 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
                   <button
                     type="button"
                     onClick={() => setManualCountryMode(true)}
-                    className="mt-2 text-sm font-semibold text-kin-teal hover:text-kin-teal-700 underline"
+                    className="mt-2 text-sm font-semibold text-kin-teal hover:text-kin-teal-700 cursor-pointer underline"
                     aria-label="Pick country and province manually"
                   >
                     Change country or province manually
@@ -557,7 +557,7 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
                   <button
                     type="button"
                     onClick={() => setManualCountryMode(false)}
-                    className="text-sm font-semibold text-kin-teal hover:text-kin-teal-700 underline"
+                    className="text-sm font-semibold text-kin-teal hover:text-kin-teal-700 cursor-pointer underline"
                     aria-label="Use worldwide province list instead"
                   >
                     Use worldwide province list instead
@@ -614,14 +614,14 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
               <button
                 type="button"
                 onClick={onCancel}
-                className="flex-1 bg-kin-stone-200 text-kin-navy py-3 rounded-kin-sm font-bold font-montserrat hover:bg-kin-stone-300 transition-all"
+                className="flex-1 bg-kin-stone-200 text-kin-navy py-3 rounded-kin-sm font-bold font-montserrat hover:bg-kin-stone-300 cursor-pointer transition-all"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isSaving}
-                className="flex-1 bg-kin-coral text-white py-3 rounded-kin-sm font-bold font-montserrat hover:bg-kin-coral-600 focus:ring-4 focus:ring-kin-coral-300 shadow-kin-medium hover:shadow-kin-strong transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 bg-kin-coral text-white py-3 rounded-kin-sm font-bold font-montserrat hover:bg-kin-coral-600 focus:ring-4 focus:ring-kin-coral-300 shadow-kin-medium hover:shadow-kin-strong cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSaving ? 'Saving...' : 'Save Changes'}
               </button>

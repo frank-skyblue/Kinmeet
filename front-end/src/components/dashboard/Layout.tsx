@@ -204,7 +204,7 @@ const Layout: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowMenu(!showMenu)}
-                  className="flex h-12 items-center gap-2 px-3 rounded-kin-sm hover:bg-kin-beige transition"
+                  className="flex h-12 items-center gap-2 px-3 rounded-kin-sm hover:bg-kin-beige transition cursor-pointer"
                   aria-label="User menu"
                   aria-expanded={showMenu}
                 >
@@ -259,7 +259,7 @@ const Layout: React.FC = () => {
                     <button
                       type="button"
                       onClick={handleLogout}
-                      className="flex w-full items-center gap-2 border-t border-kin-stone-200 px-4 py-2 text-left text-sm font-inter text-kin-coral hover:bg-kin-coral-50 transition"
+                      className="flex w-full items-center gap-2 border-t border-kin-stone-200 px-4 py-2 text-left text-sm font-inter text-kin-coral hover:bg-kin-coral-50 transition cursor-pointer"
                     >
                       <MenuIcon path={SIGN_OUT_ICON_PATH} />
                       Sign Out

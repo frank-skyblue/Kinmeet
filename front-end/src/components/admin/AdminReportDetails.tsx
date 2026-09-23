@@ -1,13 +1,7 @@
 import React, { useEffect, useId, useRef } from 'react';
-import type { AdminFeedbackItem } from '../../types';
-import {
-  categoryTagClassName,
-  contactLabel,
-  contactTagClassName,
-  formatAdminStatus,
-  formatAdminSubmittedAt,
-  statusTagClassName,
-} from '../../utils/adminFeedback';
+import type { AdminReportItem } from '../../types';
+import { formatAdminStatus, formatAdminSubmittedAt, statusTagClassName } from '../../utils/adminFeedback';
+import { reasonTagClassName } from '../../utils/adminReports';
 
 const FOCUSABLE_SELECTOR = [
   'a[href]',
@@ -18,12 +12,12 @@ const FOCUSABLE_SELECTOR = [
   '[tabindex]:not([tabindex="-1"])',
 ].join(',');
 
-type AdminFeedbackDetailsProps = {
-  item: AdminFeedbackItem;
+type AdminReportDetailsProps = {
+  item: AdminReportItem;
   onClose: () => void;
 };
 
-const AdminFeedbackDetails: React.FC<AdminFeedbackDetailsProps> = ({ item, onClose }) => {
+const AdminReportDetails: React.FC<AdminReportDetailsProps> = ({ item, onClose }) => {
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -115,7 +109,7 @@ const AdminFeedbackDetails: React.FC<AdminFeedbackDetailsProps> = ({ item, onClo
       >
         <div className="flex items-start justify-between gap-4 mb-4">
           <h2 id={titleId} className="text-xl font-bold font-montserrat text-kin-navy">
-            Feedback details
+            Report details
           </h2>
           <button
             ref={closeButtonRef}
@@ -130,13 +124,20 @@ const AdminFeedbackDetails: React.FC<AdminFeedbackDetailsProps> = ({ item, onClo
 
         <dl className="space-y-3 font-inter text-sm text-kin-navy">
           <div>
-            <dt className="font-semibold text-kin-teal">Email</dt>
-            <dd className="[overflow-wrap:anywhere]">{item.email || 'Email unavailable'}</dd>
+            <dt className="font-semibold text-kin-teal">Reported user</dt>
+            <dd className="[overflow-wrap:anywhere]">
+              {item.reportedName ? `${item.reportedName} — ` : ''}
+              {item.reportedEmail || 'Email unavailable'}
+            </dd>
           </div>
           <div>
-            <dt className="font-semibold text-kin-teal">Category</dt>
+            <dt className="font-semibold text-kin-teal">Reported by</dt>
+            <dd className="[overflow-wrap:anywhere]">{item.reporterEmail || 'Email unavailable'}</dd>
+          </div>
+          <div>
+            <dt className="font-semibold text-kin-teal">Reason</dt>
             <dd className="mt-1">
-              <span className={categoryTagClassName(item.category)}>{item.category}</span>
+              <span className={reasonTagClassName(item.reason)}>{item.reason}</span>
             </dd>
           </div>
           <div>
@@ -146,40 +147,13 @@ const AdminFeedbackDetails: React.FC<AdminFeedbackDetailsProps> = ({ item, onClo
             </dd>
           </div>
           <div>
-            <dt className="font-semibold text-kin-teal">Contact</dt>
-            <dd className="mt-1">
-              <span className={contactTagClassName(item.followUp)}>{contactLabel(item.followUp)}</span>
-            </dd>
-          </div>
-          <div>
             <dt className="font-semibold text-kin-teal">Submitted</dt>
             <dd>{formatAdminSubmittedAt(item.createdAt)}</dd>
           </div>
           <div>
-            <dt className="font-semibold text-kin-teal">Message</dt>
-            <dd className="whitespace-pre-wrap break-words">{item.message}</dd>
-          </div>
-          <div>
-            <dt className="font-semibold text-kin-teal">Screenshots</dt>
-            <dd>
-              {(item.screenshots ?? []).length === 0 ? (
-                <span>None</span>
-              ) : (
-                <ul className="list-disc pl-5 space-y-1">
-                  {(item.screenshots ?? []).map((screenshot) => (
-                    <li key={screenshot.url}>
-                      <a
-                        href={screenshot.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-kin-coral hover:text-kin-coral-600 break-all cursor-pointer"
-                      >
-                        {screenshot.url}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              )}
+            <dt className="font-semibold text-kin-teal">Details</dt>
+            <dd className="whitespace-pre-wrap break-words">
+              {item.details && item.details.trim().length > 0 ? item.details : 'No additional details'}
             </dd>
           </div>
         </dl>
@@ -188,4 +162,4 @@ const AdminFeedbackDetails: React.FC<AdminFeedbackDetailsProps> = ({ item, onClo
   );
 };
 
-export default AdminFeedbackDetails;
+export default AdminReportDetails;
