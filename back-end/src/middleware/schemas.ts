@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { normalizeEmail } from '../utils/email';
 import { FEEDBACK_CATEGORIES } from '../models/Feedback';
-import { REPORT_REASONS } from '../models/Report';
+import { REPORT_REASONS, REPORT_STATUSES } from '../models/Report';
 import { SUPPORT_ISSUE_TYPES } from '../models/SupportRequest';
 
 const objectId = z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid ID format');
@@ -244,7 +244,7 @@ export const adminLoginSchema = z.object({
     password: z.string().refine((value) => value.trim().length > 0, 'Password is required').max(256, 'Password is too long'),
 });
 
-export const listAdminFeedbackQuerySchema = z.object({
+const adminPageQuerySchema = z.object({
     page: z.preprocess((value) => {
         if (value === undefined || value === '') return 1;
         return value;
@@ -254,4 +254,13 @@ export const listAdminFeedbackQuerySchema = z.object({
     ).transform((value) => typeof value === 'number' ? value : Number(value)).pipe(
         z.number().int().min(1, 'Page must be at least 1').max(100000, 'Page is too large'),
     )),
+});
+
+export const listAdminFeedbackQuerySchema = adminPageQuerySchema;
+export const listAdminReportsQuerySchema = adminPageQuerySchema;
+
+export const adminReportIdParams = objectIdParam('reportId');
+
+export const updateAdminReportStatusSchema = z.object({
+    status: z.enum(REPORT_STATUSES, { message: 'Invalid report status' }),
 });

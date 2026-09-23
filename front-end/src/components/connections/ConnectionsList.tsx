@@ -272,72 +272,72 @@ const ConnectionsList: React.FC<ConnectionsListProps> = ({
 														) : null}
 													</div>
 
-                        {/* Actions */}
-                        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              return handleOpenChat(connection._id);
-                            }}
-                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-kin-sm bg-kin-coral text-white shadow-kin-soft transition hover:bg-kin-coral-600 cursor-pointer hover:shadow-kin-medium sm:h-auto sm:w-auto sm:px-4 sm:py-2 sm:text-sm sm:font-semibold font-montserrat"
-                            aria-label={`Message ${fullName}`}
-                          >
-                            <svg
-                              className="h-5 w-5 sm:hidden"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                              aria-hidden
+                          {/* Actions */}
+                          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                return handleOpenChat(connection._id);
+                              }}
+                              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-kin-sm bg-kin-coral text-white shadow-kin-soft transition hover:bg-kin-coral-600 cursor-pointer hover:shadow-kin-medium sm:h-auto sm:w-auto sm:px-4 sm:py-2 sm:text-sm sm:font-semibold font-montserrat"
+                              aria-label={`Message ${fullName}`}
                             >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                              />
-                            </svg>
-                            <span className="hidden sm:inline">Message</span>
-                          </button>
+                              <svg
+                                className="h-5 w-5 sm:hidden"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                                aria-hidden
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                                />
+                              </svg>
+                              <span className="hidden sm:inline">Message</span>
+                            </button>
 
-                          <ActionMenu
-                            label={`More actions for ${fullName}`}
-                            items={[
-                              {
-                                label: isRemoving ? "Removing…" : "Remove Kin",
-                                onSelect: () =>
-                                  void handleRemoveConnectionClick(
-                                    connection._id,
-                                    fullName,
-                                  ),
-                                variant: "destructive",
-                                disabled: isRemoving,
-                              },
-                              {
-                                label: "Report",
-                                onSelect: () =>
-                                  setReportTarget({
-                                    userId: connection._id,
-                                    name: fullName,
-                                  }),
-                                variant: "destructive",
-                              },
-                              {
-                                label: isBlocking ? "Blocking…" : "Block",
-                                onSelect: () =>
-                                  void handleBlockConnectionsClick(
-                                    connection._id,
-                                    fullName,
-                                  ),
-                                variant: "destructive",
-                                disabled: isBlocking,
-                              },
-                            ]}
-                          />
+                            <ActionMenu
+                              label={`More actions for ${fullName}`}
+                              items={[
+                                {
+                                  label: isRemoving ? "Removing…" : "Remove Kin",
+                                  onSelect: () =>
+                                    void handleRemoveConnectionClick(
+                                      connection._id,
+                                      fullName,
+                                    ),
+                                  variant: "destructive",
+                                  disabled: isRemoving,
+                                },
+                                {
+                                  label: "Report",
+                                  onSelect: () =>
+                                    setReportTarget({
+                                      userId: connection._id,
+                                      name: fullName,
+                                    }),
+                                  variant: "destructive",
+                                },
+                                {
+                                  label: isBlocking ? "Blocking…" : "Block",
+                                  onSelect: () =>
+                                    void handleBlockConnectionsClick(
+                                      connection._id,
+                                      fullName,
+                                    ),
+                                  variant: "destructive",
+                                  disabled: isBlocking,
+                                },
+                              ]}
+                            />
+                          </div>
                         </div>
-                      </div>
-                                        </Link>
+                      </Link>
                     </li>
                   );
                 })}

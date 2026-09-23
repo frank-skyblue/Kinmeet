@@ -15,6 +15,9 @@ import type {
   RegisterNotificationDevicePayload,
   AdminAuthResponse,
   AdminFeedbackListResponse,
+  AdminReportListResponse,
+  AdminReportStatus,
+  AdminReportUpdateResponse,
   AdminSessionResponse,
 } from '../types';
 
@@ -341,6 +344,25 @@ export const adminAPI = {
     const response = await adminClient.get<AdminFeedbackListResponse>('/admin/feedback', {
       params: { page },
     });
+    return response.data;
+  },
+
+  listReports: async (page = 1): Promise<AdminReportListResponse> => {
+    const response = await adminClient.get<AdminReportListResponse>('/admin/reports', {
+      params: { page },
+    });
+    return response.data;
+  },
+
+  updateReportStatus: async (
+    reportId: string,
+    status: AdminReportStatus,
+  ): Promise<AdminReportUpdateResponse> => {
+    const response = await adminClient.patch<AdminReportUpdateResponse>(
+      `/admin/reports/${reportId}/status`,
+      { status },
+      { headers: adminMutationHeaders },
+    );
     return response.data;
   },
 };

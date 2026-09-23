@@ -12,7 +12,9 @@ export const REPORT_REASONS = [
 
 export type ReportReason = typeof REPORT_REASONS[number];
 
-export type ReportStatus = 'new' | 'reviewing' | 'resolved';
+export const REPORT_STATUSES = ['new', 'reviewing', 'resolved'] as const;
+
+export type ReportStatus = typeof REPORT_STATUSES[number];
 
 export interface IReport extends Document {
     reporter: Types.ObjectId;
@@ -30,7 +32,7 @@ const ReportSchema: Schema<IReport> = new Schema({
     reported: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     reason: { type: String, enum: REPORT_REASONS, required: true },
     details: { type: String, trim: true, maxlength: 2000 },
-    status: { type: String, enum: ['new', 'reviewing', 'resolved'], default: 'new' },
+    status: { type: String, enum: REPORT_STATUSES, default: 'new' },
 }, {
     timestamps: true,
 });

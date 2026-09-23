@@ -40,6 +40,7 @@ const App = () => {
     <Router>
       <Routes>
         <Route path="/admin" element={<AdminPage />} />
+        <Route path="/admin/reports" element={<AdminPage section="reports" />} />
         <Route element={<UserProviders />}>
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
