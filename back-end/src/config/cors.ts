@@ -1,6 +1,6 @@
 import { WEB_APP_URL } from './env';
 
-const corsOrigins: string[] = [
+export const corsOrigins: string[] = [
     'http://localhost:5173',
     'http://localhost:5174',
 ];

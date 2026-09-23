@@ -96,11 +96,14 @@ PORT=8080
 MONGODB_URI=mongodb://localhost:27017/kinmeet
 JWT_SECRET=your_super_secret_jwt_key_change_this_in_production
 WEB_APP_URL=http://localhost:5173
+ADMIN_PASS_KEY=replace_with_15+_admin_password
 
 CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
 ```
+
+> `ADMIN_PASS_KEY` is required at backend startup. It must be at least 15 characters and must not be blank or whitespace-only. The configured value is used as-is (not trimmed). Do not commit real values.
 
 > For MongoDB Atlas, replace `MONGODB_URI` with your Atlas connection string.
 

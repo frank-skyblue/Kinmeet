@@ -70,7 +70,15 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
     };
   }, [isOpen]);
 
-  const handleSelect = (item: ActionMenuItem) => {
+  // The menu can be rendered inside a <Link> (e.g. My Kins rows), so every click
+  // here must be stopped from triggering the surrounding navigation.
+  const swallow = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleSelect = (e: React.MouseEvent, item: ActionMenuItem) => {
+    swallow(e);
     setIsOpen(false);
     item.onSelect();
   };
@@ -84,7 +92,10 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
         aria-expanded={isOpen}
         aria-haspopup="menu"
         aria-controls={menuId}
-        onClick={() => setIsOpen((open) => !open)}
+        onClick={(e) => {
+          swallow(e);
+          setIsOpen((open) => !open);
+        }}
         className={`flex ${TRIGGER_SIZE[size]} items-center justify-center rounded-kin-sm text-kin-navy transition hover:bg-kin-stone-100 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral`}
       >
         <span className="sr-only">Open menu</span>
@@ -108,7 +119,7 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
                 type="button"
                 role="menuitem"
                 disabled={item.disabled}
-                onClick={() => handleSelect(item)}
+                onClick={(e) => handleSelect(e, item)}
                 className={`w-full px-4 py-2.5 text-left text-sm font-inter cursor-pointer transition focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 ${
                   ITEM_VARIANT[item.variant ?? 'default']
                 }`}

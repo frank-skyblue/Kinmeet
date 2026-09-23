@@ -85,6 +85,8 @@ import { Message } from '../models/Message';
 import { Block } from '../models/Block';
 import { IUser, User } from '../models/User';
 import { blockService } from '../services/blockService';
+import dotenv from 'dotenv';
+dotenv.config();
 
 type LookingForType = 'Friendship' | 'Networking' | 'Support';
 type SeedGender = 'female' | 'male' | 'other';

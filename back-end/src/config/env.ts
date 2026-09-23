@@ -40,7 +40,40 @@ const parsePort = (): number => {
 export const NODE_ENV = parseNodeEnv();
 export const PORT = parsePort();
 
+export type AdminCookieSameSite = 'lax' | 'none';
+
+const parseTrustProxyHops = (): number => {
+    const raw = process.env.TRUST_PROXY_HOPS?.trim();
+    if (!raw) return 0;
+    if (!/^\d+$/.test(raw)) {
+        throw new Error('TRUST_PROXY_HOPS must be a non-negative integer.');
+    }
+    return Number(raw);
+};
+
+const parseAdminCookieSameSite = (): AdminCookieSameSite => {
+    const raw = (process.env.ADMIN_COOKIE_SAME_SITE?.trim() || 'lax').toLowerCase();
+    if (raw === 'lax' || raw === 'none') {
+        return raw;
+    }
+    throw new Error('ADMIN_COOKIE_SAME_SITE must be lax or none.');
+};
+
 export const JWT_SECRET = process.env.JWT_SECRET!.trim();
+
+const ADMIN_PASS_KEY_ERROR =
+    'ADMIN_PASS_KEY must be at least 15 characters and must not be blank.';
+
+export const resolveAdminPassKey = (raw: string | undefined): string => {
+    if (typeof raw !== 'string' || /^\s*$/.test(raw) || raw.length < 15) {
+        throw new Error(ADMIN_PASS_KEY_ERROR);
+    }
+    return raw;
+};
+
+export const ADMIN_PASS_KEY = resolveAdminPassKey(process.env.ADMIN_PASS_KEY);
+export const ADMIN_COOKIE_SAME_SITE = parseAdminCookieSameSite();
+export const TRUST_PROXY_HOPS = parseTrustProxyHops();
 export const MONGODB_URI = process.env.MONGODB_URI!.trim();
 export const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME!.trim();
 export const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY!.trim();

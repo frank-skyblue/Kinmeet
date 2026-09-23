@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { CONNECTIONS_PAGE_SIZE } from "../../constants/connectionsPagination";
 import { connectionsAPI, getPhotoUrl, blockAPI } from "../../services/api";
 import { getErrorMessage } from "../../utils/error";
@@ -237,45 +237,50 @@ const ConnectionsList: React.FC<ConnectionsListProps> = ({
 
                   return (
                     <li key={connection._id}>
-                      <div className="flex min-w-0 items-center gap-3 rounded-kin-lg bg-white px-3 py-4 shadow-kin-medium ring-1 ring-kin-stone-100 transition hover:shadow-kin-strong sm:gap-4 sm:px-4">
-                        {/* Avatar */}
-                        <div className="shrink-0">
-                          {connection.photo ? (
-                            <img
-                              src={getPhotoUrl(connection.photo)}
-                              alt={`Profile photo of ${fullName}`}
-                              className="h-14 w-14 rounded-full object-cover shadow-kin-soft sm:h-16 sm:w-16"
-                            />
-                          ) : (
-                            <div
-                              className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-kin-coral to-kin-teal text-lg font-bold font-montserrat text-white shadow-kin-soft sm:h-16 sm:w-16 sm:text-xl"
-                              aria-hidden
-                            >
-                              {connection.firstName.charAt(0)}
-                            </div>
-                          )}
-                        </div>
+											<Link to={`/profile/${connection._id}`}>
+												<div className="flex min-w-0 items-center gap-3 rounded-kin-lg bg-white px-3 py-4 shadow-kin-medium ring-1 ring-kin-stone-100 transition hover:shadow-kin-strong sm:gap-4 sm:px-4">
+													{/* Avatar */}
+													<div className="shrink-0">
+														{connection.photo ? (
+															<img
+																src={getPhotoUrl(connection.photo)}
+																alt={`Profile photo of ${fullName}`}
+																className="h-14 w-14 rounded-full object-cover shadow-kin-soft sm:h-16 sm:w-16"
+															/>
+														) : (
+															<div
+																className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-kin-coral to-kin-teal text-lg font-bold font-montserrat text-white shadow-kin-soft sm:h-16 sm:w-16 sm:text-xl"
+																aria-hidden
+															>
+																{connection.firstName.charAt(0)}
+															</div>
+														)}
+													</div>
 
-                        {/* Details */}
-                        <div className="min-w-0 flex-1">
-                          <h2 className="truncate text-sm font-bold font-montserrat text-kin-navy sm:text-base">
-                            {fullName}
-                          </h2>
-                          <p className="mt-0.5 line-clamp-3 whitespace-pre-line text-xs leading-snug text-kin-teal font-inter sm:text-sm sm:leading-normal">
-                            {getConnectionSummary(connection)}
-                          </p>
-                          {connectedLabel ? (
-                            <p className="mt-1 text-xs text-kin-navy/70 font-inter">
-                              {connectedLabel}
-                            </p>
-                          ) : null}
-                        </div>
+													{/* Details */}
+													<div className="min-w-0 flex-1">
+														<h2 className="truncate text-sm font-bold font-montserrat text-kin-navy sm:text-base">
+															{fullName}
+														</h2>
+														<p className="mt-0.5 line-clamp-3 whitespace-pre-line text-xs leading-snug text-kin-teal font-inter sm:text-sm sm:leading-normal">
+															{getConnectionSummary(connection)}
+														</p>
+														{connectedLabel ? (
+															<p className="mt-1 text-xs text-kin-navy/70 font-inter">
+																{connectedLabel}
+															</p>
+														) : null}
+													</div>
 
                         {/* Actions */}
                         <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
                           <button
                             type="button"
-                            onClick={() => handleOpenChat(connection._id)}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              return handleOpenChat(connection._id);
+                            }}
                             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-kin-sm bg-kin-coral text-white shadow-kin-soft transition hover:bg-kin-coral-600 cursor-pointer hover:shadow-kin-medium sm:h-auto sm:w-auto sm:px-4 sm:py-2 sm:text-sm sm:font-semibold font-montserrat"
                             aria-label={`Message ${fullName}`}
                           >
@@ -332,6 +337,7 @@ const ConnectionsList: React.FC<ConnectionsListProps> = ({
                           />
                         </div>
                       </div>
+                                        </Link>
                     </li>
                   );
                 })}

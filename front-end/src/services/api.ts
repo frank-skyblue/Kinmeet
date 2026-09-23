@@ -13,6 +13,9 @@ import type {
   SubmitSupportRequestResponse,
   UpdateProfilePayload,
   RegisterNotificationDevicePayload,
+  AdminAuthResponse,
+  AdminFeedbackListResponse,
+  AdminSessionResponse,
 } from '../types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
@@ -292,6 +295,53 @@ export const supportAPI = {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
     return response.data as SubmitSupportRequestResponse;
+  },
+};
+
+export const ADMIN_REQUEST_HEADER = 'X-KinMeet-Admin-Request';
+export const ADMIN_REQUEST_HEADER_VALUE = '1';
+
+export const adminClient = axios.create({
+  baseURL: API_URL,
+  withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+const adminMutationHeaders = {
+  [ADMIN_REQUEST_HEADER]: ADMIN_REQUEST_HEADER_VALUE,
+};
+
+export const adminAPI = {
+  login: async (password: string): Promise<AdminAuthResponse> => {
+    const response = await adminClient.post<AdminAuthResponse>(
+      '/admin/login',
+      { password },
+      { headers: adminMutationHeaders },
+    );
+    return response.data;
+  },
+
+  logout: async (): Promise<AdminAuthResponse> => {
+    const response = await adminClient.post<AdminAuthResponse>(
+      '/admin/logout',
+      {},
+      { headers: adminMutationHeaders },
+    );
+    return response.data;
+  },
+
+  getSession: async (): Promise<AdminSessionResponse> => {
+    const response = await adminClient.get<AdminSessionResponse>('/admin/session');
+    return response.data;
+  },
+
+  listFeedback: async (page = 1): Promise<AdminFeedbackListResponse> => {
+    const response = await adminClient.get<AdminFeedbackListResponse>('/admin/feedback', {
+      params: { page },
+    });
+    return response.data;
   },
 };
 
