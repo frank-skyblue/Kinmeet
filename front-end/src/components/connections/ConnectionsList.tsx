@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { CONNECTIONS_PAGE_SIZE } from "../../constants/connectionsPagination";
 import { connectionsAPI, getPhotoUrl } from "../../services/api";
 import { getErrorMessage } from "../../utils/error";
@@ -253,120 +253,129 @@ const ConnectionsList: React.FC<ConnectionsListProps> = ({
 
                   return (
                     <li key={connection._id}>
-                      <div className="flex min-w-0 items-center gap-3 rounded-kin-lg bg-white px-3 py-4 shadow-kin-medium ring-1 ring-kin-stone-100 transition hover:shadow-kin-strong sm:gap-4 sm:px-4">
-                        {/* Avatar */}
-                        <div className="shrink-0">
-                          {connection.photo ? (
-                            <img
-                              src={getPhotoUrl(connection.photo)}
-                              alt={`Profile photo of ${fullName}`}
-                              className="h-14 w-14 rounded-full object-cover shadow-kin-soft sm:h-16 sm:w-16"
-                            />
-                          ) : (
-                            <div
-                              className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-kin-coral to-kin-teal text-lg font-bold font-montserrat text-white shadow-kin-soft sm:h-16 sm:w-16 sm:text-xl"
-                              aria-hidden
-                            >
-                              {connection.firstName.charAt(0)}
-                            </div>
-                          )}
-                        </div>
+											<Link to={`/profile/${connection._id}`}>
+												<div className="flex min-w-0 items-center gap-3 rounded-kin-lg bg-white px-3 py-4 shadow-kin-medium ring-1 ring-kin-stone-100 transition hover:shadow-kin-strong sm:gap-4 sm:px-4">
+													{/* Avatar */}
+													<div className="shrink-0">
+														{connection.photo ? (
+															<img
+																src={getPhotoUrl(connection.photo)}
+																alt={`Profile photo of ${fullName}`}
+																className="h-14 w-14 rounded-full object-cover shadow-kin-soft sm:h-16 sm:w-16"
+															/>
+														) : (
+															<div
+																className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-kin-coral to-kin-teal text-lg font-bold font-montserrat text-white shadow-kin-soft sm:h-16 sm:w-16 sm:text-xl"
+																aria-hidden
+															>
+																{connection.firstName.charAt(0)}
+															</div>
+														)}
+													</div>
 
-                        {/* Details */}
-                        <div className="min-w-0 flex-1">
-                          <h2 className="truncate text-sm font-bold font-montserrat text-kin-navy sm:text-base">
-                            {fullName}
-                          </h2>
-                          <p className="mt-0.5 line-clamp-3 whitespace-pre-line text-xs leading-snug text-kin-teal font-inter sm:text-sm sm:leading-normal">
-                            {getConnectionSummary(connection)}
-                          </p>
-                          {connectedLabel ? (
-                            <p className="mt-1 text-xs text-kin-navy/70 font-inter">
-                              {connectedLabel}
-                            </p>
-                          ) : null}
-                        </div>
+													{/* Details */}
+													<div className="min-w-0 flex-1">
+														<h2 className="truncate text-sm font-bold font-montserrat text-kin-navy sm:text-base">
+															{fullName}
+														</h2>
+														<p className="mt-0.5 line-clamp-3 whitespace-pre-line text-xs leading-snug text-kin-teal font-inter sm:text-sm sm:leading-normal">
+															{getConnectionSummary(connection)}
+														</p>
+														{connectedLabel ? (
+															<p className="mt-1 text-xs text-kin-navy/70 font-inter">
+																{connectedLabel}
+															</p>
+														) : null}
+													</div>
 
-                        {/* Actions */}
-                        <div
-                          ref={setMenuContainerRef(connection._id)}
-                          className="relative flex shrink-0 items-center gap-1.5 sm:gap-2"
-                        >
-                          <button
-                            type="button"
-                            onClick={() => handleOpenChat(connection._id)}
-                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-kin-sm bg-kin-coral text-white shadow-kin-soft transition hover:bg-kin-coral-600 hover:shadow-kin-medium sm:h-auto sm:w-auto sm:px-4 sm:py-2 sm:text-sm sm:font-semibold font-montserrat"
-                            aria-label={`Message ${fullName}`}
-                          >
-                            <svg
-                              className="h-5 w-5 sm:hidden"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                              aria-hidden
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                              />
-                            </svg>
-                            <span className="hidden sm:inline">Message</span>
-                          </button>
+													{/* Actions */}
+													<div
+														ref={setMenuContainerRef(connection._id)}
+														className="relative flex shrink-0 items-center gap-1.5 sm:gap-2"
+													>
+														<button
+															type="button"
+															onClick={(e) => {
+																e.preventDefault();
+																e.stopPropagation();
+																return handleOpenChat(connection._id)
+															}}
+															className="flex h-10 w-10 shrink-0 items-center justify-center rounded-kin-sm bg-kin-coral text-white shadow-kin-soft transition hover:bg-kin-coral-600 hover:shadow-kin-medium sm:h-auto sm:w-auto sm:px-4 sm:py-2 sm:text-sm sm:font-semibold font-montserrat"
+															aria-label={`Message ${fullName}`}
+														>
+															<svg
+																className="h-5 w-5 sm:hidden"
+																fill="none"
+																stroke="currentColor"
+																viewBox="0 0 24 24"
+																aria-hidden
+															>
+																<path
+																	strokeLinecap="round"
+																	strokeLinejoin="round"
+																	strokeWidth={2}
+																	d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+																/>
+															</svg>
+															<span className="hidden sm:inline">Message</span>
+														</button>
 
-                          <button
-                            type="button"
-                            id={`connection-actions-trigger-${connection._id}`}
-                            aria-label={`More actions for ${fullName}`}
-                            aria-expanded={menuOpen}
-                            aria-haspopup="menu"
-                            aria-controls={menuId}
-                            tabIndex={0}
-                            onClick={() => handleToggleMenu(connection._id)}
-                            className="flex h-10 w-10 items-center justify-center rounded-kin-sm text-kin-navy transition hover:bg-kin-stone-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral"
-                          >
-                            <span className="sr-only">Open menu</span>
-                            <svg
-                              className="h-5 w-5"
-                              fill="currentColor"
-                              viewBox="0 0 24 24"
-                              aria-hidden
-                            >
-                              <circle cx="12" cy="5" r="1.8" />
-                              <circle cx="12" cy="12" r="1.8" />
-                              <circle cx="12" cy="19" r="1.8" />
-                            </svg>
-                          </button>
+														<button
+															type="button"
+															id={`connection-actions-trigger-${connection._id}`}
+															aria-label={`More actions for ${fullName}`}
+															aria-expanded={menuOpen}
+															aria-haspopup="menu"
+															aria-controls={menuId}
+															tabIndex={0}
+															onClick={(e) => {
+																e.preventDefault();
+																e.stopPropagation();
+																return handleToggleMenu(connection._id);
+															}}
+															className="flex h-10 w-10 items-center justify-center rounded-kin-sm text-kin-navy transition hover:bg-kin-stone-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral"
+														>
+															<span className="sr-only">Open menu</span>
+															<svg
+																className="h-5 w-5"
+																fill="currentColor"
+																viewBox="0 0 24 24"
+																aria-hidden
+															>
+																<circle cx="12" cy="5" r="1.8" />
+																<circle cx="12" cy="12" r="1.8" />
+																<circle cx="12" cy="19" r="1.8" />
+															</svg>
+														</button>
 
-                          {menuOpen ? (
-                            <ul
-                              id={menuId}
-                              role="menu"
-                              aria-labelledby={`connection-actions-trigger-${connection._id}`}
-                              className="absolute right-0 top-full z-20 mt-1 min-w-44 rounded-kin-sm border border-kin-stone-200 bg-white py-1 shadow-kin-strong"
-                            >
-                              <li role="presentation">
-                                <button
-                                  type="button"
-                                  role="menuitem"
-                                  tabIndex={0}
-                                  disabled={isRemoving}
-                                  className="w-full px-4 py-2.5 text-left text-sm font-inter text-kin-coral-700 transition hover:bg-kin-coral-50 focus-visible:bg-kin-coral-50 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
-                                  onClick={() =>
-                                    void handleRemoveConnectionClick(
-                                      connection._id,
-                                      fullName,
-                                    )
-                                  }
-                                >
-                                  {isRemoving ? "Removing…" : "Remove Kin"}
-                                </button>
-                              </li>
-                            </ul>
-                          ) : null}
-                        </div>
-                      </div>
+														{menuOpen ? (
+															<ul
+																id={menuId}
+																role="menu"
+																aria-labelledby={`connection-actions-trigger-${connection._id}`}
+																className="absolute right-0 top-full z-20 mt-1 min-w-44 rounded-kin-sm border border-kin-stone-200 bg-white py-1 shadow-kin-strong"
+															>
+																<li role="presentation">
+																	<button
+																		type="button"
+																		role="menuitem"
+																		tabIndex={0}
+																		disabled={isRemoving}
+																		className="w-full px-4 py-2.5 text-left text-sm font-inter text-kin-coral-700 transition hover:bg-kin-coral-50 focus-visible:bg-kin-coral-50 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
+																		onClick={(e) => {
+																			e.preventDefault();
+																			e.stopPropagation();
+																			return void handleRemoveConnectionClick(connection._id, fullName)
+																		}}
+																	>
+																		{isRemoving ? "Removing…" : "Remove Kin"}
+																	</button>
+																</li>
+															</ul>
+														) : null}
+													</div>
+												</div>
+											</Link>
                     </li>
                   );
                 })}
