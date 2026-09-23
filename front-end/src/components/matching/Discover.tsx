@@ -157,7 +157,7 @@ const Discover: React.FC = () => {
       )}
 
       <div className="flex-1 min-h-0 px-3 pb-3 md:px-6 md:pb-4 flex justify-center">
-        <div className="mx-auto w-full max-w-lg bg-white rounded-kin-xl shadow-kin-strong overflow-hidden flex flex-col">
+        <div className="mx-auto w-full max-w-lg bg-white rounded-kin-xl shadow-kin-strong overflow-y-auto flex flex-col">
           {/* Profile Photo/Avatar */}
           <div className="relative flex-1 min-h-32 bg-gradient-to-br from-kin-coral to-kin-teal flex items-center justify-center">
             {currentMatch.photo ? (
