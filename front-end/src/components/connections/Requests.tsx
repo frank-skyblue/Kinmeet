@@ -220,7 +220,8 @@ const Requests: React.FC<RequestsProps> = ({ embedded = false }) => {
               {paginatedRequests.map((request) => (
                 <article
                   key={request._id}
-                  className="flex min-h-0 min-w-0 flex-col gap-3 rounded-kin-lg bg-white p-3 shadow-kin-soft transition hover:shadow-kin-medium sm:p-3.5"
+                  onClick={() => handleViewProfile(request.sender._id)}
+                  className="flex min-h-0 min-w-0 flex-col gap-3 rounded-kin-lg bg-white p-3 shadow-kin-soft transition hover:shadow-kin-medium sm:p-3.5 cursor-pointer [&:hover:not(:has(.inner:hover))]:bg-gray-100"
                 >
                   <div className="flex min-w-0 shrink-0 gap-3 border-b border-kin-stone-200 pb-3">
                     {request.sender.photo ? (
@@ -248,7 +249,7 @@ const Requests: React.FC<RequestsProps> = ({ embedded = false }) => {
 
                     <ActionMenu
                       size="sm"
-                      className="self-start"
+                      className="inner self-start"
                       label={`More actions for ${request.sender.firstName}`}
                       items={[
                         {
@@ -354,8 +355,12 @@ const Requests: React.FC<RequestsProps> = ({ embedded = false }) => {
                   <div className="mt-auto flex w-full shrink-0 items-stretch justify-center gap-2 border-t border-kin-stone-200 pt-3">
                     <button
                       type="button"
-                      onClick={() => handleAccept(request._id)}
-                      className="flex min-h-10 min-w-0 flex-1 items-center justify-center gap-0 rounded-kin-sm bg-kin-coral px-2 py-2 text-center text-xs font-semibold leading-none font-montserrat text-white shadow-kin-soft transition hover:bg-kin-coral-600 hover:shadow-kin-medium cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral sm:gap-1.5 sm:px-3"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAccept(request._id);
+                        }
+                      }
+                      className="inner flex min-h-10 min-w-0 flex-1 items-center justify-center gap-0 rounded-kin-sm bg-kin-coral px-2 py-2 text-center text-xs font-semibold leading-none font-montserrat text-white shadow-kin-soft transition hover:bg-kin-coral-600 hover:shadow-kin-medium cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral sm:gap-1.5 sm:px-3"
                       aria-label="Accept kin request"
                     >
                       <svg
@@ -376,8 +381,12 @@ const Requests: React.FC<RequestsProps> = ({ embedded = false }) => {
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleIgnore(request._id)}
-                      className="flex min-h-10 min-w-0 flex-1 items-center justify-center gap-0 rounded-kin-sm bg-kin-stone-200 px-2 py-2 text-center text-xs font-semibold leading-none font-montserrat text-kin-navy shadow-kin-soft transition hover:bg-kin-stone-300 hover:shadow-kin-medium cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral sm:gap-1.5 sm:px-3"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleIgnore(request._id);
+                        }
+                      }
+                      className="inner flex min-h-10 min-w-0 flex-1 items-center justify-center gap-0 rounded-kin-sm bg-kin-stone-200 px-2 py-2 text-center text-xs font-semibold leading-none font-montserrat text-kin-navy shadow-kin-soft transition hover:bg-kin-stone-300 hover:shadow-kin-medium cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral sm:gap-1.5 sm:px-3"
                       aria-label="Ignore kin request"
                     >
                       <svg
