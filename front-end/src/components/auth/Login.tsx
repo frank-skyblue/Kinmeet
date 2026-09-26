@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/useAuth';
 import { getErrorMessage } from '../../utils/error';
 import Logo from '../common/Logo';
+import { primaryActionClass, surfaceCardClass, textFieldClass } from '../../constants/ui';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -31,14 +32,14 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-kin-beige px-4">
-      <div className="max-w-md w-full bg-white rounded-kin-xl shadow-kin-strong p-8">
+    <div className="min-h-screen flex items-center justify-center bg-canvas px-4">
+      <div className={`${surfaceCardClass} max-w-md w-full rounded-kin-xl p-8`}>
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
             <Logo size="xl" />
           </div>
-          <h1 className="text-4xl font-bold font-montserrat text-kin-navy mb-2">KinMeet</h1>
-          <p className="text-kin-teal font-inter">Connect with your homeland community abroad</p>
+          <h1 className="text-4xl font-bold font-montserrat text-foreground mb-2">KinMeet</h1>
+          <p className="text-muted font-inter">Connect with your homeland community abroad</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -62,7 +63,7 @@ const Login: React.FC = () => {
           )}
 
           <div>
-            <label htmlFor="email" className="block text-sm font-medium font-inter text-kin-navy mb-2">
+            <label htmlFor="email" className="block text-sm font-medium font-inter text-foreground mb-2">
               Email
             </label>
             <input
@@ -70,7 +71,7 @@ const Login: React.FC = () => {
               id="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
+              className={`${textFieldClass} w-full px-4 py-3 rounded-kin-sm transition`}
               placeholder="you@example.com"
               required
             />
@@ -78,7 +79,7 @@ const Login: React.FC = () => {
 
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label htmlFor="password" className="block text-sm font-medium font-inter text-kin-navy">
+              <label htmlFor="password" className="block text-sm font-medium font-inter text-foreground">
                 Password
               </label>
               <Link
@@ -93,7 +94,7 @@ const Login: React.FC = () => {
               id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
+              className={`${textFieldClass} w-full px-4 py-3 rounded-kin-sm transition`}
               placeholder="••••••••"
               required
             />
@@ -102,14 +103,14 @@ const Login: React.FC = () => {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-kin-coral text-white py-4 px-6 rounded-kin-sm font-bold font-montserrat text-lg hover:bg-kin-coral-600 focus:ring-4 focus:ring-kin-coral-300 shadow-kin-medium hover:shadow-kin-strong cursor-pointer transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed mt-8 mb-4"
+            className={`${primaryActionClass} w-full py-4 px-6 rounded-kin-sm font-bold font-montserrat text-lg focus:ring-4 focus:ring-ring shadow-kin-medium hover:shadow-kin-strong cursor-pointer transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed mt-8 mb-4`}
           >
             {isLoading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
 
         <div className="mt-8 text-center">
-          <p className="text-kin-navy font-inter">
+          <p className="text-foreground font-inter">
             Don't have an account?{' '}
             <Link to="/signup" className="text-kin-coral font-semibold hover:text-kin-coral-600 transition">
               Sign up

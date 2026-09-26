@@ -7,6 +7,7 @@ import { emailInitial, formatAdminStatus } from '../../utils/adminFeedback';
 import { REPORT_STATUS_OPTIONS, reasonTagClassName, reportRangeLabel } from '../../utils/adminReports';
 import AdminReportDetails from './AdminReportDetails';
 import { AdminPagination, AdminSubmittedStamp, AdminViewButton } from './AdminPagination';
+import { primaryActionClass } from '../../constants/ui';
 
 type AdminReportStatusSelectProps = {
   reportId: string;
@@ -27,7 +28,7 @@ const AdminReportStatusSelect: React.FC<AdminReportStatusSelectProps> = ({
       value={value}
       disabled={busy}
       onChange={(event) => onChange(event.target.value as AdminReportStatus)}
-      className="rounded-kin-sm border border-kin-stone-300 bg-white px-2 py-1 text-sm font-inter text-kin-navy cursor-pointer transition focus:outline-none focus:ring-2 focus:ring-kin-coral disabled:opacity-50 disabled:cursor-not-allowed"
+      className="rounded-kin-sm border border-border bg-surface px-2 py-1 text-sm font-inter text-foreground cursor-pointer transition focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
     >
       {REPORT_STATUS_OPTIONS.map((option) => (
         <option key={option} value={option}>
@@ -121,10 +122,10 @@ const AdminReports: React.FC<AdminReportsProps> = ({ onSessionExpired }) => {
   return (
     <section aria-labelledby="admin-reports-heading" className="flex flex-col gap-6">
       <div>
-        <h1 id="admin-reports-heading" className="text-3xl font-bold font-montserrat text-kin-navy sm:text-4xl">
+        <h1 id="admin-reports-heading" className="text-3xl font-bold font-montserrat text-foreground sm:text-4xl">
           Reports
         </h1>
-        <p className="mt-2 text-base font-inter text-kin-teal">
+        <p className="mt-2 text-base font-inter text-muted">
           Review reports submitted by KinMeet users.
         </p>
       </div>
@@ -138,7 +139,7 @@ const AdminReports: React.FC<AdminReportsProps> = ({ onSessionExpired }) => {
           <button
             type="button"
             onClick={handleRetry}
-            className="self-start sm:self-auto bg-kin-coral text-white px-4 py-2 rounded-kin-sm font-semibold font-montserrat hover:bg-kin-coral-600 transition cursor-pointer"
+            className={`${primaryActionClass} self-start sm:self-auto px-4 py-2 rounded-kin-sm font-semibold font-montserrat transition cursor-pointer`}
           >
             Retry
           </button>
@@ -152,25 +153,25 @@ const AdminReports: React.FC<AdminReportsProps> = ({ onSessionExpired }) => {
       )}
 
       {(isLoading || showEmpty || showList) && (
-      <div className="bg-white rounded-kin-xl border border-kin-stone-200 shadow-kin-medium overflow-hidden">
+      <div className="bg-surface rounded-kin-xl border border-border shadow-kin-medium overflow-hidden">
         {isLoading && (
-          <div role="status" className="px-6 py-16 text-center text-kin-navy font-inter">
+          <div role="status" className="px-6 py-16 text-center text-foreground font-inter">
             <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-kin-coral mx-auto mb-4" aria-hidden />
             <p>Loading reports...</p>
           </div>
         )}
         {showEmpty && (
           <div className="px-6 py-16 text-center font-inter">
-            <p className="text-lg font-semibold font-montserrat text-kin-navy cursor-pointer">No reports yet.</p>
-            <p className="mt-2 text-sm text-kin-teal">New reports will appear here.</p>
+            <p className="text-lg font-semibold font-montserrat text-foreground cursor-pointer">No reports yet.</p>
+            <p className="mt-2 text-sm text-muted">New reports will appear here.</p>
           </div>
         )}
         {showList && (
           <>
           <div className="hidden lg:block overflow-x-auto">
-          <table className="w-full text-left font-inter text-base text-kin-navy">
+          <table className="w-full text-left font-inter text-base text-foreground">
             <caption className="sr-only">Submitted reports</caption>
-            <thead className="bg-kin-beige-300 border-b border-kin-stone-200">
+            <thead className="bg-surface-muted border-b border-border">
               <tr>
                 <th scope="col" className="px-5 py-3 font-semibold">Reported user</th>
                 <th scope="col" className="px-5 py-3 font-semibold">Reported by</th>
@@ -185,7 +186,7 @@ const AdminReports: React.FC<AdminReportsProps> = ({ onSessionExpired }) => {
             </thead>
             <tbody>
               {items.map((item) => (
-                <tr key={item.id} className="border-t border-kin-stone-200">
+                <tr key={item.id} className="border-t border-border">
                   <td className="w-[22%] max-w-xs px-5 py-3 align-middle">
                     <div className="flex min-w-0 items-center gap-3">
                       <div
@@ -210,11 +211,11 @@ const AdminReports: React.FC<AdminReportsProps> = ({ onSessionExpired }) => {
                   <td className="min-w-0 px-5 py-3 align-middle">
                     <p className="line-clamp-2 break-words leading-snug">
                       {item.details && item.details.trim().length > 0 ? item.details : (
-                        <span className="text-kin-navy/50">No additional details</span>
+                        <span className="text-foreground/50">No additional details</span>
                       )}
                     </p>
                   </td>
-                  <td className="whitespace-nowrap px-5 py-3 align-middle text-sm text-kin-navy/80">
+                  <td className="whitespace-nowrap px-5 py-3 align-middle text-sm text-foreground/80">
                     <AdminSubmittedStamp value={item.createdAt} />
                   </td>
                   <td className="whitespace-nowrap px-5 py-3 align-middle">
@@ -234,9 +235,9 @@ const AdminReports: React.FC<AdminReportsProps> = ({ onSessionExpired }) => {
           </table>
         </div>
 
-        <ul className="lg:hidden divide-y divide-kin-stone-200">
+        <ul className="lg:hidden divide-y divide-border">
           {items.map((item) => (
-            <li key={item.id} className="p-5 space-y-3 font-inter text-base text-kin-navy">
+            <li key={item.id} className="p-5 space-y-3 font-inter text-base text-foreground">
               <div className="flex min-w-0 items-start gap-3">
                 <div
                   className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-kin-coral to-kin-teal text-sm font-bold font-montserrat text-white shadow-kin-soft"
@@ -248,7 +249,7 @@ const AdminReports: React.FC<AdminReportsProps> = ({ onSessionExpired }) => {
                   <p className="min-w-0 font-semibold font-montserrat [overflow-wrap:anywhere] cursor-pointer">
                     {item.reportedEmail || 'Email unavailable'}
                   </p>
-                  <p className="text-sm text-kin-navy/70 [overflow-wrap:anywhere]">
+                  <p className="text-sm text-foreground/70 [overflow-wrap:anywhere]">
                     Reported by {item.reporterEmail || 'unknown'}
                   </p>
                 </div>
@@ -264,10 +265,10 @@ const AdminReports: React.FC<AdminReportsProps> = ({ onSessionExpired }) => {
               </div>
               <p className="line-clamp-2 break-words leading-snug">
                 {item.details && item.details.trim().length > 0 ? item.details : (
-                  <span className="text-kin-navy/50">No additional details</span>
+                  <span className="text-foreground/50">No additional details</span>
                 )}
               </p>
-              <p className="text-sm text-kin-navy/70">
+              <p className="text-sm text-foreground/70">
                 <AdminSubmittedStamp value={item.createdAt} />
               </p>
               <AdminViewButton email={item.reportedEmail} onClick={() => setSelectedItem(item)} />
@@ -276,9 +277,9 @@ const AdminReports: React.FC<AdminReportsProps> = ({ onSessionExpired }) => {
         </ul>
 
         {(rangeLabel || totalPages > 1) && (
-          <div className="flex flex-col gap-3 border-t border-kin-stone-200 bg-kin-beige/60 px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3 border-t border-border bg-surface-muted px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
             {rangeLabel && (
-              <p className="text-sm font-inter text-kin-navy/70">{rangeLabel}</p>
+              <p className="text-sm font-inter text-foreground/70">{rangeLabel}</p>
             )}
             <AdminPagination
               currentPage={pagination?.page ?? page}

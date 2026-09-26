@@ -64,12 +64,12 @@ const AccountPasswordSection: React.FC = () => {
         <div className="flex-1 min-w-0">
           <h2
             id="password-heading"
-            className="text-sm font-semibold font-inter text-kin-navy mb-1"
+            className="text-sm font-semibold font-inter text-foreground mb-1"
           >
             Change Password
           </h2>
           {!section.editing && (
-            <p className="text-kin-navy font-inter text-sm">
+            <p className="text-foreground font-inter text-sm">
               Update the password for your KinMeet account.
             </p>
           )}
@@ -83,7 +83,7 @@ const AccountPasswordSection: React.FC = () => {
           <button
             type="button"
             onClick={handleEdit}
-            className="shrink-0 text-sm font-semibold font-inter text-kin-teal hover:text-kin-teal-700 cursor-pointer transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral"
+            className="shrink-0 text-sm font-semibold font-inter text-muted hover:text-kin-teal-700 cursor-pointer transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             aria-label="Change password"
           >
             Change
@@ -96,7 +96,7 @@ const AccountPasswordSection: React.FC = () => {
           <div>
             <label
               htmlFor="current-password"
-              className="block text-sm font-inter text-kin-navy mb-1"
+              className="block text-sm font-inter text-foreground mb-1"
             >
               Current password
             </label>
@@ -107,14 +107,14 @@ const AccountPasswordSection: React.FC = () => {
               required
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
-              className="w-full border border-kin-stone-300 rounded-kin-sm px-3 py-2 text-sm font-inter text-kin-navy placeholder-kin-stone-400 focus:outline-none focus:ring-2 focus:ring-kin-teal"
+              className="w-full border border-border rounded-kin-sm px-3 py-2 text-sm font-inter text-foreground placeholder-kin-stone-400 focus:outline-none focus:ring-2 focus:ring-ring"
               placeholder="Enter your current password"
             />
           </div>
           <div>
             <label
               htmlFor="new-password"
-              className="block text-sm font-inter text-kin-navy mb-1"
+              className="block text-sm font-inter text-foreground mb-1"
             >
               New password
             </label>
@@ -125,14 +125,14 @@ const AccountPasswordSection: React.FC = () => {
               required
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              className="w-full border border-kin-stone-300 rounded-kin-sm px-3 py-2 text-sm font-inter text-kin-navy placeholder-kin-stone-400 focus:outline-none focus:ring-2 focus:ring-kin-teal"
+              className="w-full border border-border rounded-kin-sm px-3 py-2 text-sm font-inter text-foreground placeholder-kin-stone-400 focus:outline-none focus:ring-2 focus:ring-ring"
               placeholder="8+ chars, upper, lower, number"
             />
           </div>
           <div>
             <label
               htmlFor="confirm-password"
-              className="block text-sm font-inter text-kin-navy mb-1"
+              className="block text-sm font-inter text-foreground mb-1"
             >
               Confirm new password
             </label>
@@ -143,7 +143,7 @@ const AccountPasswordSection: React.FC = () => {
               required
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full border border-kin-stone-300 rounded-kin-sm px-3 py-2 text-sm font-inter text-kin-navy placeholder-kin-stone-400 focus:outline-none focus:ring-2 focus:ring-kin-teal"
+              className="w-full border border-border rounded-kin-sm px-3 py-2 text-sm font-inter text-foreground placeholder-kin-stone-400 focus:outline-none focus:ring-2 focus:ring-ring"
               placeholder="Re-enter new password"
             />
           </div>
@@ -156,7 +156,7 @@ const AccountPasswordSection: React.FC = () => {
             <button
               type="submit"
               disabled={section.loading}
-              className="bg-kin-teal text-white px-4 py-2 rounded-kin-sm text-sm font-semibold font-montserrat hover:bg-kin-teal-700 cursor-pointer transition disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral"
+              className="bg-kin-teal text-white px-4 py-2 rounded-kin-sm text-sm font-semibold font-montserrat hover:bg-kin-teal-700 cursor-pointer transition disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             >
               {section.loading ? 'Saving…' : 'Save'}
             </button>
@@ -164,7 +164,7 @@ const AccountPasswordSection: React.FC = () => {
               type="button"
               onClick={handleCancel}
               disabled={section.loading}
-              className="px-4 py-2 rounded-kin-sm text-sm font-semibold font-montserrat text-kin-navy hover:bg-kin-stone-100 cursor-pointer transition disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral"
+              className="px-4 py-2 rounded-kin-sm text-sm font-semibold font-montserrat text-foreground hover:bg-surface-muted cursor-pointer transition disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             >
               Cancel
             </button>

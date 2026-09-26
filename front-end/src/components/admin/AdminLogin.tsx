@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { adminAPI } from '../../services/api';
 import { getErrorMessage } from '../../utils/error';
 import Logo from '../common/Logo';
+import { primaryActionClass, surfaceCardClass, textFieldClass } from '../../constants/ui';
 
 type AdminLoginProps = {
   onAuthenticated: () => void;
@@ -28,14 +29,14 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onAuthenticated }) => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-kin-beige px-4">
-      <div className="max-w-md w-full bg-white rounded-kin-xl shadow-kin-strong p-8">
+    <div className="min-h-screen flex items-center justify-center bg-canvas px-4">
+      <div className={`${surfaceCardClass} max-w-md w-full rounded-kin-xl p-8`}>
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
             <Logo size="xl" />
           </div>
-          <h1 className="text-4xl font-bold font-montserrat text-kin-navy mb-2">KinMeet Admin</h1>
-          <p className="text-kin-teal font-inter">Sign in to review feedback</p>
+          <h1 className="text-4xl font-bold font-montserrat text-foreground mb-2">KinMeet Admin</h1>
+          <p className="text-muted font-inter">Sign in to review feedback</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -49,7 +50,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onAuthenticated }) => {
           )}
 
           <div>
-            <label htmlFor="admin-password" className="block text-sm font-medium font-inter text-kin-navy mb-2">
+            <label htmlFor="admin-password" className="block text-sm font-medium font-inter text-foreground mb-2">
               Password
             </label>
             <input
@@ -57,7 +58,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onAuthenticated }) => {
               id="admin-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
+              className={`${textFieldClass} w-full px-4 py-3 rounded-kin-sm transition`}
               placeholder="••••••••"
               autoComplete="current-password"
               required
@@ -67,7 +68,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onAuthenticated }) => {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-kin-coral text-white py-4 px-6 rounded-kin-sm font-bold font-montserrat text-lg hover:bg-kin-coral-600 focus:ring-4 focus:ring-kin-coral-300 shadow-kin-medium hover:shadow-kin-strong transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed mt-8 mb-4"
+            className={`${primaryActionClass} w-full py-4 px-6 rounded-kin-sm font-bold font-montserrat text-lg focus:ring-4 focus:ring-ring shadow-kin-medium hover:shadow-kin-strong transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed mt-8 mb-4`}
           >
             {isLoading ? 'Signing in...' : 'Sign In'}
           </button>

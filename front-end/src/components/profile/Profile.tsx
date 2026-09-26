@@ -77,10 +77,10 @@ const Profile: React.FC = () => {
 
 	if (authLoading || isLoading) {
 		return (
-			<div className="h-full flex items-center justify-center bg-kin-beige">
+			<div className="h-full flex items-center justify-center bg-canvas">
 				<div className="text-center">
 					<div className="animate-spin rounded-full h-16 w-16 border-b-2 border-kin-coral mx-auto mb-4"></div>
-					<p className="text-kin-navy font-inter">Loading profile...</p>
+					<p className="text-foreground font-inter">Loading profile...</p>
 				</div>
 			</div>
 		);
@@ -88,7 +88,7 @@ const Profile: React.FC = () => {
 
 	if (error && !profile) {
 		return (
-			<div className="h-full flex items-center justify-center bg-kin-beige">
+			<div className="h-full flex items-center justify-center bg-canvas">
 				<div className="text-center">
 					<p className="text-kin-coral-700 font-inter">{error}</p>
 				</div>
@@ -116,7 +116,7 @@ const Profile: React.FC = () => {
 	return (
 		<>
 			{error && (
-				<div className="bg-kin-beige px-4 pt-4">
+				<div className="bg-canvas px-4 pt-4">
 					<div className="max-w-3xl mx-auto">
 						<p
 							role="alert"
