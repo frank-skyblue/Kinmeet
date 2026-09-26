@@ -6,21 +6,7 @@ import { getErrorMessage } from "../../utils/error";
 import ActionMenu from "../common/ActionMenu";
 import ReportUserModal from "../common/ReportUserModal";
 import ConnectionsPaginationNav from "./ConnectionsPaginationNav";
-
-interface Connection {
-  _id: string;
-  firstName: string;
-  lastName: string;
-  homeCountry: string;
-  currentProvince: string;
-  currentCountry: string;
-  languages: string[];
-  interests: string[];
-  lookingFor: string[];
-  photo?: string;
-  /** ISO date when the connection was formed (when API provides it) */
-  connectedAt?: string;
-}
+import type { Connection } from "../../types";
 
 const formatLongDate = (iso: string): string => {
   const d = new Date(iso);

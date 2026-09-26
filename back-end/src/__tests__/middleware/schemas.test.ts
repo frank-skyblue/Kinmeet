@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   loginSchema,
+  passwordField,
   reportUserSchema,
   submitFeedbackSchema,
   updateProfileSchema,
@@ -214,5 +215,19 @@ describe('reportUserSchema', () => {
   it('rejects a malformed userId', () => {
     const result = reportUserSchema.safeParse({ userId: 'nope', reason: 'Spam or scam' });
     expect(result.success).toBe(false);
+  });
+});
+
+describe('passwordField', () => {
+  it('accepts a strong password', () => {
+    expect(passwordField.safeParse('ValidPass1').success).toBe(true);
+  });
+
+  it('rejects a weak password', () => {
+    const result = passwordField.safeParse('weak');
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toContain('Password must be at least 8 characters');
+    }
   });
 });

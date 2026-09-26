@@ -157,7 +157,7 @@ describe('Socket.IO Handlers', () => {
 
         expect(ack.success).toBe(false);
         if (!ack.success) {
-          expect(ack.message).toBe('Content is required');
+          expect(ack.message).toBe('Message cannot be empty');
         }
 
         const saved = await Message.countDocuments({ sender: userA._id, receiver: userB._id });
@@ -182,7 +182,7 @@ describe('Socket.IO Handlers', () => {
 
         expect(ack.success).toBe(false);
         if (!ack.success) {
-          expect(ack.message).toBe('Content is required');
+          expect(ack.message).toBe('Message cannot be empty');
         }
 
         const saved = await Message.countDocuments({ sender: userA._id, receiver: userB._id });
@@ -192,7 +192,7 @@ describe('Socket.IO Handlers', () => {
       }
     });
 
-    it('rejects content over 2000 characters', async () => {
+    it('rejects content over 5000 characters', async () => {
       const userA = await createTestUser({ email: 'longa@test.com' });
       const userB = await createTestUser({ email: 'longb@test.com' });
       await Connection.create({ user1: userA._id, user2: userB._id });
@@ -202,12 +202,12 @@ describe('Socket.IO Handlers', () => {
       try {
         const ack = await emitSendMessage(clientA, {
           receiverId: userB._id.toString(),
-          content: 'x'.repeat(2001),
+          content: 'x'.repeat(5001),
         });
 
         expect(ack.success).toBe(false);
         if (!ack.success) {
-          expect(ack.message).toBe('Message too long');
+          expect(ack.message).toBe('Message is too long');
         }
 
         const saved = await Message.countDocuments({ sender: userA._id, receiver: userB._id });
@@ -217,13 +217,13 @@ describe('Socket.IO Handlers', () => {
       }
     });
 
-    it('accepts content at the 2000 character limit', async () => {
+    it('accepts content at the 5000 character limit', async () => {
       const userA = await createTestUser({ email: 'limita@test.com' });
       const userB = await createTestUser({ email: 'limitb@test.com' });
       await Connection.create({ user1: userA._id, user2: userB._id });
 
       const clientA = await connectClient(getAuthToken(userA));
-      const content = 'x'.repeat(2000);
+      const content = 'x'.repeat(5000);
 
       try {
         const ack = await emitSendMessage(clientA, {

@@ -13,6 +13,8 @@ import {
   SIGNUP_GENDER_OPTIONS,
 } from "../../constants/profileOptions";
 import type { ResolvedCityLocation } from "../../utils/citySearch";
+import { ABOUT_MAX_LENGTH } from "../../constants/validation";
+import { dobIsoBoundsUtc } from "../../utils/age";
 
 interface SignupStep2Props {
   firstName: string;
@@ -81,12 +83,7 @@ const SignupStep2: React.FC<SignupStep2Props> = ({
   onBack,
   setError,
 }) => {
-  const now = new Date();
-  const todayIsoUtc = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}`;
-  const maxDobUtc = new Date(
-    Date.UTC(now.getUTCFullYear() - 120, now.getUTCMonth(), now.getUTCDate(), 12, 0, 0, 0),
-  );
-  const minIsoUtc = `${maxDobUtc.getUTCFullYear()}-${String(maxDobUtc.getUTCMonth() + 1).padStart(2, '0')}-${String(maxDobUtc.getUTCDate()).padStart(2, '0')}`;
+  const { minIsoUtc, todayIsoUtc } = dobIsoBoundsUtc();
 
   const provinceOptions = manualCountryMode
     ? getProvinceOptions(currentCountryCode)
@@ -134,8 +131,8 @@ const SignupStep2: React.FC<SignupStep2Props> = ({
       setError("Invalid date of birth");
       return false;
     }
-    if (about && about.length > 500) {
-      setError("About section must be 500 characters or fewer");
+    if (about && about.length > ABOUT_MAX_LENGTH) {
+      setError(`About section must be ${ABOUT_MAX_LENGTH} characters or fewer`);
       return false;
     }
     return true;
@@ -271,11 +268,11 @@ const SignupStep2: React.FC<SignupStep2Props> = ({
           className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter resize-none"
           placeholder="Tell others a bit about yourself..."
           rows={3}
-          maxLength={500}
+          maxLength={ABOUT_MAX_LENGTH}
           aria-label="About you"
         />
         <p className="text-xs text-kin-teal font-inter mt-1">
-          {about.length}/500 characters
+          {about.length}/{ABOUT_MAX_LENGTH} characters
         </p>
       </div>
 

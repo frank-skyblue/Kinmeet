@@ -4,24 +4,7 @@ import { blockAPI, matchingAPI, getPhotoUrl } from '../../services/api';
 import { getErrorMessage } from '../../utils/error';
 import ActionMenu from '../common/ActionMenu';
 import ReportUserModal from '../common/ReportUserModal';
-
-interface Match {
-  _id: string;
-  firstName: string;
-  about?: string;
-  jobTitle?: string;
-  company?: string;
-  industry?: string;
-  educationLevel?: string;
-  graduationYear?: number;
-  homeCountry: string;
-  currentProvince: string;
-  currentCountry: string;
-  languages: string[];
-  interests: string[];
-  lookingFor: string[];
-  photo?: string;
-}
+import type { Match } from '../../types';
 
 const Discover: React.FC = () => {
   const [matches, setMatches] = useState<Match[]>([]);
