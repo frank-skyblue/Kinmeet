@@ -76,6 +76,66 @@ export interface GetConversationsResponse {
     unreadConversationCount: number;
 }
 
+export interface Match {
+    _id: string;
+    firstName: string;
+    about?: string;
+    jobTitle?: string;
+    company?: string;
+    industry?: string;
+    educationLevel?: string;
+    graduationYear?: number;
+    homeCountry: string;
+    currentProvince: string;
+    currentCountry: string;
+    languages: string[];
+    interests: string[];
+    lookingFor: string[];
+    photo?: string;
+}
+
+export interface GetMatchesResponse {
+    success: boolean;
+    matches: Match[];
+}
+
+export interface Connection {
+    _id: string;
+    firstName: string;
+    lastName: string;
+    homeCountry: string;
+    currentProvince: string;
+    currentCountry: string;
+    languages: string[];
+    interests: string[];
+    lookingFor: string[];
+    photo?: string;
+    connectedAt?: string;
+}
+
+export interface GetConnectionsResponse {
+    success: boolean;
+    connections: Connection[];
+}
+
+export interface BlockedAccountUser {
+    _id: string;
+    firstName: string;
+    currentProvince?: string;
+    currentCountry?: string;
+}
+
+export interface BlockedAccount {
+    _id: string;
+    blocked: BlockedAccountUser | null;
+    createdAt?: string;
+}
+
+export interface GetBlockedUsersResponse {
+    success: boolean;
+    blockedUsers: BlockedAccount[];
+}
+
 export interface ConnectionRequestSender {
     _id: string;
     firstName: string;

@@ -4,9 +4,17 @@ import { FEEDBACK_CATEGORIES } from '../models/Feedback';
 import { REPORT_REASONS, REPORT_STATUSES } from '../models/Report';
 import { SUPPORT_ISSUE_TYPES } from '../models/SupportRequest';
 
-const objectId = z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid ID format');
+export const objectId = z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid ID format');
 const requiredString = (field: string, maxLength: number) =>
     z.string().trim().min(1, `${field} is required`).max(maxLength, `${field} is too long`);
+
+const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$/;
+export const passwordField = z
+    .string()
+    .regex(
+        PASSWORD_REGEX,
+        'Password must be at least 8 characters long and include uppercase, lowercase, and a number.',
+    );
 
 export const dateOfBirthString = z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date of birth must be YYYY-MM-DD').refine((value) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
@@ -142,7 +150,7 @@ export const loginSchema = z.object({
 export const registerSchema = z.object({
     email: checkEmailSchema.shape.email,
     username: z.string().trim().toLowerCase().min(3, 'Username must be 3-30 characters using lowercase letters, numbers, or underscores').max(30, 'Username must be 3-30 characters using lowercase letters, numbers, or underscores').regex(/^[a-z0-9_]+$/, 'Username must be 3-30 characters using lowercase letters, numbers, or underscores').optional(),
-    password: z.string(),
+    password: passwordField,
     firstName: requiredString('First name', 50),
     lastName: requiredString('Last name', 50),
     about: z.string().trim().max(500, 'About section must be 500 characters or fewer').optional(),
@@ -193,7 +201,7 @@ export const forgotPasswordSchema = z.object({
 
 export const resetPasswordSchema = z.object({
     token: z.string().min(1, 'Token is required'),
-    newPassword: z.string().min(1, 'New password is required'),
+    newPassword: passwordField,
 });
 
 export const userIdParams = objectIdParam('userId');
@@ -237,7 +245,7 @@ export const changeUsernameSchema = z.object({
 
 export const changePasswordSchema = z.object({
     currentPassword: z.string().min(1, 'Current password is required'),
-    newPassword: z.string().min(1, 'New password is required'),
+    newPassword: passwordField,
 });
 
 export const adminLoginSchema = z.object({

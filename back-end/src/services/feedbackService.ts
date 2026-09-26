@@ -1,26 +1,9 @@
-import multer, { FileFilterCallback } from 'multer';
 import { Feedback, FeedbackCategory, IFeedbackScreenshot } from '../models/Feedback';
 import { User } from '../models/User';
-import { AuthRequest } from '../middleware/authMiddleware';
 import { AppError } from '../middleware/errorHandler';
 import { destroyImageByPublicId, uploadImageAsset } from './cloudinaryService';
 
 const FEEDBACK_SCREENSHOTS_SUBFOLDER = 'feedback-screenshots';
-
-const fileFilter = (_req: AuthRequest, file: Express.Multer.File, cb: FileFilterCallback) => {
-    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-    if (allowed.includes(file.mimetype)) {
-        cb(null, true);
-    } else {
-        cb(new Error('Only JPEG, PNG, WebP, and GIF images are allowed'));
-    }
-};
-
-export const feedbackUpload = multer({
-    storage: multer.memoryStorage(),
-    fileFilter,
-    limits: { fileSize: 5 * 1024 * 1024 },
-});
 
 interface SubmitFeedbackInput {
     category: FeedbackCategory;

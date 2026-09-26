@@ -84,43 +84,49 @@ describe('authenticationService', () => {
 
     it('rejects duplicate email', async () => {
       await authenticationService.register(validData);
-      const result = await authenticationService.register(validData);
-
-      expect(result.success).toBe(false);
-      expect(result.message).toBe('This email is already registered. Please log in instead.');
+      await expect(authenticationService.register(validData)).rejects.toMatchObject({
+        statusCode: 400,
+        message: 'This email is already registered. Please log in instead.',
+      });
     });
 
     it('rejects duplicate email with different casing', async () => {
       await authenticationService.register(validData);
-      const result = await authenticationService.register({
-        ...validData,
-        email: 'New@Example.com',
+      await expect(
+        authenticationService.register({
+          ...validData,
+          email: 'New@Example.com',
+        }),
+      ).rejects.toMatchObject({
+        statusCode: 400,
+        message: 'This email is already registered. Please log in instead.',
       });
-
-      expect(result.success).toBe(false);
-      expect(result.message).toBe('This email is already registered. Please log in instead.');
     });
 
     it('rejects duplicate email with surrounding whitespace', async () => {
       await authenticationService.register(validData);
-      const result = await authenticationService.register({
-        ...validData,
-        email: ' new@example.com ',
+      await expect(
+        authenticationService.register({
+          ...validData,
+          email: ' new@example.com ',
+        }),
+      ).rejects.toMatchObject({
+        statusCode: 400,
+        message: 'This email is already registered. Please log in instead.',
       });
-
-      expect(result.success).toBe(false);
-      expect(result.message).toBe('This email is already registered. Please log in instead.');
     });
 
     it('rejects duplicate email with zero-width characters', async () => {
       await authenticationService.register(validData);
-      const result = await authenticationService.register({
-        ...validData,
-        email: 'new@example.com\u200B',
+      await expect(
+        authenticationService.register({
+          ...validData,
+          email: 'new@example.com\u200B',
+        }),
+      ).rejects.toMatchObject({
+        statusCode: 400,
+        message: 'This email is already registered. Please log in instead.',
       });
-
-      expect(result.success).toBe(false);
-      expect(result.message).toBe('This email is already registered. Please log in instead.');
     });
 
     it('rejects duplicate email with unicode equivalent forms', async () => {
@@ -128,13 +134,15 @@ describe('authenticationService', () => {
         ...validData,
         email: 'caf\u00E9@example.com',
       });
-      const result = await authenticationService.register({
-        ...validData,
-        email: 'cafe\u0301@example.com',
+      await expect(
+        authenticationService.register({
+          ...validData,
+          email: 'cafe\u0301@example.com',
+        }),
+      ).rejects.toMatchObject({
+        statusCode: 400,
+        message: 'This email is already registered. Please log in instead.',
       });
-
-      expect(result.success).toBe(false);
-      expect(result.message).toBe('This email is already registered. Please log in instead.');
     });
 
     it('rejects duplicate email for legacy mixed-case records', async () => {
@@ -153,75 +161,15 @@ describe('authenticationService', () => {
         updatedAt: new Date(),
       });
 
-      const result = await authenticationService.register({
-        ...validData,
-        email: 'legacy@example.com',
+      await expect(
+        authenticationService.register({
+          ...validData,
+          email: 'legacy@example.com',
+        }),
+      ).rejects.toMatchObject({
+        statusCode: 400,
+        message: 'This email is already registered. Please log in instead.',
       });
-
-      expect(result.success).toBe(false);
-      expect(result.message).toBe('This email is already registered. Please log in instead.');
-    });
-
-    it('rejects missing required fields', async () => {
-      const result = await authenticationService.register({
-        email: 'x@test.com',
-        password: 'ValidPass1',
-      } as any);
-
-      expect(result.success).toBe(false);
-      expect(result.message).toBe('All required fields must be provided');
-    });
-
-    it('rejects missing languages', async () => {
-      const result = await authenticationService.register({
-        ...validData,
-        languages: [],
-      });
-
-      expect(result.success).toBe(false);
-      expect(result.message).toContain('language');
-    });
-
-    it('rejects missing lookingFor', async () => {
-      const result = await authenticationService.register({
-        ...validData,
-        lookingFor: [],
-      });
-
-      expect(result.success).toBe(false);
-      expect(result.message).toContain('looking for');
-    });
-
-    it('rejects weak password', async () => {
-      const result = await authenticationService.register({
-        ...validData,
-        password: 'weak',
-      });
-
-      expect(result.success).toBe(false);
-      expect(result.message).toContain('Password must be');
-    });
-
-    it('rejects invalid gender', async () => {
-      const result = await authenticationService.register({
-        ...validData,
-        email: 'bad-gender@example.com',
-        gender: 'Alien',
-      });
-
-      expect(result.success).toBe(false);
-      expect(result.message).toBe('Invalid gender selection');
-    });
-
-    it('rejects future date of birth', async () => {
-      const result = await authenticationService.register({
-        ...validData,
-        email: 'future-dob@example.com',
-        dateOfBirth: '3000-01-01',
-      });
-
-      expect(result.success).toBe(false);
-      expect(result.message).toBe('Invalid date of birth');
     });
 
     it('allows date of birth today', async () => {
@@ -234,20 +182,6 @@ describe('authenticationService', () => {
       });
 
       expect(result.success).toBe(true);
-    });
-
-    it('rejects date of birth more than 120 years ago', async () => {
-      const t = new Date();
-      const y = t.getUTCFullYear() - 121;
-      const tooOldStr = `${y}-06-15`;
-      const result = await authenticationService.register({
-        ...validData,
-        email: 'too-old-dob@example.com',
-        dateOfBirth: tooOldStr,
-      });
-
-      expect(result.success).toBe(false);
-      expect(result.message).toBe('Invalid date of birth');
     });
 
     it('allows date of birth on earliest allowed day (120 years ago, UTC)', async () => {
@@ -297,26 +231,18 @@ describe('authenticationService', () => {
       expect(result.user?.username).toBe('custom_user1');
     });
 
-    it('rejects an invalid username format', async () => {
-      const result = await authenticationService.register({
-        ...validData,
-        username: 'no spaces!',
-      });
-
-      expect(result.success).toBe(false);
-      expect(result.message).toContain('Username');
-    });
-
     it('rejects a duplicate username', async () => {
       await authenticationService.register({ ...validData, username: 'taken_name' });
-      const result = await authenticationService.register({
-        ...validData,
-        email: 'second@example.com',
-        username: 'taken_name',
+      await expect(
+        authenticationService.register({
+          ...validData,
+          email: 'second@example.com',
+          username: 'taken_name',
+        }),
+      ).rejects.toMatchObject({
+        statusCode: 400,
+        message: 'Username is already taken',
       });
-
-      expect(result.success).toBe(false);
-      expect(result.message).toBe('Username is already taken');
     });
   });
 
@@ -362,35 +288,33 @@ describe('authenticationService', () => {
 
     it('rejects wrong password', async () => {
       await createTestUser({ email: 'login@test.com', password: 'TestPass123' });
-      const result = await authenticationService.login({
-        email: 'login@test.com',
-        password: 'WrongPass1',
+      await expect(
+        authenticationService.login({
+          email: 'login@test.com',
+          password: 'WrongPass1',
+        }),
+      ).rejects.toMatchObject({
+        statusCode: 401,
+        message: 'Invalid credentials',
       });
-
-      expect(result.success).toBe(false);
-      expect(result.message).toBe('Invalid credentials');
     });
 
     it('rejects nonexistent email', async () => {
-      const result = await authenticationService.login({
-        email: 'ghost@test.com',
-        password: 'TestPass123',
+      await expect(
+        authenticationService.login({
+          email: 'ghost@test.com',
+          password: 'TestPass123',
+        }),
+      ).rejects.toMatchObject({
+        statusCode: 401,
+        message: 'Invalid credentials',
       });
-
-      expect(result.success).toBe(false);
-      expect(result.message).toBe('Invalid credentials');
-    });
-
-    it('rejects empty email or password', async () => {
-      const result = await authenticationService.login({ email: '', password: '' });
-      expect(result.success).toBe(false);
-      expect(result.message).toBe('Email and password are required');
     });
   });
 
   describe('logout', () => {
     it('returns success', async () => {
-      const result = await authenticationService.logout('some-token');
+      const result = await authenticationService.logout();
       expect(result.success).toBe(true);
     });
   });

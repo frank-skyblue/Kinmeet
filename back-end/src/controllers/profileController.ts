@@ -3,8 +3,6 @@ import { AuthRequest } from '../middleware/authMiddleware';
 import { AppError, asyncHandler } from '../middleware/errorHandler';
 import * as profileService from '../services/profileService';
 
-export { avatarUpload } from '../services/profileService';
-
 export const getProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
     const user = await profileService.getProfile(req.user!.id);
     return res.status(200).json({ success: true, user });
