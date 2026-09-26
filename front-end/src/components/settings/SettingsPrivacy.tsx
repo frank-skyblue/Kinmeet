@@ -17,6 +17,11 @@ const settingsSections = [
     title: 'Support',
     description: 'Get help and share feedback',
   },
+  {
+    path: '/settings/privacy',
+    title: 'Privacy',
+    description: 'Manage your privacy setting'
+  }
 ] as const;
 
 const SettingsPrivacy: React.FC = () => {

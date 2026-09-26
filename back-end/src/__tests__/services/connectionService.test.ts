@@ -7,6 +7,7 @@ import {
   removeConnection,
 } from '../../services/connectionService';
 import { createTestUser } from '../helpers';
+import { Block } from '../../models/Block';
 import { Connection } from '../../models/Connection';
 import { ConnectionRequest } from '../../models/ConnectionRequest';
 
@@ -100,6 +101,42 @@ describe('connectionService', () => {
       await expect(
         acceptConnectionRequest(receiver._id.toString(), req._id.toString()),
       ).rejects.toThrow('Request already processed');
+    });
+  });
+
+  describe('acceptConnectionRequest block guard', () => {
+    it('refuses to accept when a block exists and creates no Connection', async () => {
+      const sender = await createTestUser({ email: 'sender@test.com' });
+      const receiver = await createTestUser({ email: 'receiver@test.com' });
+      const req = await ConnectionRequest.create({
+        sender: sender._id,
+        receiver: receiver._id,
+        status: 'pending',
+      });
+      await Block.create({ blocker: receiver._id, blocked: sender._id });
+
+      await expect(
+        acceptConnectionRequest(receiver._id.toString(), req._id.toString()),
+      ).rejects.toThrow('Not authorized');
+
+      expect(await Connection.countDocuments({})).toBe(0);
+      const untouched = await ConnectionRequest.findById(req._id);
+      expect(untouched?.status).toBe('pending');
+    });
+
+    it('refuses when the sender is the blocker', async () => {
+      const sender = await createTestUser({ email: 'sender@test.com' });
+      const receiver = await createTestUser({ email: 'receiver@test.com' });
+      const req = await ConnectionRequest.create({
+        sender: sender._id,
+        receiver: receiver._id,
+        status: 'pending',
+      });
+      await Block.create({ blocker: sender._id, blocked: receiver._id });
+
+      await expect(
+        acceptConnectionRequest(receiver._id.toString(), req._id.toString()),
+      ).rejects.toThrow('Not authorized');
     });
   });
 

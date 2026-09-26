@@ -1,20 +1,8 @@
 import { User } from '../models/User';
 import { AppError } from '../middleware/errorHandler';
-import { normalizeEmail, escapeRegExp } from '../utils/email';
+import { findUserByEmail, normalizeEmail } from '../utils/email';
 
 const USERNAME_REGEX = /^[a-z0-9_]{3,30}$/;
-const IS_PASSWORD_SECURE = (password: string) =>
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$/.test(password);
-
-const findUserByEmail = async (email: string) => {
-    const normalized = normalizeEmail(email);
-    if (!normalized) return null;
-    const exact = await User.findOne({ email: normalized });
-    if (exact) return exact;
-    return User.findOne({
-        email: { $regex: new RegExp(`^${escapeRegExp(normalized)}$`, 'i') },
-    });
-};
 
 export const settingsService = {
     changeEmail: async (
@@ -83,13 +71,6 @@ export const settingsService = {
 
         const passwordMatch = await user.comparePassword(currentPassword);
         if (!passwordMatch) throw new AppError(401, 'Current password is incorrect');
-
-        if (!IS_PASSWORD_SECURE(newPassword)) {
-            throw new AppError(
-                400,
-                'Password must be at least 8 characters long and include uppercase, lowercase, and a number.',
-            );
-        }
 
         if (currentPassword === newPassword) {
             throw new AppError(400, 'New password must be different from your current password');

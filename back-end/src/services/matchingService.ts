@@ -1,7 +1,7 @@
 import { User } from '../models/User';
 import { Connection } from '../models/Connection';
 import { ConnectionRequest } from '../models/ConnectionRequest';
-import { Block } from '../models/Block';
+import { Block, areUsersBlocked } from '../models/Block';
 import { AppError } from '../middleware/errorHandler';
 
 export const getMatches = async (userId: string) => {
@@ -70,13 +70,7 @@ export const sendMeetRequest = async (userId: string, receiverId: string) => {
     const receiver = await User.findById(receiverId);
     if (!receiver) throw new AppError(404, 'User not found');
 
-    const blocked = await Block.findOne({
-        $or: [
-            { blocker: userId, blocked: receiverId },
-            { blocker: receiverId, blocked: userId }
-        ]
-    });
-    if (blocked) throw new AppError(403, 'Cannot send request');
+    if (await areUsersBlocked(userId, receiverId)) throw new AppError(403, 'Cannot send request');
 
     const existingConnection = await Connection.findOne({
         $or: [

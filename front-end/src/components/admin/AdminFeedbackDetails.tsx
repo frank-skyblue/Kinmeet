@@ -121,7 +121,7 @@ const AdminFeedbackDetails: React.FC<AdminFeedbackDetailsProps> = ({ item, onClo
             ref={closeButtonRef}
             type="button"
             onClick={onClose}
-            className="text-kin-navy hover:text-kin-coral font-inter text-sm font-semibold"
+            className="text-kin-navy hover:text-kin-coral font-inter text-sm font-semibold cursor-pointer"
             aria-label="Close details"
           >
             Close
@@ -172,7 +172,7 @@ const AdminFeedbackDetails: React.FC<AdminFeedbackDetailsProps> = ({ item, onClo
                         href={screenshot.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-kin-coral hover:text-kin-coral-600 break-all"
+                        className="text-kin-coral hover:text-kin-coral-600 break-all cursor-pointer"
                       >
                         {screenshot.url}
                       </a>

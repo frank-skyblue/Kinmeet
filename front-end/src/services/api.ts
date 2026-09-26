@@ -5,7 +5,10 @@ import type {
   ChangePasswordPayload,
   ChangeUsernamePayload,
   GetConnectionRequestsResponse,
+  GetConnectionsResponse,
   GetConversationsResponse,
+  GetMatchesResponse,
+  GetBlockedUsersResponse,
   RegisterPayload,
   SubmitFeedbackPayload,
   SubmitFeedbackResponse,
@@ -15,6 +18,9 @@ import type {
   RegisterNotificationDevicePayload,
   AdminAuthResponse,
   AdminFeedbackListResponse,
+  AdminReportListResponse,
+  AdminReportStatus,
+  AdminReportUpdateResponse,
   AdminSessionResponse,
 } from '../types';
 
@@ -150,8 +156,8 @@ export const profileAPI = {
 };
 
 export const matchingAPI = {
-  getMatches: async () => {
-    const response = await api.get('/matching');
+  getMatches: async (): Promise<GetMatchesResponse> => {
+    const response = await api.get<GetMatchesResponse>('/matching');
     return response.data;
   },
 
@@ -167,8 +173,8 @@ export const matchingAPI = {
 };
 
 export const connectionsAPI = {
-  getConnections: async () => {
-    const response = await api.get('/connections');
+  getConnections: async (): Promise<GetConnectionsResponse> => {
+    const response = await api.get<GetConnectionsResponse>('/connections');
     return response.data;
   },
 
@@ -233,13 +239,13 @@ export const blockAPI = {
     return response.data;
   },
 
-  getBlockedUsers: async () => {
-    const response = await api.get('/block/blocked');
+  getBlockedUsers: async (): Promise<GetBlockedUsersResponse> => {
+    const response = await api.get<GetBlockedUsersResponse>('/block/blocked');
     return response.data;
   },
 
-  reportUser: async (userId: string, reason: string) => {
-    const response = await api.post('/block/report', { userId, reason });
+  reportUser: async (userId: string, reason: string, details?: string) => {
+    const response = await api.post('/block/report', { userId, reason, details });
     return response.data;
   },
 };
@@ -341,6 +347,25 @@ export const adminAPI = {
     const response = await adminClient.get<AdminFeedbackListResponse>('/admin/feedback', {
       params: { page },
     });
+    return response.data;
+  },
+
+  listReports: async (page = 1): Promise<AdminReportListResponse> => {
+    const response = await adminClient.get<AdminReportListResponse>('/admin/reports', {
+      params: { page },
+    });
+    return response.data;
+  },
+
+  updateReportStatus: async (
+    reportId: string,
+    status: AdminReportStatus,
+  ): Promise<AdminReportUpdateResponse> => {
+    const response = await adminClient.patch<AdminReportUpdateResponse>(
+      `/admin/reports/${reportId}/status`,
+      { status },
+      { headers: adminMutationHeaders },
+    );
     return response.data;
   },
 };

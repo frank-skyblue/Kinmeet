@@ -1,24 +1,12 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { CONNECTIONS_PAGE_SIZE } from "../../constants/connectionsPagination";
-import { connectionsAPI, getPhotoUrl } from "../../services/api";
+import { connectionsAPI, getPhotoUrl, blockAPI } from "../../services/api";
 import { getErrorMessage } from "../../utils/error";
+import ActionMenu from "../common/ActionMenu";
+import ReportUserModal from "../common/ReportUserModal";
 import ConnectionsPaginationNav from "./ConnectionsPaginationNav";
-
-interface Connection {
-  _id: string;
-  firstName: string;
-  lastName: string;
-  homeCountry: string;
-  currentProvince: string;
-  currentCountry: string;
-  languages: string[];
-  interests: string[];
-  lookingFor: string[];
-  photo?: string;
-  /** ISO date when the connection was formed (when API provides it) */
-  connectedAt?: string;
-}
+import type { Connection } from "../../types";
 
 const formatLongDate = (iso: string): string => {
   const d = new Date(iso);
@@ -56,47 +44,16 @@ const ConnectionsList: React.FC<ConnectionsListProps> = ({
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
-  const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
   const [removingUserId, setRemovingUserId] = useState<string | null>(null);
-  const menuContainerRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const [blockingUserId, setBlockingUserId] = useState<string | null>(null);
+  const [reportTarget, setReportTarget] = useState<{ userId: string; name: string } | null>(
+    null,
+  );
   const navigate = useNavigate();
-
-  const setMenuContainerRef = (id: string) => (el: HTMLDivElement | null) => {
-    if (el) {
-      menuContainerRefs.current.set(id, el);
-    } else {
-      menuContainerRefs.current.delete(id);
-    }
-  };
 
   useEffect(() => {
     loadConnections();
   }, []);
-
-  useEffect(() => {
-    if (menuOpenId === null) return;
-
-    const handlePointerDown = (e: PointerEvent) => {
-      if (!(e.target instanceof Node)) return;
-      const node = menuContainerRefs.current.get(menuOpenId);
-      if (node && !node.contains(e.target)) {
-        setMenuOpenId(null);
-      }
-    };
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setMenuOpenId(null);
-      }
-    };
-
-    document.addEventListener("pointerdown", handlePointerDown);
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("pointerdown", handlePointerDown);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [menuOpenId]);
 
   const totalPages = Math.max(
     1,
@@ -129,7 +86,6 @@ const ConnectionsList: React.FC<ConnectionsListProps> = ({
 
   const handlePagePrevious = () => {
     setCurrentPage((p) => Math.max(1, p - 1));
-    setMenuOpenId(null);
   };
 
   const handlePageNext = () => {
@@ -139,15 +95,10 @@ const ConnectionsList: React.FC<ConnectionsListProps> = ({
         p + 1,
       ),
     );
-    setMenuOpenId(null);
   };
 
   const handleOpenChat = (connectionId: string) => {
     navigate(`/chat/${connectionId}`);
-  };
-
-  const handleToggleMenu = (connectionId: string) => {
-    setMenuOpenId((prev) => (prev === connectionId ? null : connectionId));
   };
 
   const handleRemoveConnectionClick = async (
@@ -159,7 +110,6 @@ const ConnectionsList: React.FC<ConnectionsListProps> = ({
     );
     if (!ok) return;
 
-    setMenuOpenId(null);
     setRemovingUserId(otherUserId);
     setError("");
     try {
@@ -171,6 +121,27 @@ const ConnectionsList: React.FC<ConnectionsListProps> = ({
       setRemovingUserId(null);
     }
   };
+
+  const handleBlockConnectionsClick = async (
+    otherUserId: string,
+    displayName: string,
+  ) => {
+    const ok = window.confirm(
+      `Block ${displayName}? They'll be removed from your kins and won't be able to message you or see you in Discover. Your conversation will be hidden. You can unblock them in Settings & Privacy, but you won't be reconnected.`
+    );
+    if (!ok) return;
+    setBlockingUserId(otherUserId);
+    setError("");
+    try {
+      await blockAPI.blockUser(otherUserId);
+      setConnections((prev) => prev.filter((c) => c._id !== otherUserId));
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, "Could not block connection"));
+    } finally {
+      setBlockingUserId(null);
+    }
+
+  }
 
   if (isLoading) {
     return (
@@ -247,9 +218,8 @@ const ConnectionsList: React.FC<ConnectionsListProps> = ({
                     formatLongDate(connection.connectedAt)
                       ? `Connected on ${formatLongDate(connection.connectedAt)}`
                       : null;
-                  const menuOpen = menuOpenId === connection._id;
-                  const menuId = `connection-actions-menu-${connection._id}`;
                   const isRemoving = removingUserId === connection._id;
+                  const isBlocking = blockingUserId === connection._id;
 
                   return (
                     <li key={connection._id}>
@@ -288,94 +258,72 @@ const ConnectionsList: React.FC<ConnectionsListProps> = ({
 														) : null}
 													</div>
 
-													{/* Actions */}
-													<div
-														ref={setMenuContainerRef(connection._id)}
-														className="relative flex shrink-0 items-center gap-1.5 sm:gap-2"
-													>
-														<button
-															type="button"
-															onClick={(e) => {
-																e.preventDefault();
-																e.stopPropagation();
-																return handleOpenChat(connection._id)
-															}}
-															className="flex h-10 w-10 shrink-0 items-center justify-center rounded-kin-sm bg-kin-coral text-white shadow-kin-soft transition hover:bg-kin-coral-600 hover:shadow-kin-medium sm:h-auto sm:w-auto sm:px-4 sm:py-2 sm:text-sm sm:font-semibold font-montserrat"
-															aria-label={`Message ${fullName}`}
-														>
-															<svg
-																className="h-5 w-5 sm:hidden"
-																fill="none"
-																stroke="currentColor"
-																viewBox="0 0 24 24"
-																aria-hidden
-															>
-																<path
-																	strokeLinecap="round"
-																	strokeLinejoin="round"
-																	strokeWidth={2}
-																	d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-																/>
-															</svg>
-															<span className="hidden sm:inline">Message</span>
-														</button>
+                          {/* Actions */}
+                          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                return handleOpenChat(connection._id);
+                              }}
+                              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-kin-sm bg-kin-coral text-white shadow-kin-soft transition hover:bg-kin-coral-600 cursor-pointer hover:shadow-kin-medium sm:h-auto sm:w-auto sm:px-4 sm:py-2 sm:text-sm sm:font-semibold font-montserrat"
+                              aria-label={`Message ${fullName}`}
+                            >
+                              <svg
+                                className="h-5 w-5 sm:hidden"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                                aria-hidden
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                                />
+                              </svg>
+                              <span className="hidden sm:inline">Message</span>
+                            </button>
 
-														<button
-															type="button"
-															id={`connection-actions-trigger-${connection._id}`}
-															aria-label={`More actions for ${fullName}`}
-															aria-expanded={menuOpen}
-															aria-haspopup="menu"
-															aria-controls={menuId}
-															tabIndex={0}
-															onClick={(e) => {
-																e.preventDefault();
-																e.stopPropagation();
-																return handleToggleMenu(connection._id);
-															}}
-															className="flex h-10 w-10 items-center justify-center rounded-kin-sm text-kin-navy transition hover:bg-kin-stone-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral"
-														>
-															<span className="sr-only">Open menu</span>
-															<svg
-																className="h-5 w-5"
-																fill="currentColor"
-																viewBox="0 0 24 24"
-																aria-hidden
-															>
-																<circle cx="12" cy="5" r="1.8" />
-																<circle cx="12" cy="12" r="1.8" />
-																<circle cx="12" cy="19" r="1.8" />
-															</svg>
-														</button>
-
-														{menuOpen ? (
-															<ul
-																id={menuId}
-																role="menu"
-																aria-labelledby={`connection-actions-trigger-${connection._id}`}
-																className="absolute right-0 top-full z-20 mt-1 min-w-44 rounded-kin-sm border border-kin-stone-200 bg-white py-1 shadow-kin-strong"
-															>
-																<li role="presentation">
-																	<button
-																		type="button"
-																		role="menuitem"
-																		tabIndex={0}
-																		disabled={isRemoving}
-																		className="w-full px-4 py-2.5 text-left text-sm font-inter text-kin-coral-700 transition hover:bg-kin-coral-50 focus-visible:bg-kin-coral-50 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
-																		onClick={(e) => {
-																			e.preventDefault();
-																			e.stopPropagation();
-																			return void handleRemoveConnectionClick(connection._id, fullName)
-																		}}
-																	>
-																		{isRemoving ? "Removing…" : "Remove Kin"}
-																	</button>
-																</li>
-															</ul>
-														) : null}
-													</div>
-												</div>
-											</Link>
+                            <ActionMenu
+                              label={`More actions for ${fullName}`}
+                              items={[
+                                {
+                                  label: isRemoving ? "Removing…" : "Remove Kin",
+                                  onSelect: () =>
+                                    void handleRemoveConnectionClick(
+                                      connection._id,
+                                      fullName,
+                                    ),
+                                  variant: "destructive",
+                                  disabled: isRemoving,
+                                },
+                                {
+                                  label: "Report",
+                                  onSelect: () =>
+                                    setReportTarget({
+                                      userId: connection._id,
+                                      name: fullName,
+                                    }),
+                                  variant: "destructive",
+                                },
+                                {
+                                  label: isBlocking ? "Blocking…" : "Block",
+                                  onSelect: () =>
+                                    void handleBlockConnectionsClick(
+                                      connection._id,
+                                      fullName,
+                                    ),
+                                  variant: "destructive",
+                                  disabled: isBlocking,
+                                },
+                              ]}
+                            />
+                          </div>
+                        </div>
+                      </Link>
                     </li>
                   );
                 })}
@@ -391,6 +339,17 @@ const ConnectionsList: React.FC<ConnectionsListProps> = ({
           </div>
         )}
       </div>
+      {reportTarget && (
+        <ReportUserModal
+          isOpen
+          userId={reportTarget.userId}
+          displayName={reportTarget.name}
+          onClose={() => setReportTarget(null)}
+          onBlocked={() =>
+            setConnections((prev) => prev.filter((c) => c._id !== reportTarget.userId))
+          }
+        />
+      )}
     </div>
   );
 };

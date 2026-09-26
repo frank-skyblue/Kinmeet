@@ -1,176 +1,237 @@
 import React from 'react';
 import { getPhotoUrl } from '../../services/api';
+import ActionMenu from '../common/ActionMenu';
 import CountryFlag from '../common/CountryFlag';
 import CountryWithFlag from '../common/CountryWithFlag';
 import type { UserProfile } from '../../types';
 import { calculateAgeFromDateOfBirth } from '../../utils/age';
 
 const genderLabel = (value: string | undefined) => {
-  if (value === 'female') return 'Female';
-  if (value === 'male') return 'Male';
-  if (value === 'other') return 'Other';
-  return null;
+	if (value === 'female') return 'Female';
+	if (value === 'male') return 'Male';
+	if (value === 'other') return 'Other';
+	return null;
 };
 
 interface ProfileViewProps {
-  profile: UserProfile;
-  onEdit: () => void;
-  showManageActions?: boolean;
+	profile: UserProfile;
+	onEdit: () => void;
+	showManageActions?: boolean;
+	/** Omitted on your own profile; opens the block confirmation. */
+	onBlock?: () => void;
+	/** Omitted on your own profile; opens the report form. */
+	onReport?: () => void;
+	onProfileOpen: () => void;
 }
 
 const ProfileView: React.FC<ProfileViewProps> = ({
-  profile,
-  onEdit,
-  showManageActions = true,
+	profile,
+	onEdit,
+	showManageActions = true,
+	onBlock,
+	onReport,
+	onProfileOpen,
 }) => {
-  return (
-    <div className="bg-kin-beige py-8 px-4">
-      <div className="max-w-3xl mx-auto">
-        <div className="bg-white rounded-kin-xl shadow-kin-strong overflow-hidden">
-          <div className="bg-gradient-to-br from-kin-coral to-kin-teal h-32"></div>
+	const showActionsMenu = !showManageActions && Boolean(onBlock);
 
-          <div className="px-8 pb-8">
-            <div className="-mt-16 mb-6">
-              {profile.photo ? (
-                <img
-                  src={getPhotoUrl(profile.photo)}
-                  alt={`${profile.firstName} ${profile.lastName}`}
-                  className="w-32 h-32 rounded-full border-4 border-white object-cover shadow-kin-medium"
-                />
-              ) : (
-                <div className="w-32 h-32 rounded-full border-4 border-white bg-gradient-to-br from-kin-coral to-kin-teal flex items-center justify-center text-white text-5xl font-bold font-montserrat shadow-kin-medium">
-                  {profile.firstName.charAt(0)}
-                </div>
-              )}
-            </div>
+	return (
+		<div className="bg-kin-beige py-8 px-4">
+			<div className="max-w-3xl mx-auto">
+				<div className="bg-white rounded-kin-xl shadow-kin-strong overflow-hidden">
+					<div className="bg-gradient-to-br from-kin-coral to-kin-teal h-32"></div>
 
-            <div className="mb-6">
-              <h1 className="text-3xl font-bold font-montserrat text-kin-navy mb-2">
-                {profile.firstName} {profile.lastName}
-              </h1>
-              {profile.username && (
-                <p className="text-kin-teal font-inter">@{profile.username}</p>
-              )}
-            </div>
+					<div className="px-8 pb-8">
+						<div className="-mt-16 mb-6">
+							{profile.photo ? (
+								<img
+									src={getPhotoUrl(profile.photo)}
+									alt={`${profile.firstName} ${profile.lastName}`}
+									className="w-32 h-32 rounded-full border-4 border-white object-cover shadow-kin-medium hover:cursor-pointer"
+									onClick={() => onProfileOpen()}
+								/>
+							) : (
+								<div
+									className="w-32 h-32 rounded-full border-4 border-white bg-gradient-to-br from-kin-coral to-kin-teal flex items-center justify-center text-white text-5xl font-bold font-montserrat shadow-kin-medium hover:cursor-pointer"
+									onClick={() => onProfileOpen()}
+								>
+									{profile.firstName.charAt(0)}
+								</div>
+							)}
+						</div>
 
-            <div className="space-y-6 mb-6">
-              <div>
-                <h3 className="text-sm font-semibold font-inter text-kin-navy mb-2">Gender</h3>
-                <p className="text-lg text-kin-navy font-montserrat">
-                  {genderLabel(profile.gender) ?? '—'}
-                </p>
-              </div>
-              <div>
-                <h3 className="text-sm font-semibold font-inter text-kin-navy mb-2">Age</h3>
-                <p className="text-lg text-kin-navy font-montserrat">
-                  {calculateAgeFromDateOfBirth(profile.dateOfBirth) ?? '—'}
-                </p>
-              </div>
-            </div>
+						<div className="mb-6 flex items-start justify-between gap-2">
+							<div className="min-w-0">
+								<h1 className="truncate text-3xl font-bold font-montserrat text-kin-navy mb-2">
+									{profile.firstName} {profile.lastName}
+								</h1>
+								{profile.username && (
+									<p className="truncate text-kin-teal font-inter">
+										@{profile.username}
+									</p>
+								)}
+							</div>
 
-            <div className="space-y-6">
-              {profile.about && (
-                <div>
-                  <h3 className="text-sm font-semibold font-inter text-kin-navy mb-2">About</h3>
-                  <p className="text-kin-navy font-inter leading-relaxed">{profile.about}</p>
-                </div>
-              )}
+							{showActionsMenu && (
+								<ActionMenu
+									label={`More actions for ${profile.firstName}`}
+									items={[
+										{
+											label: 'Report',
+											onSelect: () => onReport?.(),
+											variant: 'destructive',
+										},
+										{
+											label: 'Block',
+											onSelect: () => onBlock?.(),
+											variant: 'destructive',
+										},
+									]}
+								/>
+							)}
+						</div>
 
-              {profile.industry && (
-                <div>
-                  <h3 className="text-sm font-semibold font-inter text-kin-navy mb-2">Work</h3>
-                  <p className="text-lg text-kin-navy font-montserrat">{profile.industry}</p>
-                </div>
-              )}
+						<div className="space-y-6 mb-6">
+							<div>
+								<h3 className="text-sm font-semibold font-inter text-kin-navy mb-2">
+									Gender
+								</h3>
+								<p className="text-lg text-kin-navy font-montserrat">
+									{genderLabel(profile.gender) ?? '—'}
+								</p>
+							</div>
+							<div>
+								<h3 className="text-sm font-semibold font-inter text-kin-navy mb-2">
+									Age
+								</h3>
+								<p className="text-lg text-kin-navy font-montserrat">
+									{calculateAgeFromDateOfBirth(profile.dateOfBirth) ?? '—'}
+								</p>
+							</div>
+						</div>
 
-              {profile.educationLevel && (
-                <div>
-                  <h3 className="text-sm font-semibold font-inter text-kin-navy mb-2">Education</h3>
-                  <p className="text-lg text-kin-navy font-montserrat">
-                    {profile.educationLevel}
-                  </p>
-                </div>
-              )}
+						<div className="space-y-6">
+							{profile.about && (
+								<div>
+									<h3 className="text-sm font-semibold font-inter text-kin-navy mb-2">
+										About
+									</h3>
+									<p className="text-kin-navy font-inter leading-relaxed">
+										{profile.about}
+									</p>
+								</div>
+							)}
 
-              <div>
-                <h3 className="text-sm font-semibold font-inter text-kin-navy mb-2">Home Country</h3>
-                <CountryWithFlag
-                  country={profile.homeCountry}
-                  className="text-lg text-kin-navy font-montserrat"
-                />
-              </div>
+							{profile.industry && (
+								<div>
+									<h3 className="text-sm font-semibold font-inter text-kin-navy mb-2">
+										Work
+									</h3>
+									<p className="text-lg text-kin-navy font-montserrat">
+										{profile.industry}
+									</p>
+								</div>
+							)}
 
-              <div>
-                <h3 className="text-sm font-semibold font-inter text-kin-navy mb-2">Current Location</h3>
-                <p className="text-lg text-kin-navy font-montserrat inline-flex items-center gap-2">
-                  <CountryFlag country={profile.currentCountry} />
-                  <span>
-                    {profile.currentProvince}, {profile.currentCountry}
-                  </span>
-                </p>
-              </div>
+							{profile.educationLevel && (
+								<div>
+									<h3 className="text-sm font-semibold font-inter text-kin-navy mb-2">
+										Education
+									</h3>
+									<p className="text-lg text-kin-navy font-montserrat">
+										{profile.educationLevel}
+									</p>
+								</div>
+							)}
 
-              <div>
-                <h3 className="text-sm font-semibold font-inter text-kin-navy mb-3">Languages</h3>
-                <div className="flex flex-wrap gap-2">
-                  {profile.languages.map((lang, index) => (
-                    <span
-                      key={index}
-                      className="px-4 py-2 bg-kin-teal-100 text-kin-teal-700 rounded-kin-sm font-medium font-inter"
-                    >
-                      {lang}
-                    </span>
-                  ))}
-                </div>
-              </div>
+							<div>
+								<h3 className="text-sm font-semibold font-inter text-kin-navy mb-2">
+									Home Country
+								</h3>
+								<CountryWithFlag
+									country={profile.homeCountry}
+									className="text-lg text-kin-navy font-montserrat"
+								/>
+							</div>
 
-              {profile.interests.length > 0 && (
-                <div>
-                  <h3 className="text-sm font-semibold font-inter text-kin-navy mb-3">Interests</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {profile.interests.map((interest, index) => (
-                      <span
-                        key={index}
-                        className="px-4 py-2 bg-kin-teal-200 text-kin-teal-800 rounded-kin-sm font-medium font-inter"
-                      >
-                        {interest}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
+							<div>
+								<h3 className="text-sm font-semibold font-inter text-kin-navy mb-2">
+									Current Location
+								</h3>
+								<p className="text-lg text-kin-navy font-montserrat inline-flex items-center gap-2">
+									<CountryFlag country={profile.currentCountry} />
+									<span>
+										{profile.currentProvince}, {profile.currentCountry}
+									</span>
+								</p>
+							</div>
 
-              <div>
-                <h3 className="text-sm font-semibold font-inter text-kin-navy mb-3">Looking For</h3>
-                <div className="flex flex-wrap gap-2">
-                  {profile.lookingFor.map((item, index) => (
-                    <span
-                      key={index}
-                      className="px-4 py-2 bg-kin-coral-100 text-kin-coral-700 rounded-kin-sm font-medium font-inter"
-                    >
-                      {item}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
+							<div>
+								<h3 className="text-sm font-semibold font-inter text-kin-navy mb-3">
+									Languages
+								</h3>
+								<div className="flex flex-wrap gap-2">
+									{profile.languages.map((lang, index) => (
+										<span
+											key={index}
+											className="px-4 py-2 bg-kin-teal-100 text-kin-teal-700 rounded-kin-sm font-medium font-inter"
+										>
+											{lang}
+										</span>
+									))}
+								</div>
+							</div>
 
-            {showManageActions && (
-              <div className="mt-8">
-                <button
-                  type="button"
-                  onClick={onEdit}
-                  className="w-full bg-kin-teal text-white py-3 rounded-kin-sm font-semibold font-montserrat hover:bg-kin-teal-600 shadow-kin-soft hover:shadow-kin-medium transition"
-                >
-                  Edit Profile
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+							{profile.interests.length > 0 && (
+								<div>
+									<h3 className="text-sm font-semibold font-inter text-kin-navy mb-3">
+										Interests
+									</h3>
+									<div className="flex flex-wrap gap-2">
+										{profile.interests.map((interest, index) => (
+											<span
+												key={index}
+												className="px-4 py-2 bg-kin-teal-200 text-kin-teal-800 rounded-kin-sm font-medium font-inter"
+											>
+												{interest}
+											</span>
+										))}
+									</div>
+								</div>
+							)}
+
+							<div>
+								<h3 className="text-sm font-semibold font-inter text-kin-navy mb-3">
+									Looking For
+								</h3>
+								<div className="flex flex-wrap gap-2">
+									{profile.lookingFor.map((item, index) => (
+										<span
+											key={index}
+											className="px-4 py-2 bg-kin-coral-100 text-kin-coral-700 rounded-kin-sm font-medium font-inter"
+										>
+											{item}
+										</span>
+									))}
+								</div>
+							</div>
+						</div>
+
+						{showManageActions && (
+							<div className="mt-8">
+								<button
+									type="button"
+									onClick={onEdit}
+									className="w-full bg-kin-teal text-white py-3 rounded-kin-sm font-semibold font-montserrat hover:bg-kin-teal-600 cursor-pointer shadow-kin-soft hover:shadow-kin-medium transition"
+								>
+									Edit Profile
+								</button>
+							</div>
+						)}
+					</div>
+				</div>
+			</div>
+		</div>
+	);
 };
 
 export default ProfileView;

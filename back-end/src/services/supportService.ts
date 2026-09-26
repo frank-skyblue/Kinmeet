@@ -1,27 +1,10 @@
 import crypto from 'crypto';
-import multer, { FileFilterCallback } from 'multer';
 import { SupportRequest, SupportIssueType, ISupportRequestScreenshot } from '../models/SupportRequest';
 import { User } from '../models/User';
-import { AuthRequest } from '../middleware/authMiddleware';
 import { AppError } from '../middleware/errorHandler';
 import { destroyImageByPublicId, uploadImageAsset } from './cloudinaryService';
 
 const SUPPORT_SCREENSHOTS_SUBFOLDER = 'support-screenshots';
-
-const fileFilter = (_req: AuthRequest, file: Express.Multer.File, cb: FileFilterCallback) => {
-    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-    if (allowed.includes(file.mimetype)) {
-        cb(null, true);
-    } else {
-        cb(new Error('Only JPEG, PNG, WebP, and GIF images are allowed'));
-    }
-};
-
-export const supportUpload = multer({
-    storage: multer.memoryStorage(),
-    fileFilter,
-    limits: { fileSize: 5 * 1024 * 1024 },
-});
 
 interface SubmitSupportRequestInput {
     issueType: SupportIssueType;

@@ -29,7 +29,7 @@ const ConnectionsPaginationNav: React.FC<ConnectionsPaginationNavProps> = ({
         type="button"
         onClick={onPrevious}
         disabled={currentPage <= 1}
-        className="text-kin-teal underline-offset-2 transition hover:text-kin-navy hover:underline disabled:pointer-events-none disabled:opacity-35 disabled:no-underline"
+        className="text-kin-teal underline-offset-2 transition hover:text-kin-navy cursor-pointer hover:underline disabled:pointer-events-none disabled:opacity-35 disabled:no-underline"
         aria-label="Previous page"
       >
         Prev
@@ -41,7 +41,7 @@ const ConnectionsPaginationNav: React.FC<ConnectionsPaginationNavProps> = ({
         type="button"
         onClick={onNext}
         disabled={currentPage >= totalPages}
-        className="text-kin-teal underline-offset-2 transition hover:text-kin-navy hover:underline disabled:pointer-events-none disabled:opacity-35 disabled:no-underline"
+        className="text-kin-teal underline-offset-2 transition hover:text-kin-navy cursor-pointer hover:underline disabled:pointer-events-none disabled:opacity-35 disabled:no-underline"
         aria-label="Next page"
       >
         Next

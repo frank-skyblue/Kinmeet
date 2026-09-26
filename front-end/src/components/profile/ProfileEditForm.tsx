@@ -1,15 +1,14 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { profileAPI, getPhotoUrl } from '../../services/api';
+import { profileAPI } from '../../services/api';
 import { useAuth } from '../../contexts/useAuth';
 import SearchableSelect from '../common/SearchableSelect';
-import CitySearchInput from '../common/CitySearchInput';
 import CountryFlag from '../common/CountryFlag';
-import CountryWithFlag from '../common/CountryWithFlag';
 import DynamicListField from '../common/DynamicListField';
 import LookingForCheckboxes from '../common/LookingForCheckboxes';
 import BirthdaySelect from '../common/BirthdaySelect';
-import { validatePhotoFile } from '../../constants/validation';
+import { ABOUT_MAX_LENGTH, validatePhotoFile } from '../../constants/validation';
 import { getErrorMessage } from '../../utils/error';
+import { dobIsoBoundsUtc } from '../../utils/age';
 import {
   LANGUAGE_OPTIONS,
   COUNTRY_OPTIONS,
@@ -17,14 +16,13 @@ import {
   INDUSTRY_OPTIONS,
   SIGNUP_GENDER_OPTIONS,
   EDUCATION_LEVEL_OPTIONS,
-  getGlobalProvinceOptions,
-  getProvinceOptions,
   getCountryCode,
-  findProvinceCompositeValue,
   parseProvinceComposite,
 } from '../../constants/profileOptions';
 import type { ResolvedCityLocation } from '../../utils/citySearch';
 import type { UserProfile } from '../../types';
+import ProfilePhotoEditor from './ProfilePhotoEditor';
+import ProfileLocationFields from './ProfileLocationFields';
 
 interface ProfileEditFormProps {
   profile: UserProfile;
@@ -35,12 +33,7 @@ interface ProfileEditFormProps {
 const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCancel }) => {
   const { refreshUser } = useAuth();
 
-  const now = new Date();
-  const todayIsoUtc = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}`;
-  const maxDobUtc = new Date(
-    Date.UTC(now.getUTCFullYear() - 120, now.getUTCMonth(), now.getUTCDate(), 12, 0, 0, 0),
-  );
-  const minIsoUtc = `${maxDobUtc.getUTCFullYear()}-${String(maxDobUtc.getUTCMonth() + 1).padStart(2, '0')}-${String(maxDobUtc.getUTCDate()).padStart(2, '0')}`;
+  const { minIsoUtc, todayIsoUtc } = dobIsoBoundsUtc();
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -133,22 +126,6 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
     setCurrentProvince(p.provinceName);
   };
 
-  const provinceOptions = manualCountryMode
-    ? getProvinceOptions(currentCountryCode)
-    : getGlobalProvinceOptions();
-
-  const provinceSelectValue = manualCountryMode
-    ? currentProvince
-    : findProvinceCompositeValue(currentCountryCode, currentProvince);
-
-  const handleProvinceChange = (val: string) => {
-    if (manualCountryMode) {
-      setCurrentProvince(val);
-      return;
-    }
-    applyProvinceFromComposite(val);
-  };
-
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -200,8 +177,8 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
       setError('Invalid date of birth');
       return false;
     }
-    if (about && about.length > 500) {
-      setError('About section must be 500 characters or fewer');
+    if (about && about.length > ABOUT_MAX_LENGTH) {
+      setError(`About section must be ${ABOUT_MAX_LENGTH} characters or fewer`);
       return false;
     }
     if (graduationYear.trim() !== '') {
@@ -305,63 +282,17 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Profile Photo */}
-            <div className="flex flex-col items-center gap-4">
-              <div className="relative group">
-                {photoPreview || (!pendingPhotoRemoval && profile.photo) ? (
-                  <img
-                    src={
-                      photoPreview ||
-                      (!pendingPhotoRemoval && profile.photo ? getPhotoUrl(profile.photo) : '')
-                    }
-                    alt="Profile"
-                    className="w-28 h-28 rounded-full object-cover border-4 border-kin-stone-200"
-                  />
-                ) : (
-                  <div className="w-28 h-28 rounded-full border-4 border-kin-stone-200 bg-gradient-to-br from-kin-coral to-kin-teal flex items-center justify-center text-white text-4xl font-bold font-montserrat">
-                    {profile.firstName.charAt(0)}
-                  </div>
-                )}
-                {isSaving && (
-                  <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-                  </div>
-                )}
-              </div>
-              <div className="flex flex-wrap justify-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isSaving}
-                  className="px-4 py-2 text-sm font-semibold font-inter text-kin-teal border border-kin-teal rounded-kin-sm hover:bg-kin-teal hover:text-white transition disabled:opacity-50"
-                  aria-label="Upload profile photo"
-                >
-                  {photoPreview || (!pendingPhotoRemoval && profile.photo) ? 'Change Photo' : 'Upload Photo'}
-                </button>
-                {(pendingPhotoFile || (profile.photo && !pendingPhotoRemoval)) && (
-                  <button
-                    type="button"
-                    onClick={handleRemovePhoto}
-                    disabled={isSaving}
-                    className="px-4 py-2 text-sm font-semibold font-inter text-kin-coral-700 border border-kin-coral-200 rounded-kin-sm hover:bg-kin-coral-50 transition disabled:opacity-50"
-                    aria-label="Remove profile photo"
-                  >
-                    Remove
-                  </button>
-                )}
-              </div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif"
-                onChange={handlePhotoSelect}
-                className="hidden"
-                aria-hidden="true"
-              />
-              <p className="text-xs text-kin-teal font-inter text-center">
-                JPEG, PNG, WebP, or GIF. Max 5 MB. Photo updates apply when you save.
-              </p>
-            </div>
+            <ProfilePhotoEditor
+              firstName={profile.firstName}
+              existingPhoto={profile.photo}
+              photoPreview={photoPreview}
+              pendingPhotoFile={pendingPhotoFile}
+              pendingPhotoRemoval={pendingPhotoRemoval}
+              isSaving={isSaving}
+              fileInputRef={fileInputRef}
+              onPhotoSelect={handlePhotoSelect}
+              onRemovePhoto={handleRemovePhoto}
+            />
 
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -424,11 +355,11 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
                 className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter resize-none"
                 placeholder="Tell others a bit about yourself..."
                 rows={3}
-                maxLength={500}
+                maxLength={ABOUT_MAX_LENGTH}
                 aria-label="About you"
               />
               <p className="text-xs text-kin-teal font-inter mt-1">
-                {about.length}/500 characters
+                {about.length}/{ABOUT_MAX_LENGTH} characters
               </p>
             </div>
 
@@ -490,81 +421,19 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
               leadingContent={<CountryFlag country={homeCountry} />}
             />
 
-            <div className="space-y-4 border-t border-kin-stone-200 pt-4">
-              <p className="text-sm font-semibold font-montserrat text-kin-navy">
-                Where you live now
-              </p>
-              <CitySearchInput
-                id="profileCurrentCity"
-                label="City or town (optional)"
-                currentCity={currentCity}
-                setCurrentCity={setCurrentCity}
-                onPickCity={handlePickCityResolved}
-                helperText="Type a few letters and choose a match to fill country and province"
-              />
-              <SearchableSelect
-                id="currentProvince"
-                label={
-                  manualCountryMode
-                    ? 'Province/State'
-                    : 'Province/State (search worldwide)'
-                }
-                options={provinceOptions}
-                value={provinceSelectValue}
-                onChange={handleProvinceChange}
-                placeholder={manualCountryMode ? 'e.g., Ontario' : 'e.g., Ontario, Canada'}
-                disabled={manualCountryMode && !currentCountryCode}
-                required
-                searchable="typeahead"
-                helperText={
-                  manualCountryMode
-                    ? 'Pick your country first if needed, then province'
-                    : 'Choosing a row sets your country and province together'
-                }
-              />
-              {!manualCountryMode ? (
-                <div className="rounded-kin-sm border border-kin-stone-200 bg-kin-stone-50 px-4 py-3">
-                  <p className="text-sm font-medium font-inter text-kin-navy mb-1">Country</p>
-                  <p className="text-kin-navy font-inter">
-                    {currentCountry ? (
-                      <CountryWithFlag country={currentCountry} />
-                    ) : (
-                      '—'
-                    )}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => setManualCountryMode(true)}
-                    className="mt-2 text-sm font-semibold text-kin-teal hover:text-kin-teal-700 underline"
-                    aria-label="Pick country and province manually"
-                  >
-                    Change country or province manually
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <SearchableSelect
-                    id="currentCountry"
-                    label="Where You Live Now (Country)"
-                    options={COUNTRY_OPTIONS}
-                    value={currentCountry}
-                    onChange={handleCurrentCountryChange}
-                    placeholder="e.g., Canada"
-                    required
-                    searchable="typeahead"
-                    leadingContent={<CountryFlag country={currentCountry} />}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setManualCountryMode(false)}
-                    className="text-sm font-semibold text-kin-teal hover:text-kin-teal-700 underline"
-                    aria-label="Use worldwide province list instead"
-                  >
-                    Use worldwide province list instead
-                  </button>
-                </div>
-              )}
-            </div>
+            <ProfileLocationFields
+              currentCity={currentCity}
+              setCurrentCity={setCurrentCity}
+              currentCountry={currentCountry}
+              currentCountryCode={currentCountryCode}
+              currentProvince={currentProvince}
+              setCurrentProvince={setCurrentProvince}
+              manualCountryMode={manualCountryMode}
+              setManualCountryMode={setManualCountryMode}
+              onPickCityResolved={handlePickCityResolved}
+              onCurrentCountryChange={handleCurrentCountryChange}
+              applyProvinceFromComposite={applyProvinceFromComposite}
+            />
 
             <DynamicListField
               label="Languages Spoken"
@@ -614,14 +483,14 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
               <button
                 type="button"
                 onClick={onCancel}
-                className="flex-1 bg-kin-stone-200 text-kin-navy py-3 rounded-kin-sm font-bold font-montserrat hover:bg-kin-stone-300 transition-all"
+                className="flex-1 bg-kin-stone-200 text-kin-navy py-3 rounded-kin-sm font-bold font-montserrat hover:bg-kin-stone-300 cursor-pointer transition-all"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isSaving}
-                className="flex-1 bg-kin-coral text-white py-3 rounded-kin-sm font-bold font-montserrat hover:bg-kin-coral-600 focus:ring-4 focus:ring-kin-coral-300 shadow-kin-medium hover:shadow-kin-strong transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 bg-kin-coral text-white py-3 rounded-kin-sm font-bold font-montserrat hover:bg-kin-coral-600 focus:ring-4 focus:ring-kin-coral-300 shadow-kin-medium hover:shadow-kin-strong cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSaving ? 'Saving...' : 'Save Changes'}
               </button>

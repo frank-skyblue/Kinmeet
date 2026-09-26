@@ -1,30 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { matchingAPI, getPhotoUrl } from '../../services/api';
+import { useNavigate } from 'react-router-dom';
+import { blockAPI, matchingAPI, getPhotoUrl } from '../../services/api';
 import { getErrorMessage } from '../../utils/error';
-
-interface Match {
-  _id: string;
-  firstName: string;
-  about?: string;
-  jobTitle?: string;
-  company?: string;
-  industry?: string;
-  educationLevel?: string;
-  graduationYear?: number;
-  homeCountry: string;
-  currentProvince: string;
-  currentCountry: string;
-  languages: string[];
-  interests: string[];
-  lookingFor: string[];
-  photo?: string;
-}
+import ActionMenu from '../common/ActionMenu';
+import ReportUserModal from '../common/ReportUserModal';
+import type { Match } from '../../types';
 
 const Discover: React.FC = () => {
   const [matches, setMatches] = useState<Match[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isBlocking, setIsBlocking] = useState(false);
+  const [isReportOpen, setIsReportOpen] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadMatches();
@@ -52,6 +41,30 @@ const Discover: React.FC = () => {
       moveToNext();
     } catch (err: unknown) {
       setError(getErrorMessage(err, 'Failed to send Meet request'));
+    }
+  };
+
+  const handleViewProfile = (userId: string) => {
+    navigate(`/profile/${userId}`);
+  };
+
+  const handleBlock = async (userId: string, displayName: string) => {
+    const ok = window.confirm(
+      `Block ${displayName}? They won’t be able to message you or see you in Discover. ` +
+        'You can unblock them in Settings & Privacy.',
+    );
+    if (!ok) return;
+
+    setIsBlocking(true);
+    setError('');
+    try {
+      await blockAPI.blockUser(userId);
+      // Dropping the card keeps currentIndex pointing at the next person.
+      setMatches((prev) => prev.filter((match) => match._id !== userId));
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, `Failed to block ${displayName}`));
+    } finally {
+      setIsBlocking(false);
     }
   };
 
@@ -95,7 +108,7 @@ const Discover: React.FC = () => {
           </p>
           <button
             onClick={loadMatches}
-            className="bg-kin-coral text-white px-6 py-3 rounded-kin-sm font-semibold font-montserrat hover:bg-kin-coral-600 shadow-kin-soft hover:shadow-kin-medium transition"
+            className="bg-kin-coral text-white px-6 py-3 rounded-kin-sm font-semibold font-montserrat hover:bg-kin-coral-600 shadow-kin-soft hover:shadow-kin-medium cursor-pointer transition"
           >
             Refresh
           </button>
@@ -127,7 +140,7 @@ const Discover: React.FC = () => {
       )}
 
       <div className="flex-1 min-h-0 px-3 pb-3 md:px-6 md:pb-4 flex justify-center">
-        <div className="mx-auto w-full max-w-lg bg-white rounded-kin-xl shadow-kin-strong overflow-hidden flex flex-col">
+        <div className="mx-auto w-full max-w-lg bg-white rounded-kin-xl shadow-kin-strong overflow-y-auto flex flex-col">
           {/* Profile Photo/Avatar */}
           <div className="relative flex-1 min-h-32 bg-gradient-to-br from-kin-coral to-kin-teal flex items-center justify-center">
             {currentMatch.photo ? (
@@ -146,11 +159,37 @@ const Discover: React.FC = () => {
           {/* Info + Buttons */}
           <div className="flex flex-col">
             <div className="overflow-hidden p-4 md:p-5 flex flex-col gap-2">
-              <div>
-                <h2 className="text-xl md:text-2xl font-bold font-montserrat text-kin-navy leading-tight">
-                  {currentMatch.firstName}
-                </h2>
+              <div className="flex flex-col">
+                <div className="flex items-center justify-between gap-2">
 
+                  <h2 className="min-w-0 truncate text-xl md:text-2xl font-bold font-montserrat text-kin-navy leading-tight">
+                    {currentMatch.firstName}
+                  </h2>
+
+                  <ActionMenu
+                    key={currentMatch._id}
+                    label={`More actions for ${currentMatch.firstName}`}
+                    items={[
+                      {
+                        label: 'View Profile',
+                        onSelect: () => handleViewProfile(currentMatch._id),
+                      },
+                      {
+                        label: 'Report',
+                        onSelect: () => setIsReportOpen(true),
+                        variant: 'destructive',
+                      },
+                      {
+                        label: isBlocking ? 'Blocking…' : 'Block',
+                        onSelect: () =>
+                          void handleBlock(currentMatch._id, currentMatch.firstName),
+                        variant: 'destructive',
+                        disabled: isBlocking,
+                      },
+                    ]}
+                  />
+
+                </div>
                 {currentMatch.industry && (
                   <p className="text-kin-teal font-inter text-xs md:text-sm line-clamp-1">
                     {currentMatch.industry}
@@ -250,7 +289,7 @@ const Discover: React.FC = () => {
             <div className="shrink-0 flex gap-3 p-3 md:p-4 border-t border-kin-stone-200 bg-white">
               <button
                 onClick={handlePass}
-                className="flex-1 bg-kin-stone-200 text-kin-navy py-3 rounded-kin-sm font-semibold font-montserrat hover:bg-kin-stone-300 shadow-kin-soft hover:shadow-kin-medium transition flex items-center justify-center"
+                className="flex-1 bg-kin-stone-200 text-kin-navy py-3 rounded-kin-sm font-semibold font-montserrat hover:bg-kin-stone-300 shadow-kin-soft hover:shadow-kin-medium cursor-pointer transition flex items-center justify-center"
                 aria-label="Pass on this match"
               >
                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -260,7 +299,7 @@ const Discover: React.FC = () => {
               </button>
               <button
                 onClick={handleMeet}
-                className="flex-1 bg-kin-coral text-white py-3 rounded-kin-sm font-semibold font-montserrat hover:bg-kin-coral-600 shadow-kin-soft hover:shadow-kin-medium transition flex items-center justify-center"
+                className="flex-1 bg-kin-coral text-white py-3 rounded-kin-sm font-semibold font-montserrat hover:bg-kin-coral-600 shadow-kin-soft hover:shadow-kin-medium cursor-pointer transition flex items-center justify-center"
                 aria-label="Send meet request"
               >
                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -272,6 +311,16 @@ const Discover: React.FC = () => {
           </div>
         </div>
       </div>
+
+      <ReportUserModal
+        isOpen={isReportOpen}
+        userId={currentMatch._id}
+        displayName={currentMatch.firstName}
+        onClose={() => setIsReportOpen(false)}
+        onBlocked={() =>
+          setMatches((prev) => prev.filter((match) => match._id !== currentMatch._id))
+        }
+      />
     </div>
   );
 };

@@ -22,7 +22,6 @@ import { createAdminRouter } from './routes/adminRoutes';
 
 const app: Express = express()
 const httpServer = createServer(app) // Wrap Express with HTTP server for Socket.io
-const router = express.Router()
 if (TRUST_PROXY_HOPS > 0) {
     app.set('trust proxy', TRUST_PROXY_HOPS);
 }
@@ -63,7 +62,6 @@ app.head('/', (req, res) => {
 });
 
 // Routes
-app.use('/api', router)
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/matching', matchingRoutes);

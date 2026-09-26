@@ -100,7 +100,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ activeUserId }) => {
                 <button
                   type="button"
                   onClick={() => handleSelectConversation(peerId)}
-                  className={`flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-kin-beige focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral ${
+                  className={`flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-kin-beige-600 cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral ${
                     isActive ? "bg-kin-coral-50" : ""
                   }`}
                   aria-current={isActive ? "true" : undefined}
