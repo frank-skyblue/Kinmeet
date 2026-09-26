@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import type { SearchableSelectOption } from "../../types";
+import CountryFlag from "./CountryFlag"
 
 type SearchableSelectProps = {
   id: string;
@@ -227,7 +228,7 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
                       : "hover:bg-kin-beige text-kin-navy"
                   }`}
                 >
-                  {option.label}
+                  <CountryFlag country={option.label}/> {option.label}
                 </div>
               ))
             )}
