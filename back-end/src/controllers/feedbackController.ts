@@ -3,8 +3,6 @@ import { AuthRequest } from '../middleware/authMiddleware';
 import { asyncHandler } from '../middleware/errorHandler';
 import { feedbackService } from '../services/feedbackService';
 
-export { feedbackUpload } from '../services/feedbackService';
-
 export const submitFeedback = asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user!.id;
     const { category, message, followUp } = req.body;

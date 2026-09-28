@@ -1,31 +1,14 @@
 import mongoose from 'mongoose';
-import multer, { FileFilterCallback } from 'multer';
 import { User } from '../models/User';
-import { Block } from '../models/Block';
+import { areUsersBlocked } from '../models/Block';
 import { Connection } from '../models/Connection';
 import { ConnectionRequest } from '../models/ConnectionRequest';
 import { Message } from '../models/Message';
-import { AuthRequest } from '../middleware/authMiddleware';
 import { AppError } from '../middleware/errorHandler';
 import { dateOfBirthString } from '../middleware/schemas';
 import { uploadImage, destroyImage } from './cloudinaryService';
 
 const AVATARS_SUBFOLDER = 'avatars';
-
-const fileFilter = (_req: AuthRequest, file: Express.Multer.File, cb: FileFilterCallback) => {
-    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-    if (allowed.includes(file.mimetype)) {
-        cb(null, true);
-    } else {
-        cb(new Error('Only JPEG, PNG, WebP, and GIF images are allowed'));
-    }
-};
-
-export const avatarUpload = multer({
-    storage: multer.memoryStorage(),
-    fileFilter,
-    limits: { fileSize: 5 * 1024 * 1024 },
-});
 
 export const getProfile = async (userId: string) => {
     const user = await User.findById(userId).select('-password');
@@ -36,13 +19,9 @@ export const getProfile = async (userId: string) => {
 export const getUserProfile = async (requesterId: string, targetUserId: string) => {
     // Blocks hide the pair from each other in both directions. Reported as 404 so a
     // blocked viewer cannot tell a block apart from a deleted account.
-    const block = await Block.findOne({
-        $or: [
-            { blocker: requesterId, blocked: targetUserId },
-            { blocker: targetUserId, blocked: requesterId },
-        ],
-    });
-    if (block) throw new AppError(404, 'User not found');
+    if (await areUsersBlocked(requesterId, targetUserId)) {
+        throw new AppError(404, 'User not found');
+    }
 
     const connection = await Connection.findOne({
         $or: [

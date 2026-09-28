@@ -2,24 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { blockAPI } from '../../services/api';
 import { getErrorMessage } from '../../utils/error';
-
-/**
- * Shape returned by `GET /api/block/blocked`. The API populates only
- * `firstName`, `currentProvince` and `currentCountry` on `blocked` —
- * there is no photo or last name to render here.
- */
-interface BlockedAccountUser {
-  _id: string;
-  firstName: string;
-  currentProvince?: string;
-  currentCountry?: string;
-}
-
-interface BlockedAccount {
-  _id: string;
-  blocked: BlockedAccountUser | null;
-  createdAt?: string;
-}
+import type { BlockedAccount, BlockedAccountUser } from '../../types';
 
 const formatBlockedDate = (iso?: string): string => {
   if (!iso) return '';

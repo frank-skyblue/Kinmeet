@@ -1,6 +1,7 @@
 import React from "react";
 import { authAPI } from "../../services/api";
 import { getErrorMessage } from "../../utils/error";
+import { PASSWORD_HINT, PASSWORD_REGEX } from "../../constants/validation";
 
 const DUPLICATE_EMAIL_MESSAGE =
   "This email is already registered. Please log in instead.";
@@ -65,8 +66,8 @@ const SignupStep1: React.FC<SignupStep1Props> = ({
       setError("Passwords do not match");
       return false;
     }
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters long");
+    if (!PASSWORD_REGEX.test(password)) {
+      setError(PASSWORD_HINT);
       return false;
     }
     return true;

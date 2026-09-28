@@ -1,4 +1,5 @@
 import type { AdminReportPagination, AdminReportStatus } from '../types';
+import { rangeLabel } from './adminFeedback';
 
 const REASON_TAG_CLASS: Record<string, string> = {
   'Harassment or bullying':
@@ -23,17 +24,9 @@ const REASON_TAG_FALLBACK =
 export const reasonTagClassName = (reason: string): string =>
   REASON_TAG_CLASS[reason] ?? REASON_TAG_FALLBACK;
 
-export const reportRangeLabel = ({
-  page,
-  pageSize,
-  total,
-}: Pick<AdminReportPagination, 'page' | 'pageSize' | 'total'>): string | null => {
-  if (total <= 0 || pageSize <= 0 || page < 1) return null;
-  const start = (page - 1) * pageSize + 1;
-  if (start > total) return null;
-  const end = Math.min(page * pageSize, total);
-  return `Showing ${start} to ${end} of ${total} reports`;
-};
+export const reportRangeLabel = (
+  pagination: Pick<AdminReportPagination, 'page' | 'pageSize' | 'total'>,
+): string | null => rangeLabel({ ...pagination, noun: 'reports' });
 
 export const reportDetailsLabel = (details: string | undefined): string =>
   details && details.trim().length > 0 ? details : 'No additional details';

@@ -2,11 +2,8 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { authAPI } from '../../services/api';
 import { getErrorMessage } from '../../utils/error';
+import { PASSWORD_HINT, PASSWORD_REGEX } from '../../constants/validation';
 import Logo from '../common/Logo';
-
-const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$/;
-const PASSWORD_HINT =
-  'At least 8 characters, with uppercase, lowercase, and a number.';
 
 const ResetPassword: React.FC = () => {
   const [searchParams] = useSearchParams();

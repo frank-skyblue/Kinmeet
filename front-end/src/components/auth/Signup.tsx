@@ -5,6 +5,7 @@ import {
   parseProvinceComposite,
 } from "../../constants/profileOptions";
 import { validatePhotoFile } from "../../constants/validation";
+import { dobIsoBoundsUtc } from "../../utils/age";
 import { useAuth } from '../../contexts/useAuth';
 import { profileAPI } from "../../services/api";
 import Logo from "../common/Logo";
@@ -146,12 +147,7 @@ const Signup: React.FC = () => {
   const handleSubmit = async () => {
     setIsLoading(true);
 
-    const now = new Date();
-    const todayIsoUtc = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}`;
-    const maxDobUtc = new Date(
-      Date.UTC(now.getUTCFullYear() - 120, now.getUTCMonth(), now.getUTCDate(), 12, 0, 0, 0),
-    );
-    const minIsoUtc = `${maxDobUtc.getUTCFullYear()}-${String(maxDobUtc.getUTCMonth() + 1).padStart(2, '0')}-${String(maxDobUtc.getUTCDate()).padStart(2, '0')}`;
+    const { minIsoUtc, todayIsoUtc } = dobIsoBoundsUtc();
     const dob = dateOfBirth.trim();
     if (
       /^\d{4}-\d{2}-\d{2}$/.test(dob) &&

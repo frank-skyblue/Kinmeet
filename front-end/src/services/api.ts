@@ -5,7 +5,10 @@ import type {
   ChangePasswordPayload,
   ChangeUsernamePayload,
   GetConnectionRequestsResponse,
+  GetConnectionsResponse,
   GetConversationsResponse,
+  GetMatchesResponse,
+  GetBlockedUsersResponse,
   RegisterPayload,
   SubmitFeedbackPayload,
   SubmitFeedbackResponse,
@@ -153,8 +156,8 @@ export const profileAPI = {
 };
 
 export const matchingAPI = {
-  getMatches: async () => {
-    const response = await api.get('/matching');
+  getMatches: async (): Promise<GetMatchesResponse> => {
+    const response = await api.get<GetMatchesResponse>('/matching');
     return response.data;
   },
 
@@ -170,8 +173,8 @@ export const matchingAPI = {
 };
 
 export const connectionsAPI = {
-  getConnections: async () => {
-    const response = await api.get('/connections');
+  getConnections: async (): Promise<GetConnectionsResponse> => {
+    const response = await api.get<GetConnectionsResponse>('/connections');
     return response.data;
   },
 
@@ -236,8 +239,8 @@ export const blockAPI = {
     return response.data;
   },
 
-  getBlockedUsers: async () => {
-    const response = await api.get('/block/blocked');
+  getBlockedUsers: async (): Promise<GetBlockedUsersResponse> => {
+    const response = await api.get<GetBlockedUsersResponse>('/block/blocked');
     return response.data;
   },
 
