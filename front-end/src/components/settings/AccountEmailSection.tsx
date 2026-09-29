@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { settingsAPI } from '../../services/api';
 import { useAuth } from '../../contexts/useAuth';
 import { getErrorMessage } from '../../utils/error';
+import PasswordInputField from '../common/PasswordInputField';
 
 type SectionState = {
   editing: boolean;
@@ -113,16 +114,18 @@ const AccountEmailSection: React.FC = () => {
             >
               Current password
             </label>
-            <input
-              id="email-current-password"
-              type="password"
-              autoComplete="current-password"
-              required
-              value={emailPassword}
-              onChange={(e) => setEmailPassword(e.target.value)}
-              className="w-full border border-border rounded-kin-sm px-3 py-2 text-sm font-inter text-foreground placeholder-kin-stone-400 focus:outline-none focus:ring-2 focus:ring-ring"
-              placeholder="Enter your current password"
-            />
+
+						<PasswordInputField
+							id="email-current-password"
+							autoComplete="email-current-password"
+							required
+							value={emailPassword}
+							setPassword={setEmailPassword}
+							className="placeholder-kin-stone-400"
+							placeholder="Enter your current password"
+							sizeType="small"
+						/>
+
           </div>
           {section.error && (
             <p role="alert" className="text-kin-coral text-sm font-inter">
