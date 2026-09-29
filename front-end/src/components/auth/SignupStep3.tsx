@@ -1,6 +1,7 @@
 import React from "react";
 import SearchableSelect from "../common/SearchableSelect";
 import { EDUCATION_LEVEL_OPTIONS, INDUSTRY_OPTIONS } from "../../constants/profileOptions";
+import { primaryActionClass, secondaryActionClass } from '../../constants/ui';
 
 interface SignupStep3Props {
   industry: string;
@@ -28,16 +29,16 @@ const SignupStep3: React.FC<SignupStep3Props> = ({
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold font-montserrat text-kin-navy mb-4">
+      <h2 className="text-2xl font-bold font-montserrat text-foreground mb-4">
         Work & Education
       </h2>
-      <p className="text-sm text-kin-teal font-inter -mt-2 mb-2">
+      <p className="text-sm text-muted font-inter -mt-2 mb-2">
         These fields are optional but help others get to know you better.
       </p>
 
       {/* Work Section */}
       <fieldset className="space-y-4">
-        <legend className="text-lg font-semibold font-montserrat text-kin-navy">
+        <legend className="text-lg font-semibold font-montserrat text-foreground">
           Work
         </legend>
 
@@ -54,7 +55,7 @@ const SignupStep3: React.FC<SignupStep3Props> = ({
 
       {/* Education Section */}
       <fieldset className="space-y-4">
-        <legend className="text-lg font-semibold font-montserrat text-kin-navy">
+        <legend className="text-lg font-semibold font-montserrat text-foreground">
           Education
         </legend>
 
@@ -94,14 +95,14 @@ const SignupStep3: React.FC<SignupStep3Props> = ({
         <button
           type="button"
           onClick={onBack}
-          className="flex-1 bg-kin-stone-200 text-kin-navy py-4 px-4 rounded-kin-sm font-bold font-montserrat text-lg hover:bg-kin-stone-300 transition-all duration-200 shadow-kin-soft hover:shadow-kin-medium"
+          className={`${secondaryActionClass} flex-1 py-4 px-4 rounded-kin-sm font-bold font-montserrat text-lg transition-all duration-200 shadow-kin-soft hover:shadow-kin-medium`}
         >
           Back
         </button>
         <button
           type="button"
           onClick={handleNext}
-          className="flex-1 bg-kin-coral text-white py-4 px-4 rounded-kin-sm font-bold font-montserrat text-lg hover:bg-kin-coral-600 focus:ring-4 focus:ring-kin-coral-300 shadow-kin-medium hover:shadow-kin-strong transition-all duration-200"
+          className={`${primaryActionClass} flex-1 py-4 px-4 rounded-kin-sm font-bold font-montserrat text-lg focus:ring-4 focus:ring-ring shadow-kin-medium hover:shadow-kin-strong transition-all duration-200`}
         >
           Next
         </button>

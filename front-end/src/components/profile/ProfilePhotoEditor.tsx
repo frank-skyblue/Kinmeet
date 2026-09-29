@@ -36,10 +36,10 @@ const ProfilePhotoEditor: React.FC<ProfilePhotoEditorProps> = ({
               (!pendingPhotoRemoval && existingPhoto ? getPhotoUrl(existingPhoto) : '')
             }
             alt="Profile"
-            className="w-28 h-28 rounded-full object-cover border-4 border-kin-stone-200"
+            className="w-28 h-28 rounded-full object-cover border-4 border-border"
           />
         ) : (
-          <div className="w-28 h-28 rounded-full border-4 border-kin-stone-200 bg-gradient-to-br from-kin-coral to-kin-teal flex items-center justify-center text-white text-4xl font-bold font-montserrat">
+          <div className="w-28 h-28 rounded-full border-4 border-border bg-gradient-to-br from-kin-coral to-kin-teal flex items-center justify-center text-white text-4xl font-bold font-montserrat">
             {firstName.charAt(0)}
           </div>
         )}
@@ -54,7 +54,7 @@ const ProfilePhotoEditor: React.FC<ProfilePhotoEditorProps> = ({
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={isSaving}
-          className="px-4 py-2 text-sm font-semibold font-inter text-kin-teal border border-kin-teal rounded-kin-sm hover:bg-kin-teal hover:text-white cursor-pointer transition disabled:opacity-50"
+          className="px-4 py-2 text-sm font-semibold font-inter text-muted border border-kin-teal rounded-kin-sm hover:bg-kin-teal hover:text-white cursor-pointer transition disabled:opacity-50"
           aria-label="Upload profile photo"
         >
           {hasVisiblePhoto ? 'Change Photo' : 'Upload Photo'}
@@ -79,7 +79,7 @@ const ProfilePhotoEditor: React.FC<ProfilePhotoEditorProps> = ({
         className="hidden"
         aria-hidden="true"
       />
-      <p className="text-xs text-kin-teal font-inter text-center">
+      <p className="text-xs text-muted font-inter text-center">
         JPEG, PNG, WebP, or GIF. Max 5 MB. Photo updates apply when you save.
       </p>
     </div>

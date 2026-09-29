@@ -7,6 +7,7 @@ import ActionMenu from "../common/ActionMenu";
 import ReportUserModal from "../common/ReportUserModal";
 import ConnectionsPaginationNav from "./ConnectionsPaginationNav";
 import type { Connection } from "../../types";
+import { primaryActionClass } from '../../constants/ui';
 
 const formatLongDate = (iso: string): string => {
   const d = new Date(iso);
@@ -149,12 +150,12 @@ const ConnectionsList: React.FC<ConnectionsListProps> = ({
         className={
           embedded
             ? "flex min-h-48 flex-1 flex-col items-center justify-center"
-            : "flex min-h-0 flex-1 items-center justify-center bg-kin-beige px-4 py-4"
+            : "flex min-h-0 flex-1 items-center justify-center bg-canvas px-4 py-4"
         }
       >
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-kin-coral mx-auto mb-4"></div>
-          <p className="text-kin-navy font-inter">Loading kins...</p>
+          <p className="text-foreground font-inter">Loading kins...</p>
         </div>
       </div>
     );
@@ -162,7 +163,7 @@ const ConnectionsList: React.FC<ConnectionsListProps> = ({
 
   const outerClass = embedded
     ? "flex min-h-0 min-w-0 flex-1 flex-col"
-    : "flex min-h-0 flex-1 flex-col bg-kin-beige px-4 py-4";
+    : "flex min-h-0 flex-1 flex-col bg-canvas px-4 py-4";
 
   return (
     <div className={outerClass}>
@@ -171,11 +172,11 @@ const ConnectionsList: React.FC<ConnectionsListProps> = ({
           {embedded ? (
             <h2 className="sr-only">My kins</h2>
           ) : (
-            <h1 className="mb-0.5 font-montserrat text-sm font-semibold text-kin-navy">
+            <h1 className="mb-0.5 font-montserrat text-sm font-semibold text-foreground">
               My Kins
             </h1>
           )}
-          <p className="text-xs text-kin-teal font-inter">
+          <p className="text-xs text-muted font-inter">
             {connections.length} {connections.length === 1 ? "kin" : "kins"}
           </p>
         </div>
@@ -189,17 +190,17 @@ const ConnectionsList: React.FC<ConnectionsListProps> = ({
         {connections.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center py-8 text-center">
             <div className="mb-4 text-5xl">🤝</div>
-            <h2 className="mb-2 font-montserrat text-xl font-bold text-kin-navy">
+            <h2 className="mb-2 font-montserrat text-xl font-bold text-foreground">
               No Kins Yet
             </h2>
-            <p className="mb-6 text-sm text-kin-teal font-inter">
+            <p className="mb-6 text-sm text-muted font-inter">
               Start discovering people from your homeland and send Meet
               requests!
             </p>
             <button
               type="button"
               onClick={() => navigate("/discover")}
-              className="bg-kin-coral text-white px-6 py-3 rounded-kin-sm font-semibold font-montserrat hover:bg-kin-coral-600 shadow-kin-soft hover:shadow-kin-medium transition"
+              className={`${primaryActionClass} px-6 py-3 rounded-kin-sm font-semibold font-montserrat shadow-kin-soft hover:shadow-kin-medium transition`}
             >
               Discover People
             </button>
@@ -224,7 +225,7 @@ const ConnectionsList: React.FC<ConnectionsListProps> = ({
                   return (
                     <li key={connection._id}>
 											<Link to={`/profile/${connection._id}`}>
-												<div className="flex min-w-0 items-center gap-3 rounded-kin-lg bg-white px-3 py-4 shadow-kin-medium ring-1 ring-kin-stone-100 transition hover:shadow-kin-strong sm:gap-4 sm:px-4">
+												<div className="flex min-w-0 items-center gap-3 rounded-kin-lg bg-surface px-3 py-4 shadow-kin-medium ring-1 ring-border transition hover:shadow-kin-strong sm:gap-4 sm:px-4">
 													{/* Avatar */}
 													<div className="shrink-0">
 														{connection.photo ? (
@@ -245,14 +246,14 @@ const ConnectionsList: React.FC<ConnectionsListProps> = ({
 
 													{/* Details */}
 													<div className="min-w-0 flex-1">
-														<h2 className="truncate text-sm font-bold font-montserrat text-kin-navy sm:text-base">
+														<h2 className="truncate text-sm font-bold font-montserrat text-foreground sm:text-base">
 															{fullName}
 														</h2>
-														<p className="mt-0.5 line-clamp-3 whitespace-pre-line text-xs leading-snug text-kin-teal font-inter sm:text-sm sm:leading-normal">
+														<p className="mt-0.5 line-clamp-3 whitespace-pre-line text-xs leading-snug text-muted font-inter sm:text-sm sm:leading-normal">
 															{getConnectionSummary(connection)}
 														</p>
 														{connectedLabel ? (
-															<p className="mt-1 text-xs text-kin-navy/70 font-inter">
+															<p className="mt-1 text-xs text-foreground/70 font-inter">
 																{connectedLabel}
 															</p>
 														) : null}
@@ -267,7 +268,7 @@ const ConnectionsList: React.FC<ConnectionsListProps> = ({
                                 e.stopPropagation();
                                 return handleOpenChat(connection._id);
                               }}
-                              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-kin-sm bg-kin-coral text-white shadow-kin-soft transition hover:bg-kin-coral-600 cursor-pointer hover:shadow-kin-medium sm:h-auto sm:w-auto sm:px-4 sm:py-2 sm:text-sm sm:font-semibold font-montserrat"
+                              className={`${primaryActionClass} flex h-10 w-10 shrink-0 items-center justify-center rounded-kin-sm shadow-kin-soft transition cursor-pointer hover:shadow-kin-medium sm:h-auto sm:w-auto sm:px-4 sm:py-2 sm:text-sm sm:font-semibold font-montserrat`}
                               aria-label={`Message ${fullName}`}
                             >
                               <svg

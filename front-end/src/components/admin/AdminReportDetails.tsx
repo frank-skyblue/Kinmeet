@@ -2,6 +2,7 @@ import React, { useEffect, useId, useRef } from 'react';
 import type { AdminReportItem } from '../../types';
 import { formatAdminStatus, formatAdminSubmittedAt, statusTagClassName } from '../../utils/adminFeedback';
 import { reasonTagClassName } from '../../utils/adminReports';
+import { surfaceCardClass } from '../../constants/ui';
 
 const FOCUSABLE_SELECTOR = [
   'a[href]',
@@ -96,7 +97,7 @@ const AdminReportDetails: React.FC<AdminReportDetailsProps> = ({ item, onClose }
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-overlay p-4"
       onClick={handleBackdropClick}
     >
       <div
@@ -105,53 +106,53 @@ const AdminReportDetails: React.FC<AdminReportDetailsProps> = ({ item, onClose }
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className="bg-white rounded-kin-xl shadow-kin-strong max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 outline-none"
+        className={`${surfaceCardClass} rounded-kin-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 outline-none`}
       >
         <div className="flex items-start justify-between gap-4 mb-4">
-          <h2 id={titleId} className="text-xl font-bold font-montserrat text-kin-navy">
+          <h2 id={titleId} className="text-xl font-bold font-montserrat text-foreground">
             Report details
           </h2>
           <button
             ref={closeButtonRef}
             type="button"
             onClick={onClose}
-            className="text-kin-navy hover:text-kin-coral font-inter text-sm font-semibold cursor-pointer"
+            className="text-foreground hover:text-kin-coral font-inter text-sm font-semibold cursor-pointer"
             aria-label="Close details"
           >
             Close
           </button>
         </div>
 
-        <dl className="space-y-3 font-inter text-sm text-kin-navy">
+        <dl className="space-y-3 font-inter text-sm text-foreground">
           <div>
-            <dt className="font-semibold text-kin-teal">Reported user</dt>
+            <dt className="font-semibold text-muted">Reported user</dt>
             <dd className="[overflow-wrap:anywhere]">
               {item.reportedName ? `${item.reportedName} — ` : ''}
               {item.reportedEmail || 'Email unavailable'}
             </dd>
           </div>
           <div>
-            <dt className="font-semibold text-kin-teal">Reported by</dt>
+            <dt className="font-semibold text-muted">Reported by</dt>
             <dd className="[overflow-wrap:anywhere]">{item.reporterEmail || 'Email unavailable'}</dd>
           </div>
           <div>
-            <dt className="font-semibold text-kin-teal">Reason</dt>
+            <dt className="font-semibold text-muted">Reason</dt>
             <dd className="mt-1">
               <span className={reasonTagClassName(item.reason)}>{item.reason}</span>
             </dd>
           </div>
           <div>
-            <dt className="font-semibold text-kin-teal">Status</dt>
+            <dt className="font-semibold text-muted">Status</dt>
             <dd className="mt-1">
               <span className={statusTagClassName(item.status)}>{formatAdminStatus(item.status)}</span>
             </dd>
           </div>
           <div>
-            <dt className="font-semibold text-kin-teal">Submitted</dt>
+            <dt className="font-semibold text-muted">Submitted</dt>
             <dd>{formatAdminSubmittedAt(item.createdAt)}</dd>
           </div>
           <div>
-            <dt className="font-semibold text-kin-teal">Details</dt>
+            <dt className="font-semibold text-muted">Details</dt>
             <dd className="whitespace-pre-wrap break-words">
               {item.details && item.details.trim().length > 0 ? item.details : 'No additional details'}
             </dd>

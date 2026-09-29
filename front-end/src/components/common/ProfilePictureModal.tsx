@@ -35,18 +35,18 @@ export default function ProfilePictureModal({
 
 	return (
 		<div
-			className={`fixed inset-0 bg-black/50 z-50 p-4 flex items-center justify-center ${isOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`}
+			className={`fixed inset-0 bg-overlay z-50 p-4 flex items-center justify-center ${isOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`}
 			onClick={() => onClose()}
 		>
 			<button
-				className="absolute right-4 top-4 bg-white text-4xl px-2.5 rounded-full hover:cursor-pointer"
+				className="absolute right-4 top-4 bg-surface text-4xl px-2.5 rounded-full hover:cursor-pointer"
 				onClick={() => onClose()}
 			>
 				&times;
 			</button>
 
 			<div
-				className="bg-white h-3/4 w-1/2 rounded-md overflow-hidden max-md:w-full"
+				className="bg-surface h-3/4 w-1/2 rounded-md overflow-hidden max-md:w-full"
 				onClick={(e) => {
 					e.preventDefault();
 					e.stopPropagation();

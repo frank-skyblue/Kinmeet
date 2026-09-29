@@ -5,6 +5,7 @@ import { getErrorMessage } from '../../utils/error';
 import ActionMenu from '../common/ActionMenu';
 import ReportUserModal from '../common/ReportUserModal';
 import type { Match } from '../../types';
+import { primaryActionClass, secondaryActionClass, surfaceCardClass } from '../../constants/ui';
 
 const Discover: React.FC = () => {
   const [matches, setMatches] = useState<Match[]>([]);
@@ -88,10 +89,10 @@ const Discover: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="h-full flex items-center justify-center bg-kin-beige">
+      <div className="h-full flex items-center justify-center bg-canvas">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-kin-coral mx-auto mb-4"></div>
-          <p className="text-kin-navy font-inter">Loading matches...</p>
+          <p className="text-foreground font-inter">Loading matches...</p>
         </div>
       </div>
     );
@@ -99,16 +100,16 @@ const Discover: React.FC = () => {
 
   if (matches.length === 0 || currentIndex >= matches.length) {
     return (
-      <div className="h-full flex items-center justify-center bg-kin-beige px-4">
+      <div className="h-full flex items-center justify-center bg-canvas px-4">
         <div className="text-center max-w-md">
           <div className="text-6xl mb-4">🌍</div>
-          <h2 className="text-2xl font-bold font-montserrat text-kin-navy mb-2">No More Matches</h2>
-          <p className="text-kin-teal font-inter mb-6">
+          <h2 className="text-2xl font-bold font-montserrat text-foreground mb-2">No More Matches</h2>
+          <p className="text-muted font-inter mb-6">
             Check back later for more people from your homeland!
           </p>
           <button
             onClick={loadMatches}
-            className="bg-kin-coral text-white px-6 py-3 rounded-kin-sm font-semibold font-montserrat hover:bg-kin-coral-600 shadow-kin-soft hover:shadow-kin-medium cursor-pointer transition"
+            className={`${primaryActionClass} px-6 py-3 rounded-kin-sm font-semibold font-montserrat shadow-kin-soft hover:shadow-kin-medium cursor-pointer transition`}
           >
             Refresh
           </button>
@@ -121,12 +122,12 @@ const Discover: React.FC = () => {
   const remaining = matches.length - currentIndex;
 
   return (
-    <div className="h-full flex flex-col bg-kin-beige overflow-hidden">
+    <div className="h-full flex flex-col bg-canvas overflow-hidden">
       <div className="shrink-0 px-4 pt-3 pb-2 md:pt-5 md:pb-3 text-center">
-        <h1 className="text-2xl md:text-3xl font-bold font-montserrat text-kin-navy">
+        <h1 className="text-2xl md:text-3xl font-bold font-montserrat text-foreground">
           Discover
         </h1>
-        <p className="text-xs md:text-sm text-kin-teal font-inter">
+        <p className="text-xs md:text-sm text-muted font-inter">
           {remaining} match{remaining !== 1 ? 'es' : ''} available
         </p>
       </div>
@@ -140,7 +141,7 @@ const Discover: React.FC = () => {
       )}
 
       <div className="flex-1 min-h-0 px-3 pb-3 md:px-6 md:pb-4 flex justify-center">
-        <div className="mx-auto w-full max-w-lg bg-white rounded-kin-xl shadow-kin-strong overflow-y-auto flex flex-col">
+        <div className={`${surfaceCardClass} mx-auto w-full max-w-lg rounded-kin-xl overflow-y-auto flex flex-col`}>
           {/* Profile Photo/Avatar */}
           <div className="relative flex-1 min-h-32 bg-gradient-to-br from-kin-coral to-kin-teal flex items-center justify-center">
             {currentMatch.photo ? (
@@ -162,7 +163,7 @@ const Discover: React.FC = () => {
               <div className="flex flex-col">
                 <div className="flex items-center justify-between gap-2">
 
-                  <h2 className="min-w-0 truncate text-xl md:text-2xl font-bold font-montserrat text-kin-navy leading-tight">
+                  <h2 className="min-w-0 truncate text-xl md:text-2xl font-bold font-montserrat text-foreground leading-tight">
                     {currentMatch.firstName}
                   </h2>
 
@@ -191,21 +192,21 @@ const Discover: React.FC = () => {
 
                 </div>
                 {currentMatch.industry && (
-                  <p className="text-kin-teal font-inter text-xs md:text-sm line-clamp-1">
+                  <p className="text-muted font-inter text-xs md:text-sm line-clamp-1">
                     {currentMatch.industry}
                   </p>
                 )}
               </div>
 
               {currentMatch.about && (
-                <p className="text-kin-navy font-inter text-sm leading-snug line-clamp-3 md:line-clamp-5">
+                <p className="text-foreground font-inter text-sm leading-snug line-clamp-3 md:line-clamp-5">
                   {currentMatch.about}
                 </p>
               )}
 
               <div className="space-y-1 text-xs md:text-sm font-inter">
                 {(currentMatch.educationLevel || currentMatch.graduationYear) && (
-                  <div className="flex items-center text-kin-teal">
+                  <div className="flex items-center text-muted">
                     <svg className="w-4 h-4 mr-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
@@ -219,23 +220,23 @@ const Discover: React.FC = () => {
                   </div>
                 )}
 
-                <div className="flex items-center text-kin-teal">
+                <div className="flex items-center text-muted">
                   <svg className="w-4 h-4 mr-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
                   <span className="truncate">
-                    <strong className="text-kin-navy">{currentMatch.homeCountry}</strong>
+                    <strong className="text-foreground">{currentMatch.homeCountry}</strong>
                     <span className="mx-1.5 text-kin-stone-400">·</span>
                     <span>Lives in </span>
-                    <strong className="text-kin-navy">{currentMatch.currentProvince}, {currentMatch.currentCountry}</strong>
+                    <strong className="text-foreground">{currentMatch.currentProvince}, {currentMatch.currentCountry}</strong>
                   </span>
                 </div>
               </div>
 
               <div className="space-y-1.5">
                 <div>
-                  <h3 className="text-[10px] md:text-xs font-semibold font-inter text-kin-navy mb-1 uppercase tracking-wide">
+                  <h3 className="text-[10px] md:text-xs font-semibold font-inter text-foreground mb-1 uppercase tracking-wide">
                     Languages
                   </h3>
                   <div className="flex flex-wrap gap-1.5 max-h-[3.75rem] overflow-hidden">
@@ -252,7 +253,7 @@ const Discover: React.FC = () => {
 
                 {currentMatch.interests.length > 0 && (
                   <div>
-                    <h3 className="text-[10px] md:text-xs font-semibold font-inter text-kin-navy mb-1 uppercase tracking-wide">
+                    <h3 className="text-[10px] md:text-xs font-semibold font-inter text-foreground mb-1 uppercase tracking-wide">
                       Interests
                     </h3>
                     <div className="flex flex-wrap gap-1.5 max-h-[3.75rem] overflow-hidden">
@@ -269,7 +270,7 @@ const Discover: React.FC = () => {
                 )}
 
                 <div>
-                  <h3 className="text-[10px] md:text-xs font-semibold font-inter text-kin-navy mb-1 uppercase tracking-wide">
+                  <h3 className="text-[10px] md:text-xs font-semibold font-inter text-foreground mb-1 uppercase tracking-wide">
                     Looking For
                   </h3>
                   <div className="flex flex-wrap gap-1.5 max-h-[3.75rem] overflow-hidden">
@@ -286,10 +287,10 @@ const Discover: React.FC = () => {
               </div>
             </div>
 
-            <div className="shrink-0 flex gap-3 p-3 md:p-4 border-t border-kin-stone-200 bg-white">
+            <div className="shrink-0 flex gap-3 p-3 md:p-4 border-t border-border bg-surface">
               <button
                 onClick={handlePass}
-                className="flex-1 bg-kin-stone-200 text-kin-navy py-3 rounded-kin-sm font-semibold font-montserrat hover:bg-kin-stone-300 shadow-kin-soft hover:shadow-kin-medium cursor-pointer transition flex items-center justify-center"
+                className={`${secondaryActionClass} flex-1 py-3 rounded-kin-sm font-semibold font-montserrat shadow-kin-soft hover:shadow-kin-medium cursor-pointer transition flex items-center justify-center`}
                 aria-label="Pass on this match"
               >
                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -299,7 +300,7 @@ const Discover: React.FC = () => {
               </button>
               <button
                 onClick={handleMeet}
-                className="flex-1 bg-kin-coral text-white py-3 rounded-kin-sm font-semibold font-montserrat hover:bg-kin-coral-600 shadow-kin-soft hover:shadow-kin-medium cursor-pointer transition flex items-center justify-center"
+                className={`${primaryActionClass} flex-1 py-3 rounded-kin-sm font-semibold font-montserrat shadow-kin-soft hover:shadow-kin-medium cursor-pointer transition flex items-center justify-center`}
                 aria-label="Send meet request"
               >
                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

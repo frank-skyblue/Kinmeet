@@ -4,6 +4,7 @@ import { authAPI } from '../../services/api';
 import { getErrorMessage } from '../../utils/error';
 import { PASSWORD_HINT, PASSWORD_REGEX } from '../../constants/validation';
 import Logo from '../common/Logo';
+import { primaryActionClass, surfaceCardClass, textFieldClass } from '../../constants/ui';
 
 const ResetPassword: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -53,18 +54,18 @@ const ResetPassword: React.FC = () => {
 
   if (!token) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-kin-beige px-4">
-        <div className="max-w-md w-full bg-white rounded-kin-xl shadow-kin-strong p-8 text-center">
+      <div className="min-h-screen flex items-center justify-center bg-canvas px-4">
+        <div className={`${surfaceCardClass} max-w-md w-full rounded-kin-xl p-8 text-center`}>
           <div className="flex justify-center mb-4">
             <Logo size="xl" />
           </div>
-          <h1 className="text-2xl font-bold font-montserrat text-kin-navy mb-3">Invalid Link</h1>
+          <h1 className="text-2xl font-bold font-montserrat text-foreground mb-3">Invalid Link</h1>
           <p className="text-kin-stone-600 font-inter text-sm mb-6">
             This password reset link is missing or malformed.
           </p>
           <Link
             to="/forgot-password"
-            className="inline-block bg-kin-coral text-white py-3 px-6 rounded-kin-sm font-bold font-montserrat hover:bg-kin-coral-600 transition"
+            className={`${primaryActionClass} inline-block py-3 px-6 rounded-kin-sm font-bold font-montserrat transition`}
           >
             Request a new link
           </Link>
@@ -74,14 +75,14 @@ const ResetPassword: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-kin-beige px-4">
-      <div className="max-w-md w-full bg-white rounded-kin-xl shadow-kin-strong p-8">
+    <div className="min-h-screen flex items-center justify-center bg-canvas px-4">
+      <div className={`${surfaceCardClass} max-w-md w-full rounded-kin-xl p-8`}>
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
             <Logo size="xl" />
           </div>
-          <h1 className="text-3xl font-bold font-montserrat text-kin-navy mb-2">Create New Password</h1>
-          <p className="text-kin-teal font-inter text-sm">{PASSWORD_HINT}</p>
+          <h1 className="text-3xl font-bold font-montserrat text-foreground mb-2">Create New Password</h1>
+          <p className="text-muted font-inter text-sm">{PASSWORD_HINT}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6" noValidate>
@@ -103,7 +104,7 @@ const ResetPassword: React.FC = () => {
           <div>
             <label
               htmlFor="newPassword"
-              className="block text-sm font-medium font-inter text-kin-navy mb-2"
+              className="block text-sm font-medium font-inter text-foreground mb-2"
             >
               New Password
             </label>
@@ -112,7 +113,7 @@ const ResetPassword: React.FC = () => {
               id="newPassword"
               value={newPassword}
               onChange={handleNewPasswordChange}
-              className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
+              className={`${textFieldClass} w-full px-4 py-3 rounded-kin-sm transition`}
               placeholder="••••••••"
               required
               aria-required="true"
@@ -124,7 +125,7 @@ const ResetPassword: React.FC = () => {
           <div>
             <label
               htmlFor="confirmPassword"
-              className="block text-sm font-medium font-inter text-kin-navy mb-2"
+              className="block text-sm font-medium font-inter text-foreground mb-2"
             >
               Confirm New Password
             </label>
@@ -133,7 +134,7 @@ const ResetPassword: React.FC = () => {
               id="confirmPassword"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
+              className={`${textFieldClass} w-full px-4 py-3 rounded-kin-sm transition`}
               placeholder="••••••••"
               required
               aria-required="true"
@@ -150,7 +151,7 @@ const ResetPassword: React.FC = () => {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-kin-coral text-white py-4 px-6 rounded-kin-sm font-bold font-montserrat text-lg hover:bg-kin-coral-600 focus:ring-4 focus:ring-kin-coral-300 shadow-kin-medium hover:shadow-kin-strong transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+            className={`${primaryActionClass} w-full py-4 px-6 rounded-kin-sm font-bold font-montserrat text-lg focus:ring-4 focus:ring-ring shadow-kin-medium hover:shadow-kin-strong transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed mt-2`}
           >
             {isLoading ? 'Saving…' : 'Reset Password'}
           </button>
@@ -159,7 +160,7 @@ const ResetPassword: React.FC = () => {
         <div className="mt-6 text-center">
           <Link
             to="/login"
-            className="text-kin-teal font-inter text-sm hover:text-kin-navy transition"
+            className="text-muted font-inter text-sm hover:text-foreground transition"
             aria-label="Go back to sign in page"
           >
             ← Back to Sign In
