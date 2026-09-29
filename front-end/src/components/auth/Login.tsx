@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/useAuth';
 import { getErrorMessage } from '../../utils/error';
 import Logo from '../common/Logo';
 import { primaryActionClass, surfaceCardClass, textFieldClass } from '../../constants/ui';
+import PasswordInputField from '../common/PasswordInputField';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -89,15 +90,8 @@ const Login: React.FC = () => {
                 Forgot password?
               </Link>
             </div>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className={`${textFieldClass} w-full px-4 py-3 rounded-kin-sm transition`}
-              placeholder="••••••••"
-              required
-            />
+
+						<PasswordInputField id="password" value={password} setPassword={setPassword} />
           </div>
 
           <button
