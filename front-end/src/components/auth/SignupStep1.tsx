@@ -3,6 +3,7 @@ import { authAPI } from "../../services/api";
 import { getErrorMessage } from "../../utils/error";
 import { PASSWORD_HINT, PASSWORD_REGEX } from "../../constants/validation";
 import { primaryActionClass, textFieldClass } from '../../constants/ui';
+import PasswordInputField from "../common/PasswordInputField";
 
 const DUPLICATE_EMAIL_MESSAGE =
   "This email is already registered. Please log in instead.";
@@ -148,15 +149,9 @@ const SignupStep1: React.FC<SignupStep1Props> = ({
         >
           Password
         </label>
-        <input
-          type="password"
-          id="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className={`${textFieldClass} w-full px-4 py-3 rounded-kin-sm transition`}
-          placeholder="••••••••"
-          required
-        />
+
+				<PasswordInputField id="password" value={password} setPassword={setPassword} required />
+
         <p className="text-xs text-muted font-inter mt-1">
           Must be at least 8 characters with uppercase, lowercase, and
           number
@@ -170,15 +165,8 @@ const SignupStep1: React.FC<SignupStep1Props> = ({
         >
           Confirm Password
         </label>
-        <input
-          type="password"
-          id="confirmPassword"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          className={`${textFieldClass} w-full px-4 py-3 rounded-kin-sm transition`}
-          placeholder="••••••••"
-          required
-        />
+
+				<PasswordInputField id="confirmPassword" value={confirmPassword} setPassword={setConfirmPassword} />
       </div>
 
       <button
