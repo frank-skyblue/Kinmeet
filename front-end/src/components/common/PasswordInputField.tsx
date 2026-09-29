@@ -42,6 +42,7 @@ export default function PasswordInputField({
 				type="button"
 				className="p-1 hover:cursor-pointer pr-1.5"
 				onClick={() => setIsPasswordMode((current) => !current)}
+				aria-label='Toggle Password Visibility'
 			>
 				{isPasswordMode ? (
 					<>
@@ -50,6 +51,7 @@ export default function PasswordInputField({
 							fill="none"
 							stroke="currentColor"
 							viewBox="0 0 24 24"
+							aria-label='Show Password'
 						>
 							<path
 								strokeLinecap="round"
@@ -70,6 +72,7 @@ export default function PasswordInputField({
 							fill="none"
 							stroke="currentColor"
 							viewBox="0 0 24 24"
+							aria-label="Hide Password"
 						>
 							<path
 								strokeLinecap="round"
