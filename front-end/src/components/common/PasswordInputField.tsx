@@ -1,4 +1,4 @@
-import { useState, type ComponentPropsWithoutRef } from 'react';
+import { useRef, useState, type ComponentPropsWithoutRef } from 'react';
 
 interface FunctionProps extends ComponentPropsWithoutRef<'input'> {
 	setPassword: (v: string) => void;
@@ -22,6 +22,9 @@ export default function PasswordInputField({
 			? 'text-sm outline-offset-1'
 			: 'text-base outline-offset-2';
 
+	// Creating a reference for the '<input>' tag to ensure it stays focused even on clicking the show/hide password button toggle
+	const inputRef = useRef<HTMLInputElement | null>(null);
+
 	return (
 		<div
 			className={`w-full flex items-center justify-start rounded-kin-sm transition border border-border font-inter outline-none focus-within:border-transparent focus-within:ring-ring focus-within:ring-4 ${sizeStyles}`}
@@ -36,13 +39,18 @@ export default function PasswordInputField({
 					placeholder ?? (isPasswordMode ? '••••••••' : 'ExamplePassword123')
 				}
 				required={required}
+				ref={inputRef}
 				{...defaultProps}
 			/>
 			<button
 				type="button"
 				className="p-1 hover:cursor-pointer pr-1.5"
-				onClick={() => setIsPasswordMode((current) => !current)}
-				aria-label='Toggle Password Visibility'
+				onClick={() => {
+					// Reverse the show/hide visibility and ensure the password input field stays focused for the user to type
+					setIsPasswordMode((current) => !current);
+					inputRef?.current?.focus();
+				}}
+				aria-label="Toggle Password Visibility"
 			>
 				{isPasswordMode ? (
 					<>
@@ -51,7 +59,7 @@ export default function PasswordInputField({
 							fill="none"
 							stroke="currentColor"
 							viewBox="0 0 24 24"
-							aria-label='Show Password'
+							aria-label="Show Password"
 						>
 							<path
 								strokeLinecap="round"
