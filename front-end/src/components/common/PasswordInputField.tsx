@@ -25,6 +25,7 @@ export default function PasswordInputField({
 				required={required}
 			/>
 			<button
+				type="button"
 				className="p-1 hover:cursor-pointer pr-1.5"
 				onClick={() => setIsPasswordMode((current) => !current)}
 			>
