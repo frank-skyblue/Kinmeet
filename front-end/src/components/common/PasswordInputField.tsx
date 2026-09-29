@@ -1,8 +1,9 @@
 import { useRef, useState, type ComponentPropsWithoutRef } from 'react';
 
 interface FunctionProps extends ComponentPropsWithoutRef<'input'> {
-	setPassword: (v: string) => void;
+	setPassword?: (v: string) => void;
 	sizeType?: 'small' | 'regular';
+	actualOnChange?: (e: React.ChangeEvent<HTMLInputElement, HTMLInputElement>) => void;
 }
 
 export default function PasswordInputField({
@@ -13,6 +14,7 @@ export default function PasswordInputField({
 	required = true,
 	sizeType = 'regular',
 	placeholder,
+	actualOnChange,
 	...defaultProps
 }: FunctionProps) {
 	const [isPasswordMode, setIsPasswordMode] = useState(true);
@@ -33,7 +35,7 @@ export default function PasswordInputField({
 				type={isPasswordMode ? 'password' : 'text'}
 				id={id}
 				value={value}
-				onChange={(e) => setPassword(e.target.value)}
+				onChange={actualOnChange ? actualOnChange : (e) => setPassword?.(e.target.value)}
 				className={`w-full rounded-kin-sm transition focus:border-transparent focus:ring-0 focus-visible:outline-none! ${sizeType === 'small' ? 'px-2 py-1.5' : 'px-4 py-3'} ${className}`}
 				placeholder={
 					placeholder ?? (isPasswordMode ? '••••••••' : 'ExamplePassword123')
