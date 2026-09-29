@@ -2,6 +2,7 @@ import { useState, type ComponentPropsWithoutRef } from 'react';
 
 interface FunctionProps extends ComponentPropsWithoutRef<'input'> {
 	setPassword: (v: string) => void;
+	sizeType?: 'small' | 'regular';
 }
 
 export default function PasswordInputField({
@@ -10,19 +11,32 @@ export default function PasswordInputField({
 	setPassword,
 	className,
 	required = true,
+	sizeType = 'regular',
+	placeholder,
+	...defaultProps
 }: FunctionProps) {
 	const [isPasswordMode, setIsPasswordMode] = useState(true);
 
+	const sizeStyles =
+		sizeType === 'small'
+			? 'text-sm outline-offset-1'
+			: 'text-base outline-offset-2';
+
 	return (
-		<div className="w-full flex items-center justify-start rounded-kin-sm outline-offset-2 transition border border-border font-inter outline-none focus-within:border-transparent focus-within:ring-4 focus-within:ring-ring">
+		<div
+			className={`w-full flex items-center justify-start rounded-kin-sm transition border border-border font-inter outline-none focus-within:border-transparent focus-within:ring-ring focus-within:ring-4 ${sizeStyles}`}
+		>
 			<input
 				type={isPasswordMode ? 'password' : 'text'}
 				id={id}
 				value={value}
 				onChange={(e) => setPassword(e.target.value)}
-				className={`w-full px-4 py-3 rounded-kin-sm transition focus:border-transparent focus:ring-0 focus-visible:outline-none! ${className}`}
-				placeholder={isPasswordMode ? '••••••••' : 'ExamplePassword@2026'}
+				className={`w-full rounded-kin-sm transition focus:border-transparent focus:ring-0 focus-visible:outline-none! ${sizeType === 'small' ? 'px-2 py-1.5' : 'px-4 py-3'} ${className}`}
+				placeholder={
+					placeholder ?? (isPasswordMode ? '••••••••' : 'ExamplePassword123')
+				}
 				required={required}
+				{...defaultProps}
 			/>
 			<button
 				type="button"
