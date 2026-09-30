@@ -1,13 +1,23 @@
+import type { ComponentPropsWithoutRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-export default function BackButton() {
+export default function BackButton({
+	className,
+	...defaultProps
+}: ComponentPropsWithoutRef<'button'>) {
 	const navigate = useNavigate();
+
+	function onNavigateBack() {
+		return navigate(-1);
+	}
 
 	return (
 		<>
 			<button
-				className="bg-primary text-primary-foreground shadow-kin-soft transition hover:shadow-kin-medium font-medium flex items-center justify-start gap-x-1 p-2 text-sm rounded-kin-sm hover:bg-primary-hover hover:cursor-pointer"
-				onClick={() => navigate(-1)}
+				className={`bg-primary text-primary-foreground shadow-kin-soft transition hover:shadow-kin-medium font-medium flex items-center justify-start gap-x-1 p-2 text-sm rounded-kin-sm hover:bg-primary-hover hover:cursor-pointer ${className}`}
+				onClick={onNavigateBack}
+				aria-label="Back Button"
+				{...defaultProps}
 			>
 				<span>
 					<svg
