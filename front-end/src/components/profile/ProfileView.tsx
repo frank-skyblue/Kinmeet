@@ -6,6 +6,7 @@ import CountryWithFlag from '../common/CountryWithFlag';
 import type { UserProfile } from '../../types';
 import { calculateAgeFromDateOfBirth } from '../../utils/age';
 import { surfaceCardClass } from '../../constants/ui';
+import BackButton from '../common/BackButton';
 
 const genderLabel = (value: string | undefined) => {
 	if (value === 'female') return 'Female';
@@ -37,6 +38,9 @@ const ProfileView: React.FC<ProfileViewProps> = ({
 
 	return (
 		<div className="bg-canvas py-8 px-4">
+
+			<BackButton />
+
 			<div className="max-w-3xl mx-auto">
 				<div className={`${surfaceCardClass} rounded-kin-xl overflow-hidden`}>
 					<div className="bg-gradient-to-br from-kin-coral to-kin-teal h-32"></div>
