@@ -5,6 +5,7 @@ import {
   parseProvinceComposite,
 } from "../../constants/profileOptions";
 import { validatePhotoFile } from "../../constants/validation";
+import { dobIsoBoundsUtc } from "../../utils/age";
 import { useAuth } from '../../contexts/useAuth';
 import { profileAPI } from "../../services/api";
 import Logo from "../common/Logo";
@@ -13,6 +14,7 @@ import SignupStep2 from "./SignupStep2";
 import SignupStep3 from "./SignupStep3";
 import SignupStep4 from "./SignupStep4";
 import type { ResolvedCityLocation } from "../../utils/citySearch";
+import { surfaceCardClass } from '../../constants/ui';
 
 const TOTAL_STEPS = 4;
 
@@ -146,12 +148,7 @@ const Signup: React.FC = () => {
   const handleSubmit = async () => {
     setIsLoading(true);
 
-    const now = new Date();
-    const todayIsoUtc = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}`;
-    const maxDobUtc = new Date(
-      Date.UTC(now.getUTCFullYear() - 120, now.getUTCMonth(), now.getUTCDate(), 12, 0, 0, 0),
-    );
-    const minIsoUtc = `${maxDobUtc.getUTCFullYear()}-${String(maxDobUtc.getUTCMonth() + 1).padStart(2, '0')}-${String(maxDobUtc.getUTCDate()).padStart(2, '0')}`;
+    const { minIsoUtc, todayIsoUtc } = dobIsoBoundsUtc();
     const dob = dateOfBirth.trim();
     if (
       /^\d{4}-\d{2}-\d{2}$/.test(dob) &&
@@ -211,16 +208,16 @@ const Signup: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-kin-beige px-4 py-8">
-      <div className="max-w-2xl w-full bg-white rounded-kin-xl shadow-kin-strong p-8">
+    <div className="min-h-screen flex items-center justify-center bg-canvas px-4 py-8">
+      <div className={`${surfaceCardClass} max-w-2xl w-full rounded-kin-xl p-8`}>
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
             <Logo size="lg" />
           </div>
-          <h1 className="text-4xl font-bold font-montserrat text-kin-navy mb-2">
+          <h1 className="text-4xl font-bold font-montserrat text-foreground mb-2">
             Join KinMeet
           </h1>
-          <p className="text-kin-teal font-inter">
+          <p className="text-muted font-inter">
             Connect with people from your homeland living abroad
           </p>
         </div>
@@ -237,10 +234,10 @@ const Signup: React.FC = () => {
                 }}
                 aria-label={`Go to signup step ${s}`}
                 aria-current={step === s ? "step" : undefined}
-                className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold font-montserrat shadow-kin-soft transition focus:outline-none focus:ring-2 focus:ring-kin-coral focus:ring-offset-2 ${
+                className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold font-montserrat shadow-kin-soft transition focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ${
                   step >= s
-                    ? "bg-kin-coral text-white"
-                    : "bg-kin-stone-200 text-kin-stone-500"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary text-kin-stone-500"
                 } ${
                   s <= maxReachedStep
                     ? "cursor-pointer hover:opacity-90"
@@ -252,7 +249,7 @@ const Signup: React.FC = () => {
               {s < TOTAL_STEPS && (
                 <div
                   className={`w-12 h-1 rounded-full transition ${
-                    step > s ? "bg-kin-coral" : "bg-kin-stone-200"
+                    step > s ? "bg-primary" : "bg-secondary"
                   }`}
                 />
               )}
@@ -351,7 +348,7 @@ const Signup: React.FC = () => {
         )}
 
         <div className="mt-6 text-center">
-          <p className="text-kin-navy font-inter">
+          <p className="text-foreground font-inter">
             Already have an account?{" "}
             <Link
               to="/login"

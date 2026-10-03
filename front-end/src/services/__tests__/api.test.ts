@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach } from 'vitest';
-import api, { feedbackAPI, supportAPI } from '../api';
+import api, { blockAPI, feedbackAPI, supportAPI } from '../api';
 
 const postWithAdapter = async (data: unknown, headers?: Record<string, string>) => {
   let capturedUrl: string | undefined;
@@ -226,3 +226,61 @@ describe('api', () => {
   });
 });
 
+describe('blockAPI', () => {
+  const userId = '507f1f77bcf86cd799439011';
+
+  const captureRequest = async (call: () => Promise<unknown>) => {
+    let url: string | undefined;
+    let method: string | undefined;
+    let body: unknown;
+
+    api.defaults.adapter = (config) => {
+      url = config.url;
+      method = config.method;
+      body = typeof config.data === 'string' ? JSON.parse(config.data) : config.data;
+      return Promise.resolve({
+        data: { success: true },
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config,
+      });
+    };
+
+    await call();
+    api.defaults.adapter = undefined;
+
+    return { url, method, body };
+  };
+
+  it('sends reason and details as separate fields when reporting', async () => {
+    const { url, body } = await captureRequest(() =>
+      blockAPI.reportUser(userId, 'Spam or scam', 'crypto links'),
+    );
+
+    expect(url).toBe('/block/report');
+    expect(body).toEqual({ userId, reason: 'Spam or scam', details: 'crypto links' });
+  });
+
+  it('omits details when none are given', async () => {
+    const { body } = await captureRequest(() => blockAPI.reportUser(userId, 'Safety concern'));
+
+    // details is undefined, so JSON.stringify drops the key entirely
+    expect(body).toEqual({ userId, reason: 'Safety concern' });
+  });
+
+  it('posts a block with an optional reason', async () => {
+    const { url, method, body } = await captureRequest(() => blockAPI.blockUser(userId));
+
+    expect(url).toBe('/block/block');
+    expect(method).toBe('post');
+    expect(body).toEqual({ userId });
+  });
+
+  it('unblocks by id', async () => {
+    const { url, method } = await captureRequest(() => blockAPI.unblockUser(userId));
+
+    expect(url).toBe(`/block/unblock/${userId}`);
+    expect(method).toBe('delete');
+  });
+});

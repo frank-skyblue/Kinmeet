@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import request from 'supertest';
 import { createTestApp, createTestUser, getAuthToken } from '../helpers';
+import { Block } from '../../models/Block';
 import { ConnectionRequest } from '../../models/ConnectionRequest';
 import { Connection } from '../../models/Connection';
 
@@ -63,6 +64,49 @@ describe('Connections Routes', () => {
         .set('Authorization', `Bearer ${token}`);
 
       expect(res.status).toBe(400);
+    });
+
+    it('refuses to accept a surviving request when a block exists', async () => {
+      // A pending request must never be able to rebuild a connection between
+      // two users who have a block between them.
+      const sender = await createTestUser({ email: 'blk-sender@test.com', firstName: 'Sam' });
+      const receiver = await createTestUser({ email: 'blk-recv@test.com', firstName: 'Rae' });
+      const connReq = await ConnectionRequest.create({
+        sender: sender._id,
+        receiver: receiver._id,
+        status: 'pending',
+      });
+      await Block.create({ blocker: receiver._id, blocked: sender._id });
+
+      const res = await request(app)
+        .post(`/api/connections/requests/${connReq._id}/accept`)
+        .set('Authorization', `Bearer ${getAuthToken(receiver)}`);
+
+      expect(res.status).toBe(403);
+      const created = await Connection.findOne({
+        $or: [
+          { user1: sender._id, user2: receiver._id },
+          { user1: receiver._id, user2: sender._id },
+        ],
+      });
+      expect(created).toBeNull();
+    });
+
+    it('refuses when the sender is the blocker', async () => {
+      const sender = await createTestUser({ email: 'blk-sender2@test.com', firstName: 'Sid' });
+      const receiver = await createTestUser({ email: 'blk-recv2@test.com', firstName: 'Ria' });
+      const connReq = await ConnectionRequest.create({
+        sender: sender._id,
+        receiver: receiver._id,
+        status: 'pending',
+      });
+      await Block.create({ blocker: sender._id, blocked: receiver._id });
+
+      const res = await request(app)
+        .post(`/api/connections/requests/${connReq._id}/accept`)
+        .set('Authorization', `Bearer ${getAuthToken(receiver)}`);
+
+      expect(res.status).toBe(403);
     });
   });
 

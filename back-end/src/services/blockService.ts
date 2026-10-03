@@ -1,8 +1,9 @@
-import { Block } from '../models/Block';
+import { Block, areUsersBlocked } from '../models/Block';
 import { AppError } from '../middleware/errorHandler';
 import { deleteConnectionAndRequestsBetweenUsers } from './connectionService';
 
 export const blockService = {
+    areUsersBlocked,
     blockUser: async (userId: string, blockedUserId: string, reason?: string) => {
         if (!blockedUserId) throw new AppError(400, 'User ID is required');
         if (userId === blockedUserId) throw new AppError(400, 'Cannot block yourself');
@@ -35,23 +36,5 @@ export const blockService = {
         return Block.find({ blocker: userId })
             .populate('blocked', 'firstName currentProvince currentCountry')
             .sort({ createdAt: -1 });
-    },
-
-    reportUser: async (userId: string, reportedUserId: string, reason: string) => {
-        if (!reportedUserId || !reason) {
-            throw new AppError(400, 'User ID and reason are required');
-        }
-        if (userId === reportedUserId) {
-            throw new AppError(400, 'Cannot report yourself');
-        }
-
-        const block = new Block({
-            blocker: userId,
-            blocked: reportedUserId,
-            reason: `REPORT: ${reason}`,
-        });
-        await block.save();
-
-        await deleteConnectionAndRequestsBetweenUsers(userId, reportedUserId);
     },
 };

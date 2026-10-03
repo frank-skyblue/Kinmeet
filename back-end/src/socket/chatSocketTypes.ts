@@ -1,12 +1,8 @@
 import { z } from 'zod';
+import { objectId, sendMessageSchema } from '../middleware/schemas';
 import type { chatService } from '../services/chatService';
 
-const objectId = z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid ID format');
-
-export const chatSendMessageSchema = z.object({
-  receiverId: objectId,
-  content: z.string().trim().min(1, 'Content is required').max(2000, 'Message too long'),
-});
+export const chatSendMessageSchema = sendMessageSchema;
 
 export const chatTypingSchema = z.object({
   receiverId: objectId,

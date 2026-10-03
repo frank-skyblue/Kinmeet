@@ -3,9 +3,12 @@ import { createRoot } from 'react-dom/client'
 import 'flag-icons/css/flag-icons.min.css'
 import './index.css'
 import App from './App.tsx'
+import { ThemeProvider } from './contexts/ThemeProvider'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <ThemeProvider>
+      <App />
+    </ThemeProvider>
   </StrictMode>,
 )

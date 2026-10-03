@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { loginSchema, submitFeedbackSchema, updateProfileSchema } from '../../middleware/schemas';
+import {
+  loginSchema,
+  passwordField,
+  reportUserSchema,
+  submitFeedbackSchema,
+  updateProfileSchema,
+} from '../../middleware/schemas';
 
 describe('loginSchema', () => {
   it('accepts valid credentials', () => {
@@ -155,5 +161,73 @@ describe('submitFeedbackSchema', () => {
     });
 
     expect(result.success).toBe(false);
+  });
+});
+
+describe('reportUserSchema', () => {
+  const userId = '507f1f77bcf86cd799439011';
+
+  it('accepts a listed reason without details', () => {
+    const result = reportUserSchema.safeParse({ userId, reason: 'Spam or scam' });
+    expect(result.success).toBe(true);
+  });
+
+  it('trims details', () => {
+    const result = reportUserSchema.safeParse({
+      userId,
+      reason: 'Safety concern',
+      details: '  they followed me home  ',
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.details).toBe('they followed me home');
+    }
+  });
+
+  it('rejects a reason outside the allowed list', () => {
+    // This is the shape the UI used to send before details became their own field.
+    const result = reportUserSchema.safeParse({
+      userId,
+      reason: 'Harassment or bullying \u2014 extra text',
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it('requires details when the reason is Other', () => {
+    expect(reportUserSchema.safeParse({ userId, reason: 'Other' }).success).toBe(false);
+    expect(
+      reportUserSchema.safeParse({ userId, reason: 'Other', details: '   ' }).success,
+    ).toBe(false);
+  });
+
+  it('accepts Other when details are given', () => {
+    const result = reportUserSchema.safeParse({
+      userId,
+      reason: 'Other',
+      details: 'Impersonating support staff',
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects a malformed userId', () => {
+    const result = reportUserSchema.safeParse({ userId: 'nope', reason: 'Spam or scam' });
+    expect(result.success).toBe(false);
+  });
+});
+
+describe('passwordField', () => {
+  it('accepts a strong password', () => {
+    expect(passwordField.safeParse('ValidPass1').success).toBe(true);
+  });
+
+  it('rejects a weak password', () => {
+    const result = passwordField.safeParse('weak');
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toContain('Password must be at least 8 characters');
+    }
   });
 });

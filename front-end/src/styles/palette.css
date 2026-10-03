@@ -1,0 +1,74 @@
+@theme {
+  /* KinMeet brand scales. These do not change per theme. */
+  --color-kin-coral-50: #fef5f3;
+  --color-kin-coral-100: #fde9e5;
+  --color-kin-coral-200: #facdc3;
+  --color-kin-coral-300: #f7b1a1;
+  --color-kin-coral-400: #f4957d;
+  --color-kin-coral-500: #f47a5f;
+  --color-kin-coral-600: #f15a3a;
+  --color-kin-coral-700: #d73c1e;
+  --color-kin-coral-800: #a82e17;
+  --color-kin-coral-900: #792111;
+  --color-kin-coral: #f47a5f;
+
+  --color-kin-navy-50: #e8f0f5;
+  --color-kin-navy-100: #d1e1eb;
+  --color-kin-navy-200: #a3c3d7;
+  --color-kin-navy-300: #75a5c3;
+  --color-kin-navy-400: #4787af;
+  --color-kin-navy-500: #2b6180;
+  --color-kin-navy-600: #1f4d66;
+  --color-kin-navy-700: #113b50;
+  --color-kin-navy-800: #0d2e3e;
+  --color-kin-navy-900: #09212c;
+  --color-kin-navy: #113b50;
+
+  --color-kin-teal-50: #edf3f2;
+  --color-kin-teal-100: #dbe7e5;
+  --color-kin-teal-200: #b7cfcb;
+  --color-kin-teal-300: #93b7b1;
+  --color-kin-teal-400: #6f9f97;
+  --color-kin-teal-500: #4f7a72;
+  --color-kin-teal-600: #3f625b;
+  --color-kin-teal-700: #2f4944;
+  --color-kin-teal-800: #1f312d;
+  --color-kin-teal-900: #101916;
+  --color-kin-teal: #4f7a72;
+
+  --color-kin-beige-50: #ffffff;
+  --color-kin-beige-100: #fffefb;
+  --color-kin-beige-200: #fef9ef;
+  --color-kin-beige-300: #fdf4e6;
+  --color-kin-beige-400: #fbf2e4;
+  --color-kin-beige-500: #f9f1e3;
+  --color-kin-beige-600: #f0e0c0;
+  --color-kin-beige-700: #e7cf9d;
+  --color-kin-beige-800: #debe7a;
+  --color-kin-beige-900: #d5ad57;
+  --color-kin-beige: #f9f1e3;
+
+  --color-kin-stone-50: #f5f4f3;
+  --color-kin-stone-100: #ebe9e7;
+  --color-kin-stone-200: #d7d3cf;
+  --color-kin-stone-300: #c3bdb7;
+  --color-kin-stone-400: #bfb7af;
+  --color-kin-stone-500: #a79f97;
+  --color-kin-stone-600: #8f877f;
+  --color-kin-stone-700: #726b65;
+  --color-kin-stone-800: #54504b;
+  --color-kin-stone-900: #373431;
+  --color-kin-stone: #bfb7af;
+
+  --font-montserrat: "Montserrat", sans-serif;
+  --font-inter: "Inter", sans-serif;
+  --font-sans: "Montserrat", "Inter", system-ui, sans-serif;
+  --font-family-montserrat: "Montserrat", sans-serif;
+  --font-family-inter: "Inter", sans-serif;
+  --font-family-sans: "Montserrat", "Inter", system-ui, sans-serif;
+
+  --radius-kin: 1rem;
+  --radius-kin-sm: 0.75rem;
+  --radius-kin-lg: 1.5rem;
+  --radius-kin-xl: 2rem;
+}

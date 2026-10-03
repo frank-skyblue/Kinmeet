@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { authAPI } from '../../services/api';
 import { getErrorMessage } from '../../utils/error';
 import Logo from '../common/Logo';
+import { primaryActionClass, surfaceCardClass, textFieldClass } from '../../constants/ui';
 
 const ForgotPassword: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -27,14 +28,14 @@ const ForgotPassword: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-kin-beige px-4">
-      <div className="max-w-md w-full bg-white rounded-kin-xl shadow-kin-strong p-8">
+    <div className="min-h-screen flex items-center justify-center bg-canvas px-4">
+      <div className={`${surfaceCardClass} max-w-md w-full rounded-kin-xl p-8`}>
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
             <Logo size="xl" />
           </div>
-          <h1 className="text-3xl font-bold font-montserrat text-kin-navy mb-2">Forgot Password?</h1>
-          <p className="text-kin-teal font-inter text-sm">
+          <h1 className="text-3xl font-bold font-montserrat text-foreground mb-2">Forgot Password?</h1>
+          <p className="text-muted font-inter text-sm">
             Enter your registered email and we'll send you a reset link.
           </p>
         </div>
@@ -50,7 +51,7 @@ const ForgotPassword: React.FC = () => {
             </div>
             <Link
               to="/login"
-              className="block w-full text-center bg-kin-coral text-white py-4 px-6 rounded-kin-sm font-bold font-montserrat text-lg hover:bg-kin-coral-600 focus:ring-4 focus:ring-kin-coral-300 shadow-kin-medium hover:shadow-kin-strong transition-all duration-200"
+              className={`${primaryActionClass} block w-full text-center py-4 px-6 rounded-kin-sm font-bold font-montserrat text-lg focus:ring-4 focus:ring-ring shadow-kin-medium hover:shadow-kin-strong transition-all duration-200`}
             >
               Back to Sign In
             </Link>
@@ -70,7 +71,7 @@ const ForgotPassword: React.FC = () => {
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-medium font-inter text-kin-navy mb-2"
+                className="block text-sm font-medium font-inter text-foreground mb-2"
               >
                 Email address
               </label>
@@ -79,7 +80,7 @@ const ForgotPassword: React.FC = () => {
                 id="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
+                className={`${textFieldClass} w-full px-4 py-3 rounded-kin-sm transition`}
                 placeholder="you@example.com"
                 required
                 aria-required="true"
@@ -90,7 +91,7 @@ const ForgotPassword: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-kin-coral text-white py-4 px-6 rounded-kin-sm font-bold font-montserrat text-lg hover:bg-kin-coral-600 focus:ring-4 focus:ring-kin-coral-300 shadow-kin-medium hover:shadow-kin-strong transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className={`${primaryActionClass} w-full py-4 px-6 rounded-kin-sm font-bold font-montserrat text-lg focus:ring-4 focus:ring-ring shadow-kin-medium hover:shadow-kin-strong transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed`}
             >
               {isLoading ? 'Sending…' : 'Send Reset Link'}
             </button>
@@ -100,7 +101,7 @@ const ForgotPassword: React.FC = () => {
         <div className="mt-6 text-center">
           <Link
             to="/login"
-            className="text-kin-teal font-inter text-sm hover:text-kin-navy transition"
+            className="text-muted font-inter text-sm hover:text-foreground transition"
             aria-label="Go back to sign in page"
           >
             ← Back to Sign In

@@ -1,318 +1,88 @@
-# KinMeet Theme Implementation Summary
+# KinMeet theme tokens
 
-**Date:** December 3, 2025  
-**Version:** 1.0.0
+Components use Tailwind utilities. Color that should follow the active theme uses role names (`bg-canvas`, `text-foreground`, `bg-primary`). Brand scales (`bg-kin-coral-100`, `from-kin-coral`, `to-kin-teal`) stay fixed and are for chips, gradients, and logo moments.
 
-## Overview
+The app currently ships one theme: light. Dark mode is not registered.
 
-Successfully implemented the KinMeet brand theme across the entire frontend application, following the brand guidelines with custom colors, typography, rounded shapes, and modern UI/UX patterns.
+## Layers
 
----
+| File | Role |
+|------|------|
+| `src/styles/palette.css` | Fixed brand scales, fonts, and radii |
+| `src/styles/semantic.css` | Maps each role to a runtime CSS variable (`@theme inline`) |
+| `src/styles/themes/light.css` | Light assignment, also the `:root` default |
+| `src/styles/base.css` | Body, scrollbar, and focus ring, using the role variables |
+| `src/constants/ui.ts` | Repeated button, field, and card class strings |
+| `src/constants/themes.ts` | Registered theme names and the `localStorage` key |
 
-## Brand Theme Specifications
+`@theme inline` is required. It makes `bg-canvas` compile to `background-color: var(--canvas)`, so a theme file can change the value without editing components.
 
-### Color Palette
+## Roles (light)
 
-| Color Name | Hex Code | Usage |
-|------------|----------|-------|
-| **Kin Coral** | `#F47A5F` | Primary CTAs, buttons, accent elements |
-| **Kin Deep Navy** | `#113B50` | Text, headings, primary content |
-| **Kin Emerald Teal** | `#4F7A72` | UI components, secondary accents, badges |
-| **Kin Warm Beige** | `#F9F1E3` | Background color, light surfaces |
-| **Kin Soft Stone** | `#BFB7AF` | Borders, subtle accents, disabled states |
+| Role | Utilities | Value |
+|------|-----------|-------|
+| canvas | `bg-canvas` | `#F9F1E3` |
+| surface | `bg-surface` | `#FFFFFF` |
+| surface-muted | `bg-surface-muted` | `#F9F1E3` |
+| surface-hover | `bg-surface-hover` | `#F0E0C0` |
+| foreground | `text-foreground` | `#113B50` |
+| muted | `text-muted` | `#4F7A72` |
+| border | `border-border`, `divide-border` | `#D7D3CF` |
+| primary | `bg-primary` | `#F47A5F` |
+| primary-hover | `hover:bg-primary-hover` | `#F15A3A` |
+| primary-foreground | `text-primary-foreground` | `#FFFFFF` |
+| secondary | `bg-secondary` | `#D7D3CF` |
+| secondary-hover | `hover:bg-secondary-hover` | `#C3BDB7` |
+| secondary-foreground | `text-secondary-foreground` | `#113B50` |
+| ring | `ring-ring`, `outline-ring` | `#F47A5F` |
+| overlay | `bg-overlay` | `rgb(0 0 0 / 0.5)` |
 
-### Typography
+Shadows keep the names `shadow-kin-soft`, `shadow-kin-medium`, and `shadow-kin-strong` (navy at 8%, 12%, and 16%).
 
-- **Primary Font:** Montserrat (headings, buttons, important text)
-- **Secondary Font:** Inter (body text, labels, descriptions)
+`surface-hover` is the stronger hover used on canvas (chat rows). `surface-muted` is the lighter hover and inset fill used on white cards. `secondary-hover` is the stone-button hover.
 
-### Design Style
+## What stays on the palette
 
-- **Rounded shapes** with custom border radius (1rem, 1.5rem, 2rem)
-- **Soft, friendly curves** matching the logo aesthetic
-- **Flat/semi-flat** graphical elements
-- **Subtle gradients** within the color palette
-- **Custom shadows** for depth (soft, medium, strong)
+- Language, interest, and looking-for chips
+- Avatar and header gradients
+- Alert chips that pair a `*-50` background with a `*-700` text color
+- Teal actions (`bg-kin-teal`) and stronger coral actions (`bg-kin-coral-700`)
+- Logo artwork
 
----
+## Adding a theme
 
-## Files Modified
+Yes. A theme is a different color combination for the roles above. Components already use `bg-canvas`, `text-foreground`, `bg-primary`, and the other utilities, so they do not need new class names.
 
-### 1. Configuration Files
-
-#### `tailwind.config.js`
-- Added custom color palette with all KinMeet brand colors
-- Each color includes full shade range (50-900)
-- Added custom font families (Montserrat, Inter)
-- Added custom border radius values (kin, kin-sm, kin-lg, kin-xl)
-- Added custom box shadows (kin-soft, kin-medium, kin-strong)
-
-#### `index.html`
-- Updated page title to "KinMeet - Connect with Your Homeland Abroad"
-- Added Google Fonts preconnect for optimal performance
-- Imported Montserrat (300-800 weights) and Inter (300-700 weights)
-
-#### `src/index.css`
-- Updated body background to Kin Warm Beige
-- Set default text color to Kin Deep Navy
-- Applied Montserrat as primary font family
-- Added custom scrollbar styling with theme colors
-- Added smooth transitions for interactive elements
-- Implemented accessible focus styles with Kin Coral
-
----
-
-### 2. Component Updates
-
-#### **Layout Component** (`src/components/dashboard/Layout.tsx`)
-- Navigation bar: White background with Kin Stone borders
-- KinMeet logo: Kin Navy with Montserrat font
-- Active nav items: Kin Coral background with soft shadow
-- User avatar: Coral-to-Teal gradient
-- Mobile navigation: Kin Coral for active states
-- Dropdown menu: Rounded corners with theme colors
-
-#### **Authentication Components**
-
-**Login Component** (`src/components/auth/Login.tsx`)
-- Background: Kin Warm Beige
-- Card: White with strong shadow and XL rounded corners
-- Title: Kin Navy with Montserrat font
-- Subtitle: Kin Teal with Inter font
-- Input fields: Kin Stone borders with Coral focus ring
-- CTA button: Kin Coral with hover effects and shadows
-- Error messages: Coral-themed alert boxes
-
-**Signup Component** (`src/components/auth/Signup.tsx`)
-- Multi-step progress indicator: Kin Coral for active steps
-- Rounded progress bars with smooth transitions
-- All input fields: Stone borders with Coral focus
-- Helper text: Kin Teal color
-- Action buttons: Coral primary, Stone secondary
-- Add/Remove buttons: Coral-themed
-- Checkbox options: Coral accent with hover states
-
-#### **Matching Component**
-
-**Discover Component** (`src/components/matching/Discover.tsx`)
-- Background: Kin Warm Beige
-- Profile cards: White with strong shadow and XL rounded corners
-- Header gradient: Coral-to-Teal
-- Avatar background: Coral-to-Teal gradient
-- Language badges: Teal-100 background, Teal-700 text
-- Interest badges: Teal-200 background, Teal-800 text
-- Looking For badges: Coral-100 background, Coral-700 text
-- Pass button: Stone-200 with Navy text
-- Meet button: Coral with white text and shadow effects
-
-#### **Connection Components**
-
-**Requests Component** (`src/components/connections/Requests.tsx`)
-- Request cards: White with medium shadow and large rounded corners
-- User avatars: Coral-to-Teal gradient
-- Language badges: Teal-themed
-- Looking For badges: Coral-themed
-- Accept button: Coral with shadow effects
-- Ignore button: Stone-themed
-- Empty state: Navy headings, Teal descriptions
-
-**ConnectionsList Component** (`src/components/connections/ConnectionsList.tsx`)
-- Grid layout with themed cards
-- Avatar gradient: Coral-to-Teal
-- Language badges: Teal-100/700
-- Interest badges: Teal-200/800 (limited to 3 with "+X more")
-- Looking For badges: Coral-100/700
-- Message button: Coral with hover shadow effects
-- Empty state with "Discover People" Coral CTA
-
-#### **Profile Component** (`src/components/profile/Profile.tsx`)
-- Header gradient: Coral-to-Teal
-- Large avatar with gradient fallback
-- Name: Navy with Montserrat
-- Email: Teal with Inter
-- Section headings: Navy with Inter
-- Language badges: Teal-themed
-- Interest badges: Teal-themed
-- Looking For badges: Coral-themed
-- Edit button: Teal primary button
-- Community guidelines: White card with themed text
-
-#### **Chat Component** (`src/components/chat/Chat.tsx`)
-- Background: Kin Warm Beige
-- Header: White with Stone border and soft shadow
-- Back button: Navy with Coral hover
-- User info: Navy headings, Teal location
-- Own messages: Coral background with white text
-- Received messages: White background with Navy text
-- Message timestamps: Beige for own, Teal for received
-- Input field: Stone border with Coral focus
-- Send button: Coral with shadow effects
-
----
-
-## Design Pattern Implementation
-
-### Buttons
-
-**Primary (CTA)**
-```css
-bg-kin-coral text-white rounded-kin-sm font-semibold font-montserrat
-hover:bg-kin-coral-600 shadow-kin-soft hover:shadow-kin-medium transition
-```
-
-**Secondary**
-```css
-bg-kin-stone-200 text-kin-navy rounded-kin-sm font-semibold font-montserrat
-hover:bg-kin-stone-300 shadow-kin-soft transition
-```
-
-### Input Fields
+Copy `src/styles/themes/light.css` to `src/styles/themes/<name>.css` and replace the values. Keep every variable name. Point the selector at the new theme instead of `:root`:
 
 ```css
-w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm
-focus:ring-2 focus:ring-kin-coral focus:border-transparent
-outline-none transition font-inter
+[data-theme="<name>"] {
+  color-scheme: light;
+  --canvas: /* page background */;
+  --surface: /* cards, nav, modals */;
+  --surface-muted: /* hover and inset fills on cards */;
+  --surface-hover: /* hover on the page background */;
+  --foreground: /* headings and body text */;
+  --muted: /* helper text */;
+  --border: /* borders and dividers */;
+  --primary: /* main button */;
+  --primary-hover: /* main button hover */;
+  --primary-foreground: /* text on the main button */;
+  --secondary: /* secondary button */;
+  --secondary-hover: /* secondary button hover */;
+  --secondary-foreground: /* text on the secondary button */;
+  --ring: /* focus ring */;
+  --overlay: /* modal scrim */;
+  --shadow-soft: /* button shadow */;
+  --shadow-medium: /* card shadow */;
+  --shadow-strong: /* modal shadow */;
+}
 ```
 
-### Cards
+The file does not turn on by itself. Register the same name in three places:
 
-```css
-bg-white rounded-kin-lg shadow-kin-medium
-hover:shadow-kin-strong transition
-```
+1. Import it from `src/index.css`, next to `light.css`.
+2. Add `"<name>"` to `THEME_PREFERENCES` in `src/constants/themes.ts`.
+3. Add `"<name>": true` to the `allowed` map in the script in `index.html`, so the first paint uses it.
 
-### Badges
-
-**Language Badges**
-```css
-px-3 py-1 bg-kin-teal-100 text-kin-teal-700
-rounded-full text-sm font-medium font-inter
-```
-
-**Interest Badges**
-```css
-px-3 py-1 bg-kin-teal-200 text-kin-teal-800
-rounded-full text-sm font-medium font-inter
-```
-
-**Looking For Badges**
-```css
-px-3 py-1 bg-kin-coral-100 text-kin-coral-700
-rounded-full text-sm font-medium font-inter
-```
-
-### Gradients
-
-**Avatar/Header Background**
-```css
-bg-gradient-to-br from-kin-coral to-kin-teal
-```
-
----
-
-## Accessibility Features
-
-- **Focus Indicators:** 2px Kin Coral outline with 2px offset on all interactive elements
-- **Aria Labels:** Added to all buttons and interactive elements
-- **Color Contrast:** All text colors meet WCAG AA standards
-- **Keyboard Navigation:** Full support with visible focus states
-- **Smooth Transitions:** 0.2s ease-in-out for all state changes
-
----
-
-## Typography Hierarchy
-
-| Element | Font | Weight | Size | Color |
-|---------|------|--------|------|-------|
-| H1 (Page Titles) | Montserrat | Bold (700) | 3xl | Kin Navy |
-| H2 (Section Titles) | Montserrat | Bold (700) | 2xl | Kin Navy |
-| H3 (Subsections) | Montserrat | Bold (700) | xl | Kin Navy |
-| Body Text | Inter | Regular (400) | base | Kin Navy |
-| Labels | Inter | Medium (500) | sm | Kin Navy |
-| Helper Text | Inter | Regular (400) | xs | Kin Teal |
-| Button Text | Montserrat | Semibold (600) | base | White/Navy |
-
----
-
-## Shadow System
-
-| Shadow Type | Usage | CSS |
-|-------------|-------|-----|
-| **Soft** | Subtle elevation, buttons | `0 2px 8px rgba(17, 59, 80, 0.08)` |
-| **Medium** | Cards, dropdowns | `0 4px 12px rgba(17, 59, 80, 0.12)` |
-| **Strong** | Modal, elevated cards | `0 8px 24px rgba(17, 59, 80, 0.16)` |
-
----
-
-## Border Radius System
-
-| Size | Value | Usage |
-|------|-------|-------|
-| **kin-sm** | 0.75rem | Buttons, inputs, small cards |
-| **kin** | 1rem | Standard cards, containers |
-| **kin-lg** | 1.5rem | Large cards, sections |
-| **kin-xl** | 2rem | Hero sections, major containers |
-
----
-
-## Testing Checklist
-
-- [x] All components render without errors
-- [x] No linting errors in any modified files
-- [x] Color contrast meets accessibility standards
-- [x] Fonts load correctly from Google Fonts
-- [x] Responsive design works on mobile and desktop
-- [x] Interactive states (hover, focus, active) work correctly
-- [x] Shadows and rounded corners display properly
-- [x] Theme consistency across all pages
-
----
-
-## Next Steps
-
-### Recommended Enhancements
-
-1. **Theme Configuration File**
-   - Create a centralized theme config for easy updates
-   - Export theme constants for JavaScript usage
-
-2. **Dark Mode Support**
-   - Add dark mode variants for all theme colors
-   - Implement theme toggle functionality
-
-3. **Animation Library**
-   - Add page transitions
-   - Implement micro-interactions
-
-4. **Logo Integration**
-   - Replace text logo with actual KinMeet logo image
-   - Add favicon using the logo
-
-5. **Loading States**
-   - Enhance loading spinners with brand styling
-   - Add skeleton screens for better UX
-
----
-
-## Resources
-
-- **Google Fonts:** [Montserrat](https://fonts.google.com/specimen/Montserrat) | [Inter](https://fonts.google.com/specimen/Inter)
-- **Tailwind CSS Documentation:** [tailwindcss.com](https://tailwindcss.com)
-- **WCAG Accessibility Guidelines:** [w3.org/WAI/WCAG21](https://www.w3.org/WAI/WCAG21/)
-
----
-
-## Support
-
-For questions or issues related to the theme implementation, please refer to:
-- `DOCUMENTATION.md` - Main project documentation
-- `tailwind.config.js` - Theme configuration reference
-- Component files - Individual component styling
-
----
-
-**Implementation completed by:** AI Assistant  
-**Review required by:** Development Team  
-**Approved by:** _Pending_
-
-
+`ThemeProvider` writes the stored preference to `<html data-theme>`. A stored value that is not in `THEME_PREFERENCES` falls back to `light`. There is no theme control in the account menu until a second theme exists. Chips, avatar gradients, and the logo stay on the fixed palette in `palette.css` and do not follow the new combination.

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { chatService } from '../../services/chatService';
 import { createTestUser } from '../helpers';
+import { Block } from '../../models/Block';
 import { Connection } from '../../models/Connection';
 import { Message } from '../../models/Message';
 
@@ -34,7 +35,27 @@ describe('chatService', () => {
       ).rejects.toThrow('Can only message connected users');
     });
 
-    it('rejects empty content', async () => {
+    it('rejects a message when a block exists, even with a live connection', async () => {
+      // Blocking tears the connection down, but not atomically — the guard must
+      // hold on its own rather than relying on that cleanup.
+      const { userA, userB } = await connectUsers();
+      await Block.create({ blocker: userA._id, blocked: userB._id });
+
+      await expect(
+        chatService.sendMessage(userA._id.toString(), userB._id.toString(), 'Hi'),
+      ).rejects.toThrow('Can only message connected users');
+    });
+
+    it('rejects a message from the blocked side too', async () => {
+      const { userA, userB } = await connectUsers();
+      await Block.create({ blocker: userA._id, blocked: userB._id });
+
+      await expect(
+        chatService.sendMessage(userB._id.toString(), userA._id.toString(), 'Hi'),
+      ).rejects.toThrow('Can only message connected users');
+    });
+
+    it('rejects empty content', async () =>{
       const { userA, userB } = await connectUsers();
       await expect(
         chatService.sendMessage(userA._id.toString(), userB._id.toString(), ''),

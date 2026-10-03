@@ -1,4 +1,5 @@
 import { Message } from '../models/Message';
+import { areUsersBlocked } from '../models/Block';
 import { Connection } from '../models/Connection';
 import { User } from '../models/User';
 import { AppError } from '../middleware/errorHandler';
@@ -7,6 +8,10 @@ export const chatService = {
     sendMessage: async (senderId: string, receiverId: string, content: string) => {
         if (!receiverId || !content?.trim()) {
             throw new AppError(400, 'Receiver ID and content are required');
+        }
+
+        if (await areUsersBlocked(senderId, receiverId)) {
+            throw new AppError(403, 'Can only message connected users');
         }
 
         const connection = await Connection.findOne({

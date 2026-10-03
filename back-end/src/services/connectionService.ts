@@ -1,6 +1,7 @@
 import { Connection } from '../models/Connection';
 import { ConnectionRequest } from '../models/ConnectionRequest';
 import { User } from '../models/User';
+import { areUsersBlocked } from '../models/Block';
 import { AppError } from '../middleware/errorHandler';
 
 const connectionPairFilter = (userId: string, otherUserId: string) => ({
@@ -44,6 +45,10 @@ export const acceptConnectionRequest = async (userId: string, requestId: string)
     if (!request) throw new AppError(404, 'Request not found');
 
     if (request.receiver.toString() !== userId) {
+        throw new AppError(403, 'Not authorized');
+    }
+
+    if (await areUsersBlocked(userId, request.sender.toString())) {
         throw new AppError(403, 'Not authorized');
     }
 

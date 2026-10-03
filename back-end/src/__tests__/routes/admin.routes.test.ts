@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import { createTestApp, createTestUser, getAuthToken } from '../helpers';
 import { ADMIN_COOKIE_NAME } from '../../controllers/adminController';
 import { Feedback } from '../../models/Feedback';
+import { Report } from '../../models/Report';
 import { JWT_SECRET, resolveAdminPassKey } from '../../config/env';
 import { adminLoginSchema } from '../../middleware/schemas';
 
@@ -378,6 +379,193 @@ describe('Admin Routes', () => {
       spy.mockRestore();
     });
   });
+
+  describe('GET /api/admin/reports', () => {
+    it('requires an admin session', async () => {
+      const missing = await request(app).get('/api/admin/reports');
+      expect(missing.status).toBe(401);
+
+      const user = await createTestUser({ email: 'reports-user-jwt@example.com' });
+      const withUserJwt = await request(app)
+        .get('/api/admin/reports')
+        .set('Cookie', `${ADMIN_COOKIE_NAME}=${getAuthToken(user)}`);
+      expect(withUserJwt.status).toBe(401);
+    });
+
+    it('lists reports with both parties resolved, and rejects invalid pages', async () => {
+      const loginRes = await request(app)
+        .post('/api/admin/login')
+        .set(adminHeaders)
+        .send({ password: ADMIN_PASSWORD });
+      const cookie = sessionCookie(loginRes);
+
+      const reporter = await createTestUser({ email: 'reporter@example.com' });
+      const reported = await createTestUser({
+        email: 'reported@example.com',
+        firstName: 'Tomas',
+      });
+      await Report.create({
+        reporter: reporter._id,
+        reported: reported._id,
+        reason: 'Harassment or bullying',
+        details: 'Unwanted messages',
+      });
+
+      const res = await request(app).get('/api/admin/reports').set('Cookie', cookie);
+
+      expect(res.status).toBe(200);
+      expect(res.headers['cache-control']).toBe('no-store');
+      expect(res.body.success).toBe(true);
+      expect(res.body.pagination).toEqual({
+        page: 1,
+        pageSize: 20,
+        total: 1,
+        totalPages: 1,
+      });
+      expect(res.body.reports[0]).toMatchObject({
+        reporterEmail: 'reporter@example.com',
+        reportedEmail: 'reported@example.com',
+        reportedName: 'Tomas',
+        reason: 'Harassment or bullying',
+        details: 'Unwanted messages',
+        status: 'new',
+      });
+      // internal fields must not leak
+      expect(res.body.reports[0].updatedAt).toBeUndefined();
+      expect(res.body.reports[0].__v).toBeUndefined();
+
+      const badPage = await request(app)
+        .get('/api/admin/reports?page=0')
+        .set('Cookie', cookie);
+      expect(badPage.status).toBe(400);
+
+      const pastLastPage = await request(app)
+        .get('/api/admin/reports?page=99')
+        .set('Cookie', cookie);
+      expect(pastLastPage.status).toBe(200);
+      expect(pastLastPage.body.reports).toEqual([]);
+    });
+
+    it('omits details when a report has none', async () => {
+      const loginRes = await request(app)
+        .post('/api/admin/login')
+        .set(adminHeaders)
+        .send({ password: ADMIN_PASSWORD });
+      const cookie = sessionCookie(loginRes);
+
+      const reporter = await createTestUser({ email: 'r2@example.com' });
+      const reported = await createTestUser({ email: 'r3@example.com' });
+      await Report.create({
+        reporter: reporter._id,
+        reported: reported._id,
+        reason: 'Spam or scam',
+      });
+
+      const res = await request(app).get('/api/admin/reports').set('Cookie', cookie);
+
+      expect(res.status).toBe(200);
+      expect(res.body.reports[0].details).toBeUndefined();
+    });
+  });
+
+
+  describe('PATCH /api/admin/reports/:reportId/status', () => {
+    const createReport = async () => {
+      const reporter = await createTestUser({ email: `rep-${Date.now()}@example.com` });
+      const reported = await createTestUser({ email: `tgt-${Date.now()}@example.com` });
+      return Report.create({
+        reporter: reporter._id,
+        reported: reported._id,
+        reason: 'Safety concern',
+      });
+    };
+
+    const adminCookie = async () => {
+      const loginRes = await request(app)
+        .post('/api/admin/login')
+        .set(adminHeaders)
+        .send({ password: ADMIN_PASSWORD });
+      return sessionCookie(loginRes);
+    };
+
+    it('requires an admin session', async () => {
+      const created = await createReport();
+      const res = await request(app)
+        .patch(`/api/admin/reports/${created._id}/status`)
+        .set(adminHeaders)
+        .send({ status: 'reviewing' });
+      expect(res.status).toBe(401);
+    });
+
+    it('rejects a mutation without the admin CSRF headers', async () => {
+      const cookie = await adminCookie();
+      const created = await createReport();
+
+      const res = await request(app)
+        .patch(`/api/admin/reports/${created._id}/status`)
+        .set('Cookie', cookie)
+        .send({ status: 'reviewing' });
+
+      expect(res.status).toBe(403);
+    });
+
+    it('moves a report through reviewing and resolved', async () => {
+      const cookie = await adminCookie();
+      const created = await createReport();
+
+      const reviewing = await request(app)
+        .patch(`/api/admin/reports/${created._id}/status`)
+        .set(adminHeaders)
+        .set('Cookie', cookie)
+        .send({ status: 'reviewing' });
+
+      expect(reviewing.status).toBe(200);
+      expect(reviewing.body.report).toMatchObject({ id: created._id.toString(), status: 'reviewing' });
+
+      const resolved = await request(app)
+        .patch(`/api/admin/reports/${created._id}/status`)
+        .set(adminHeaders)
+        .set('Cookie', cookie)
+        .send({ status: 'resolved' });
+
+      expect(resolved.status).toBe(200);
+      expect(resolved.body.report.status).toBe('resolved');
+
+      const persisted = await Report.findById(created._id);
+      expect(persisted?.status).toBe('resolved');
+    });
+
+    it('rejects an unknown status and a malformed id', async () => {
+      const cookie = await adminCookie();
+      const created = await createReport();
+
+      const badStatus = await request(app)
+        .patch(`/api/admin/reports/${created._id}/status`)
+        .set(adminHeaders)
+        .set('Cookie', cookie)
+        .send({ status: 'archived' });
+      expect(badStatus.status).toBe(400);
+
+      const badId = await request(app)
+        .patch('/api/admin/reports/not-an-id/status')
+        .set(adminHeaders)
+        .set('Cookie', cookie)
+        .send({ status: 'resolved' });
+      expect(badId.status).toBe(400);
+    });
+
+    it('returns 404 for a report that does not exist', async () => {
+      const cookie = await adminCookie();
+      const res = await request(app)
+        .patch('/api/admin/reports/000000000000000000000000/status')
+        .set(adminHeaders)
+        .set('Cookie', cookie)
+        .send({ status: 'resolved' });
+
+      expect(res.status).toBe(404);
+    });
+  });
+
 });
 
 describe('Admin login rate limit', () => {
@@ -404,4 +592,5 @@ describe('Admin login rate limit', () => {
     });
     expect(limited.headers['cache-control']).toBe('no-store');
   });
+
 });

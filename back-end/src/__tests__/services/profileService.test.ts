@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import * as profileService from '../../services/profileService';
 import { createTestUser } from '../helpers';
 import { User } from '../../models/User';
+import { Block } from '../../models/Block';
 import { Connection } from '../../models/Connection';
 import { ConnectionRequest } from '../../models/ConnectionRequest';
 import { Message } from '../../models/Message';
@@ -54,6 +55,39 @@ describe('profileService', () => {
 
       expect(result.isConnected).toBe(true);
       expect(result.user.lastName).toBe('Visible');
+    });
+  });
+
+  describe('getUserProfile block gate', () => {
+    it('hides the target when the requester has blocked them', async () => {
+      const requester = await createTestUser({ email: 'a@test.com' });
+      const target = await createTestUser({ email: 'b@test.com' });
+      await Block.create({ blocker: requester._id, blocked: target._id });
+
+      await expect(
+        profileService.getUserProfile(requester._id.toString(), target._id.toString()),
+      ).rejects.toThrow('User not found');
+    });
+
+    it('hides the target when the target has blocked the requester', async () => {
+      const requester = await createTestUser({ email: 'a@test.com' });
+      const target = await createTestUser({ email: 'b@test.com' });
+      await Block.create({ blocker: target._id, blocked: requester._id });
+
+      await expect(
+        profileService.getUserProfile(requester._id.toString(), target._id.toString()),
+      ).rejects.toThrow('User not found');
+    });
+
+    it('hides a blocked target even when they are still connected', async () => {
+      const requester = await createTestUser({ email: 'a@test.com' });
+      const target = await createTestUser({ email: 'b@test.com' });
+      await Connection.create({ user1: requester._id, user2: target._id });
+      await Block.create({ blocker: requester._id, blocked: target._id });
+
+      await expect(
+        profileService.getUserProfile(requester._id.toString(), target._id.toString()),
+      ).rejects.toThrow('User not found');
     });
   });
 

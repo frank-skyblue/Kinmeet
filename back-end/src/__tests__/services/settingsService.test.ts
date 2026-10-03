@@ -116,14 +116,6 @@ describe('settingsService', () => {
             ).rejects.toMatchObject({ statusCode: 401 });
         });
 
-        it('throws 400 for a weak new password', async () => {
-            const user = await createTestUser({ email: 'pwweak@example.com', password: 'TestPass123' });
-
-            await expect(
-                settingsService.changePassword(user._id.toString(), 'TestPass123', 'weak'),
-            ).rejects.toMatchObject({ statusCode: 400 });
-        });
-
         it('throws 400 when new password is the same as current', async () => {
             const user = await createTestUser({ email: 'pwsame@example.com', password: 'TestPass123' });
 

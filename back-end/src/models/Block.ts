@@ -21,3 +21,13 @@ BlockSchema.index({ blocker: 1, blocked: 1 }, { unique: true });
 
 export const Block = mongoose.model<IBlock>('Block', BlockSchema);
 
+export const areUsersBlocked = async (userA: string, userB: string): Promise<boolean> => {
+    const block = await Block.findOne({
+        $or: [
+            { blocker: userA, blocked: userB },
+            { blocker: userB, blocked: userA },
+        ],
+    });
+    return Boolean(block);
+};
+
