@@ -4,7 +4,8 @@ import { authAPI } from '../../services/api';
 import { getErrorMessage } from '../../utils/error';
 import { PASSWORD_HINT, PASSWORD_REGEX } from '../../constants/validation';
 import Logo from '../common/Logo';
-import { primaryActionClass, surfaceCardClass, textFieldClass } from '../../constants/ui';
+import { primaryActionClass, surfaceCardClass } from '../../constants/ui';
+import PasswordInputField from '../common/PasswordInputField';
 
 const ResetPassword: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -108,18 +109,16 @@ const ResetPassword: React.FC = () => {
             >
               New Password
             </label>
-            <input
-              type="password"
-              id="newPassword"
-              value={newPassword}
-              onChange={handleNewPasswordChange}
-              className={`${textFieldClass} w-full px-4 py-3 rounded-kin-sm transition`}
-              placeholder="••••••••"
-              required
-              aria-required="true"
-              aria-describedby={passwordError ? 'password-error' : undefined}
-              autoComplete="new-password"
-            />
+
+						<PasswordInputField
+							id="newPassword"
+							value={newPassword}
+							actualOnChange={handleNewPasswordChange}
+							required
+							aria-required="true"
+							aria-describedby={passwordError ? 'password-error' : undefined}
+							autoComplete="new-password"
+						/>
           </div>
 
           <div>
@@ -129,17 +128,15 @@ const ResetPassword: React.FC = () => {
             >
               Confirm New Password
             </label>
-            <input
-              type="password"
-              id="confirmPassword"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className={`${textFieldClass} w-full px-4 py-3 rounded-kin-sm transition`}
-              placeholder="••••••••"
-              required
-              aria-required="true"
-              autoComplete="new-password"
-            />
+
+						<PasswordInputField
+							id="confirmPassword"
+							value={confirmPassword}
+							setPassword={setConfirmPassword}
+							required
+							aria-required="true"
+							autoComplete="confirmPassword"
+						/>
           </div>
 
           {passwordError && (
