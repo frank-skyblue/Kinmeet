@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { normalizeEmail } from '../utils/email';
 import type {
+  AccountStatus,
   ChangeEmailPayload,
   ChangePasswordPayload,
   ChangeUsernamePayload,
@@ -264,6 +265,16 @@ export const settingsAPI = {
   changePassword: async (payload: ChangePasswordPayload) => {
     const response = await api.patch('/settings/password', payload);
     return response.data as { success: boolean; message: string };
+  },
+
+  deactivateAccount: async (currentPassword: string) => {
+    const response = await api.post('/settings/account/deactivate', { currentPassword });
+    return response.data as { success: boolean; message: string };
+  },
+
+  reactivateAccount: async () => {
+    const response = await api.post('/settings/account/reactivate');
+    return response.data as { success: boolean; message: string; accountStatus: AccountStatus };
   },
 };
 

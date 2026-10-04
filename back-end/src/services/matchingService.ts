@@ -1,4 +1,4 @@
-import { User } from '../models/User';
+import { ACTIVE_ACCOUNT_FILTER, User } from '../models/User';
 import { Connection } from '../models/Connection';
 import { ConnectionRequest } from '../models/ConnectionRequest';
 import { Block, areUsersBlocked } from '../models/Block';
@@ -54,7 +54,8 @@ export const getMatches = async (userId: string) => {
         },
         homeCountry: currentUser.homeCountry,
         currentCountry: currentUser.currentCountry,
-        profileComplete: true
+        profileComplete: true,
+        ...ACTIVE_ACCOUNT_FILTER
     })
     .select('-password -lastName -email -blockedUsers')
     .limit(50)
@@ -67,7 +68,7 @@ export const sendMeetRequest = async (userId: string, receiverId: string) => {
     if (!receiverId) throw new AppError(400, 'Receiver ID is required');
     if (userId === receiverId) throw new AppError(400, 'Cannot send request to yourself');
 
-    const receiver = await User.findById(receiverId);
+    const receiver = await User.findOne({ _id: receiverId, ...ACTIVE_ACCOUNT_FILTER });
     if (!receiver) throw new AppError(404, 'User not found');
 
     if (await areUsersBlocked(userId, receiverId)) throw new AppError(403, 'Cannot send request');

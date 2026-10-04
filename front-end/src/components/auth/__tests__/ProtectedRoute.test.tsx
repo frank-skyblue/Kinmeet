@@ -28,6 +28,7 @@ const renderRoute = (initialRoute = '/protected') => {
     <MemoryRouter initialEntries={[initialRoute]}>
       <Routes>
         <Route path="/login" element={<div>Login Page</div>} />
+        <Route path="/reactivate" element={<div>Reactivate Page</div>} />
         <Route element={<ProtectedRoute />}>
           <Route path="/protected" element={<div>Protected Content</div>} />
         </Route>
@@ -47,6 +48,15 @@ describe('ProtectedRoute', () => {
     authModule.__setAuth({ user: { id: '1' }, isLoading: false });
     renderRoute();
     expect(screen.getByText('Protected Content')).toBeInTheDocument();
+  });
+
+  it('redirects a deactivated account to the reactivation prompt', () => {
+    authModule.__setAuth({
+      user: { id: '1', accountStatus: 'deactivated' } as { id: string },
+      isLoading: false,
+    });
+    renderRoute();
+    expect(screen.getByText('Reactivate Page')).toBeInTheDocument();
   });
 
   it('shows loading spinner while auth is loading', () => {

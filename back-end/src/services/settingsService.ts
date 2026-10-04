@@ -1,4 +1,5 @@
-import { User } from '../models/User';
+import { ACTIVE_ACCOUNT_FILTER, User, type AccountStatus } from '../models/User';
+import { AccountEvent } from '../models/AccountEvent';
 import { AppError } from '../middleware/errorHandler';
 import { findUserByEmail, normalizeEmail } from '../utils/email';
 
@@ -78,5 +79,37 @@ export const settingsService = {
 
         user.password = newPassword;
         await user.save();
+    },
+
+    deactivateAccount: async (userId: string, currentPassword: string): Promise<void> => {
+        const user = await User.findById(userId);
+        if (!user) throw new AppError(404, 'User not found');
+
+        const passwordMatch = await user.comparePassword(currentPassword);
+        if (!passwordMatch) throw new AppError(401, 'Current password is incorrect');
+
+        // Conditional update so a repeated or concurrent request is a no-op instead of
+        // overwriting deactivatedAt or recording a second event.
+        const deactivated = await User.findOneAndUpdate(
+            { _id: userId, ...ACTIVE_ACCOUNT_FILTER },
+            { $set: { accountStatus: 'deactivated', deactivatedAt: new Date() } },
+        );
+        if (deactivated) {
+            await AccountEvent.create({ user: userId, type: 'deactivated' });
+        }
+    },
+
+    reactivateAccount: async (userId: string): Promise<{ accountStatus: AccountStatus }> => {
+        const reactivated = await User.findOneAndUpdate(
+            { _id: userId, accountStatus: 'deactivated' },
+            { $set: { accountStatus: 'active' }, $unset: { deactivatedAt: 1 } },
+        );
+        if (reactivated) {
+            await AccountEvent.create({ user: userId, type: 'reactivated' });
+        } else if (!(await User.exists({ _id: userId }))) {
+            throw new AppError(404, 'User not found');
+        }
+
+        return { accountStatus: 'active' };
     },
 };

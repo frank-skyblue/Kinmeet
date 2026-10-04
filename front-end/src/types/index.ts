@@ -3,6 +3,8 @@ export type SearchableSelectOption = {
     label: string;
 };
 
+export type AccountStatus = 'active' | 'deactivated';
+
 export interface User {
     id: string;
     email: string;
@@ -11,6 +13,8 @@ export interface User {
     lastName: string;
     photo?: string;
     profileComplete: boolean;
+    /** Missing on sessions stored before account status existed; treat as active. */
+    accountStatus?: AccountStatus;
 }
 
 export interface UserProfile {
@@ -60,8 +64,10 @@ export interface ChatConversationUser {
     firstName: string;
     lastName: string;
     photo?: string;
-    currentProvince: string;
-    currentCountry: string;
+    currentProvince?: string;
+    currentCountry?: string;
+    /** Set when the other account is deactivated; its name is replaced with "Unavailable". */
+    unavailable?: boolean;
 }
 
 export interface ChatConversationSummary {

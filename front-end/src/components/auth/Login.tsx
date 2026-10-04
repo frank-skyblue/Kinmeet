@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/useAuth';
 import { getErrorMessage } from '../../utils/error';
+import { isAccountDeactivated } from '../../utils/account';
 import Logo from '../common/Logo';
 
 const Login: React.FC = () => {
@@ -21,8 +22,8 @@ const Login: React.FC = () => {
     setIsLoading(true);
 
     try {
-      await login(email, password);
-      navigate('/discover');
+      const signedInUser = await login(email, password);
+      navigate(isAccountDeactivated(signedInUser) ? '/reactivate' : '/discover');
     } catch (err: unknown) {
       setError(getErrorMessage(err, 'Login failed. Please try again.'));
     } finally {

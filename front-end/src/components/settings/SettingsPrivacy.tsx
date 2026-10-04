@@ -5,7 +5,7 @@ const settingsSections = [
   {
     path: '/settings/account',
     title: 'Account',
-    description: 'Manage your account and delete your profile',
+    description: 'Manage, deactivate, or delete your account',
   },
   {
     path: '/settings/community-safety',

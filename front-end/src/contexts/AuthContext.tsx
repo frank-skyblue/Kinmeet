@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
-import { authAPI, profileAPI } from '../services/api';
+import { authAPI, profileAPI, settingsAPI } from '../services/api';
 import {
   registerWebPushForCurrentUser,
   unregisterWebPushForCurrentUser,
 } from '../services/pushNotifications';
 import type { User, RegisterPayload } from '../types';
 import { getErrorMessage } from '../utils/error';
+import { isAccountDeactivated } from '../utils/account';
 import { AuthContext } from './auth-context';
 
 interface AuthProviderProps {
@@ -39,13 +40,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    if (!user || !token) return;
+    if (!user || !token || isAccountDeactivated(user)) return;
     void Promise.resolve(registerWebPushForCurrentUser()).catch((err) => {
       console.error('Web push registration failed:', err);
     });
   }, [user, token]);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string): Promise<User> => {
     try {
       const response = await authAPI.login(email, password);
 
@@ -55,6 +56,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUser(newUser);
         localStorage.setItem('token', newToken);
         localStorage.setItem('user', JSON.stringify(newUser));
+        return newUser;
       } else {
         throw new Error(response.message || 'Login failed');
       }
@@ -111,6 +113,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           lastName: response.user.lastName,
           photo: response.user.photo,
           profileComplete: response.user.profileComplete,
+          accountStatus: response.user.accountStatus,
         };
         setUser(updated);
         localStorage.setItem('user', JSON.stringify(updated));
@@ -118,6 +121,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } catch (error) {
       console.error('Failed to refresh user:', error);
     }
+  };
+
+  const reactivateAccount = async () => {
+    const response = await settingsAPI.reactivateAccount();
+    if (!user) return;
+    const updated: User = { ...user, accountStatus: response.accountStatus };
+    setUser(updated);
+    localStorage.setItem('user', JSON.stringify(updated));
   };
 
   const value = {
@@ -128,6 +139,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     register,
     logout,
     refreshUser,
+    reactivateAccount,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

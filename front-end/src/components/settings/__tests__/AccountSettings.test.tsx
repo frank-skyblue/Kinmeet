@@ -24,6 +24,11 @@ vi.mock('../../profile/DeleteAccountModal', () => ({
     isOpen ? <div role="dialog">Delete Account Modal</div> : null,
 }));
 
+vi.mock('../DeactivateAccountModal', () => ({
+  default: ({ isOpen }: { isOpen: boolean }) =>
+    isOpen ? <div role="dialog">Deactivate Account Modal</div> : null,
+}));
+
 const mockChangeEmail = vi.fn();
 const mockChangeUsername = vi.fn();
 const mockChangePassword = vi.fn();
@@ -204,6 +209,17 @@ describe('AccountSettings', () => {
     });
   });
 
+  // ─── Deactivate Account section ───────────────────────────────────────────
+  describe('Deactivate Account section', () => {
+    it('opens the deactivate confirmation modal', async () => {
+      const user = userEvent.setup();
+      renderComponent();
+
+      await user.click(screen.getByRole('button', { name: /deactivate account/i }));
+      expect(screen.getByRole('dialog')).toHaveTextContent('Deactivate Account Modal');
+    });
+  });
+
   // ─── Delete Account section ───────────────────────────────────────────────
   describe('Delete Account section', () => {
     it('opens the delete confirmation modal', async () => {
@@ -211,7 +227,7 @@ describe('AccountSettings', () => {
       renderComponent();
 
       await user.click(screen.getByRole('button', { name: /delete account/i }));
-      expect(screen.getByRole('dialog')).toBeInTheDocument();
+      expect(screen.getByRole('dialog')).toHaveTextContent('Delete Account Modal');
     });
   });
 });

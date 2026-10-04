@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../../contexts/useAuth';
+import { isAccountDeactivated } from '../../utils/account';
 
 const ProtectedRoute: React.FC = () => {
   const { user, isLoading } = useAuth();
@@ -18,6 +19,10 @@ const ProtectedRoute: React.FC = () => {
 
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (isAccountDeactivated(user)) {
+    return <Navigate to="/reactivate" replace />;
   }
 
   return <Outlet />;

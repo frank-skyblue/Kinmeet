@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { settingsService } from '../../services/settingsService';
 import { createTestUser } from '../helpers';
+import { User } from '../../models/User';
+import { AccountEvent } from '../../models/AccountEvent';
 
 describe('settingsService', () => {
     describe('changeEmail', () => {
@@ -127,6 +129,90 @@ describe('settingsService', () => {
         it('throws 404 for nonexistent user', async () => {
             await expect(
                 settingsService.changePassword('507f1f77bcf86cd799439011', 'old', 'NewPass456'),
+            ).rejects.toMatchObject({ statusCode: 404 });
+        });
+    });
+
+    describe('deactivateAccount', () => {
+        it('marks the account deactivated, stamps the date and records one event', async () => {
+            const user = await createTestUser({ email: 'deact@example.com', password: 'TestPass123' });
+
+            await settingsService.deactivateAccount(user._id.toString(), 'TestPass123');
+
+            const updated = await User.findById(user._id);
+            expect(updated?.accountStatus).toBe('deactivated');
+            expect(updated?.deactivatedAt).toBeInstanceOf(Date);
+            const events = await AccountEvent.find({ user: user._id });
+            expect(events.map((e) => e.type)).toEqual(['deactivated']);
+        });
+
+        it('throws 401 and leaves the account active when the password is wrong', async () => {
+            const user = await createTestUser({ email: 'deact-wrong@example.com', password: 'TestPass123' });
+
+            await expect(
+                settingsService.deactivateAccount(user._id.toString(), 'WrongPass1'),
+            ).rejects.toMatchObject({ statusCode: 401 });
+
+            const unchanged = await User.findById(user._id);
+            expect(unchanged?.accountStatus).toBe('active');
+            expect(await AccountEvent.countDocuments({ user: user._id })).toBe(0);
+        });
+
+        it('is a no-op when repeated, keeping the original date and a single event', async () => {
+            const user = await createTestUser({ email: 'deact-twice@example.com', password: 'TestPass123' });
+            await settingsService.deactivateAccount(user._id.toString(), 'TestPass123');
+            const firstDate = (await User.findById(user._id))?.deactivatedAt;
+
+            await settingsService.deactivateAccount(user._id.toString(), 'TestPass123');
+
+            const updated = await User.findById(user._id);
+            expect(updated?.deactivatedAt?.getTime()).toBe(firstDate?.getTime());
+            expect(await AccountEvent.countDocuments({ user: user._id })).toBe(1);
+        });
+
+        it('does not store the password in the audit event', async () => {
+            const user = await createTestUser({ email: 'deact-audit@example.com', password: 'TestPass123' });
+
+            await settingsService.deactivateAccount(user._id.toString(), 'TestPass123');
+
+            const event = await AccountEvent.findOne({ user: user._id }).lean();
+            expect(JSON.stringify(event)).not.toContain('TestPass123');
+        });
+
+        it('throws 404 for nonexistent user', async () => {
+            await expect(
+                settingsService.deactivateAccount('507f1f77bcf86cd799439011', 'TestPass123'),
+            ).rejects.toMatchObject({ statusCode: 404 });
+        });
+    });
+
+    describe('reactivateAccount', () => {
+        it('restores the account, clears the date and records an event', async () => {
+            const user = await createTestUser({ email: 'react@example.com', password: 'TestPass123' });
+            await settingsService.deactivateAccount(user._id.toString(), 'TestPass123');
+
+            const result = await settingsService.reactivateAccount(user._id.toString());
+
+            expect(result.accountStatus).toBe('active');
+            const updated = await User.findById(user._id);
+            expect(updated?.accountStatus).toBe('active');
+            expect(updated?.deactivatedAt).toBeUndefined();
+            const events = await AccountEvent.find({ user: user._id }).sort({ createdAt: 1 });
+            expect(events.map((e) => e.type)).toEqual(['deactivated', 'reactivated']);
+        });
+
+        it('is a no-op for an account that is already active', async () => {
+            const user = await createTestUser({ email: 'react-active@example.com' });
+
+            const result = await settingsService.reactivateAccount(user._id.toString());
+
+            expect(result.accountStatus).toBe('active');
+            expect(await AccountEvent.countDocuments({ user: user._id })).toBe(0);
+        });
+
+        it('throws 404 for nonexistent user', async () => {
+            await expect(
+                settingsService.reactivateAccount('507f1f77bcf86cd799439011'),
             ).rejects.toMatchObject({ statusCode: 404 });
         });
     });

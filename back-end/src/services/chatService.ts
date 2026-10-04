@@ -1,8 +1,32 @@
-import { Message } from '../models/Message';
+import { Message, type IMessage } from '../models/Message';
 import { areUsersBlocked } from '../models/Block';
 import { Connection } from '../models/Connection';
-import { User } from '../models/User';
+import { User, isAccountDeactivated } from '../models/User';
 import { AppError } from '../middleware/errorHandler';
+
+// Shown in place of a deactivated account's name. Conversation history stays visible,
+// but the other participant isn't told who the account was or why it's unavailable.
+const UNAVAILABLE_USER_NAME = { firstName: 'Unavailable', lastName: '' };
+
+type ChatParticipant = { _id: { toString(): string }; firstName?: string; lastName?: string };
+
+type PopulatedMessage = Pick<IMessage, '_id' | 'content' | 'read' | 'createdAt'> & {
+    sender: ChatParticipant;
+    receiver: ChatParticipant;
+};
+
+const redactUnavailableParticipant = (
+    message: { toObject(): unknown },
+    unavailableUserId: string,
+): PopulatedMessage => {
+    const plain = message.toObject() as PopulatedMessage;
+    for (const key of ['sender', 'receiver'] as const) {
+        if (plain[key]?._id.toString() === unavailableUserId) {
+            plain[key] = { _id: plain[key]._id, ...UNAVAILABLE_USER_NAME };
+        }
+    }
+    return plain;
+};
 
 export const chatService = {
     sendMessage: async (senderId: string, receiverId: string, content: string) => {
@@ -21,6 +45,10 @@ export const chatService = {
             ],
         });
         if (!connection) throw new AppError(403, 'Can only message connected users');
+
+        if (await isAccountDeactivated(receiverId)) {
+            throw new AppError(403, 'This account is unavailable');
+        }
 
         const message = new Message({
             sender: senderId,
@@ -60,6 +88,10 @@ export const chatService = {
             { read: true },
         );
 
+        if (await isAccountDeactivated(otherUserId)) {
+            return messages.map((message) => redactUnavailableParticipant(message, otherUserId));
+        }
+
         return messages;
     },
 
@@ -94,9 +126,18 @@ export const chatService = {
                     }),
 
                     User.findById(connectedUserId).select(
-                        'firstName lastName photo currentProvince currentCountry',
+                        'firstName lastName photo currentProvince currentCountry accountStatus',
                     ),
                 ]);
+
+                if (user?.accountStatus === 'deactivated') {
+                    const unavailableUserId = user._id.toString();
+                    return {
+                        user: { _id: user._id, ...UNAVAILABLE_USER_NAME, unavailable: true },
+                        lastMessage: lastMessage && redactUnavailableParticipant(lastMessage, unavailableUserId),
+                        unreadCount,
+                    };
+                }
 
                 return { user, lastMessage, unreadCount };
             }),

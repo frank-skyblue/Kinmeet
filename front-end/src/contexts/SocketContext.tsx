@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import type { Socket } from 'socket.io-client';
 import { socketService } from '../services/socketService';
 import { useAuth } from './useAuth';
+import { activeUserOrNull } from '../utils/account';
 import { SocketContext } from './socket-context';
 
 interface SocketProviderProps {
@@ -9,7 +10,8 @@ interface SocketProviderProps {
 }
 
 export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
-  const { user, isLoading } = useAuth();
+  const { user: authUser, isLoading } = useAuth();
+  const user = activeUserOrNull(authUser);
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
 

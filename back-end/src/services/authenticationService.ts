@@ -39,6 +39,7 @@ const authUserPayload = (user: IUser) => ({
     lastName: user.lastName,
     photo: user.photo,
     profileComplete: user.profileComplete,
+    accountStatus: user.accountStatus ?? 'active',
 });
 
 const signAuthToken = (user: IUser) =>

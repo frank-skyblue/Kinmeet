@@ -248,6 +248,10 @@ export const changePasswordSchema = z.object({
     newPassword: passwordField,
 });
 
+export const deactivateAccountSchema = z.object({
+    currentPassword: z.string().min(1, 'Current password is required'),
+});
+
 export const adminLoginSchema = z.object({
     password: z.string().refine((value) => value.trim().length > 0, 'Password is required').max(256, 'Password is too long'),
 });

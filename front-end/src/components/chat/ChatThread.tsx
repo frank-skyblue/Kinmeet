@@ -27,7 +27,7 @@ interface ChatThreadProps {
 const ChatThread: React.FC<ChatThreadProps> = ({ userId }) => {
   const { user } = useAuth();
   const { socket, isConnected } = useSocket();
-  const { refetchInbox } = useChatInbox();
+  const { conversations, refetchInbox } = useChatInbox();
   const navigate = useNavigate();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -42,6 +42,10 @@ const ChatThread: React.FC<ChatThreadProps> = ({ userId }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const messageDateGroups = groupMessagesByDate(messages);
+  // History stays readable, but a deactivated peer has no profile and can't receive messages.
+  const isPeerUnavailable = Boolean(
+    conversations.find((conversation) => conversation.user?._id === userId)?.user?.unavailable,
+  );
 
   useEffect(() => {
     loadConversation();
@@ -248,7 +252,21 @@ const ChatThread: React.FC<ChatThreadProps> = ({ userId }) => {
               </svg>
             </button>
 
-            {otherUser && (
+            {isPeerUnavailable ? (
+              <div className="flex min-w-0 items-center gap-3 md:gap-4">
+                <div
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-kin-stone-300 shadow-kin-soft md:h-12 md:w-12"
+                  aria-hidden
+                >
+                  <svg className="h-6 w-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-4.42 0-8 2.24-8 5v1h16v-1c0-2.76-3.58-5-8-5z" />
+                  </svg>
+                </div>
+                <h2 className="truncate font-montserrat text-base font-bold text-kin-stone-500 md:text-lg">
+                  Unavailable
+                </h2>
+              </div>
+            ) : otherUser && (
               <Link
                 to={`/profile/${userId}`}
                 className="flex min-w-0 items-center gap-3 rounded-kin-sm outline-none transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-kin-coral focus-visible:ring-offset-2 md:gap-4"
@@ -386,14 +404,14 @@ const ChatThread: React.FC<ChatThreadProps> = ({ userId }) => {
               type="text"
               value={newMessage}
               onChange={handleInputChange}
-              placeholder="Type a message..."
+              placeholder={isPeerUnavailable ? 'This account is unavailable' : 'Type a message...'}
               className="flex-1 rounded-kin-sm border border-kin-stone-300 px-4 py-3 font-inter outline-none transition focus:border-transparent focus:ring-2 focus:ring-kin-coral"
-              disabled={isSending || !isConnected}
+              disabled={isSending || !isConnected || isPeerUnavailable}
               aria-label="Type a message"
             />
             <button
               type="submit"
-              disabled={isSending || !newMessage.trim() || !isConnected}
+              disabled={isSending || !newMessage.trim() || !isConnected || isPeerUnavailable}
               className="flex items-center rounded-kin-sm bg-kin-coral px-6 py-3 font-montserrat font-semibold text-white shadow-kin-soft transition hover:bg-kin-coral-600 hover:shadow-kin-medium disabled:cursor-not-allowed disabled:opacity-50"
               aria-label="Send message"
             >

@@ -23,6 +23,7 @@ import { initializeSocket } from '../../socket/socketServer';
 import { createTestUser, getAuthToken } from '../helpers';
 import { Connection } from '../../models/Connection';
 import { Message } from '../../models/Message';
+import { User } from '../../models/User';
 import { notificationService } from '../../services/notificationService';
 
 let httpServer: HTTPServer;
@@ -95,6 +96,23 @@ describe('Socket.IO Handlers', () => {
     });
 
     expect(error.message).toContain('Authentication error');
+    socket.disconnect();
+  });
+
+  it('rejects connection for a deactivated account', async () => {
+    const user = await createTestUser({ email: 'socket-deactivated@test.com' });
+    await User.updateOne({ _id: user._id }, { accountStatus: 'deactivated' });
+
+    const socket = ioClient(`http://localhost:${port}`, {
+      auth: { token: getAuthToken(user) },
+      transports: ['websocket'],
+    });
+
+    const error = await new Promise<Error>((resolve) => {
+      socket.on('connect_error', resolve);
+    });
+
+    expect(error.message).toContain('Account deactivated');
     socket.disconnect();
   });
 
