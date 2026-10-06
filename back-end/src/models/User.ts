@@ -34,6 +34,7 @@ export interface IUser extends Document {
     blockedUsers: Types.ObjectId[];
     accountStatus: AccountStatus;
     deactivatedAt?: Date;
+    tokenVersion: number;
     _id: Types.ObjectId;
     createdAt: Date;
     updatedAt: Date;
@@ -91,6 +92,7 @@ const UserSchema: Schema<IUser> = new Schema({
     blockedUsers: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     accountStatus: { type: String, enum: ACCOUNT_STATUSES, default: 'active', index: true },
     deactivatedAt: { type: Date },
+    tokenVersion: { type: Number, default: 0, select: false },
 }, {
     timestamps: true
 });

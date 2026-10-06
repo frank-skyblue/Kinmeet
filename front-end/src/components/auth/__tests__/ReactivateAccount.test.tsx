@@ -7,14 +7,20 @@ import type { User } from '../../../types';
 
 const mockReactivateAccount = vi.fn();
 const mockLogout = vi.fn();
+const mockLogin = vi.fn();
+const mockDismissDeactivated = vi.fn();
 let mockUser: User | null = null;
+let mockDeactivatedEmail: string | null = null;
 
 vi.mock('../../../contexts/useAuth', () => ({
   useAuth: () => ({
     user: mockUser,
     isLoading: false,
+    deactivatedEmail: mockDeactivatedEmail,
+    login: mockLogin,
     reactivateAccount: mockReactivateAccount,
     logout: mockLogout,
+    dismissDeactivated: mockDismissDeactivated,
   }),
 }));
 
@@ -42,7 +48,9 @@ describe('ReactivateAccount', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUser = deactivatedUser;
+    mockDeactivatedEmail = null;
     mockReactivateAccount.mockResolvedValue(undefined);
+    mockLogin.mockResolvedValue(deactivatedUser);
     mockLogout.mockResolvedValue(undefined);
   });
 
@@ -98,5 +106,83 @@ describe('ReactivateAccount', () => {
     mockUser = null;
     renderPage();
     expect(screen.getByText('Login Page')).toBeInTheDocument();
+  });
+
+  it('does not ask for a password when already signed in', () => {
+    renderPage();
+    expect(screen.queryByLabelText('Password')).not.toBeInTheDocument();
+  });
+
+  describe('after the session ended because the account was deactivated', () => {
+    beforeEach(() => {
+      mockUser = null;
+      mockDeactivatedEmail = 'alice@example.com';
+    });
+
+    it('shows the prompt and asks for the password', async () => {
+      const user = userEvent.setup();
+      renderPage();
+
+      expect(
+        screen.getByText('Your account is currently deactivated. Would you like to reactivate it?'),
+      ).toBeInTheDocument();
+      expect(screen.getByText('alice@example.com')).toBeInTheDocument();
+      const reactivate = screen.getByRole('button', { name: 'Reactivate Account' });
+      expect(reactivate).toBeDisabled();
+
+      await user.type(screen.getByLabelText('Password'), 'TestPass123');
+      expect(reactivate).toBeEnabled();
+    });
+
+    it('signs in with the password, then reactivates', async () => {
+      const user = userEvent.setup();
+      renderPage();
+
+      await user.type(screen.getByLabelText('Password'), 'TestPass123');
+      await user.click(screen.getByRole('button', { name: 'Reactivate Account' }));
+
+      await waitFor(() => expect(screen.getByText('Discover Page')).toBeInTheDocument());
+      expect(mockLogin).toHaveBeenCalledWith('alice@example.com', 'TestPass123');
+      expect(mockReactivateAccount).toHaveBeenCalledTimes(1);
+      expect(mockLogin.mock.invocationCallOrder[0]).toBeLessThan(
+        mockReactivateAccount.mock.invocationCallOrder[0],
+      );
+    });
+
+    it('shows the error and does not reactivate when the password is wrong', async () => {
+      mockLogin.mockRejectedValueOnce(new Error('Invalid credentials'));
+      const user = userEvent.setup();
+      renderPage();
+
+      await user.type(screen.getByLabelText('Password'), 'WrongPass1');
+      await user.click(screen.getByRole('button', { name: 'Reactivate Account' }));
+
+      await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent(/invalid credentials/i));
+      expect(mockReactivateAccount).not.toHaveBeenCalled();
+    });
+
+    it('skips reactivation if the account was already reactivated elsewhere', async () => {
+      mockLogin.mockResolvedValueOnce({ ...deactivatedUser, accountStatus: 'active' });
+      const user = userEvent.setup();
+      renderPage();
+
+      await user.type(screen.getByLabelText('Password'), 'TestPass123');
+      await user.click(screen.getByRole('button', { name: 'Reactivate Account' }));
+
+      await waitFor(() => expect(screen.getByText('Discover Page')).toBeInTheDocument());
+      expect(mockReactivateAccount).not.toHaveBeenCalled();
+    });
+
+    it('Stay Deactivated goes to login without signing in', async () => {
+      const user = userEvent.setup();
+      renderPage();
+
+      await user.click(screen.getByRole('button', { name: 'Stay Deactivated' }));
+
+      await waitFor(() => expect(screen.getByText('Login Page')).toBeInTheDocument());
+      expect(mockDismissDeactivated).toHaveBeenCalledTimes(1);
+      expect(mockLogin).not.toHaveBeenCalled();
+      expect(mockLogout).not.toHaveBeenCalled();
+    });
   });
 });

@@ -158,6 +158,27 @@ describe('settingsService', () => {
             expect(await AccountEvent.countDocuments({ user: user._id })).toBe(0);
         });
 
+        it('increments tokenVersion once, revoking existing tokens', async () => {
+            const user = await createTestUser({ email: 'deact-tv@example.com', password: 'TestPass123' });
+
+            await settingsService.deactivateAccount(user._id.toString(), 'TestPass123');
+            await settingsService.deactivateAccount(user._id.toString(), 'TestPass123');
+
+            const updated = await User.findById(user._id).select('+tokenVersion');
+            expect(updated?.tokenVersion).toBe(1);
+        });
+
+        it('leaves tokenVersion unchanged when the password is wrong', async () => {
+            const user = await createTestUser({ email: 'deact-tv-wrong@example.com', password: 'TestPass123' });
+
+            await expect(
+                settingsService.deactivateAccount(user._id.toString(), 'WrongPass1'),
+            ).rejects.toMatchObject({ statusCode: 401 });
+
+            const unchanged = await User.findById(user._id).select('+tokenVersion');
+            expect(unchanged?.tokenVersion).toBe(0);
+        });
+
         it('is a no-op when repeated, keeping the original date and a single event', async () => {
             const user = await createTestUser({ email: 'deact-twice@example.com', password: 'TestPass123' });
             await settingsService.deactivateAccount(user._id.toString(), 'TestPass123');
@@ -199,6 +220,16 @@ describe('settingsService', () => {
             expect(updated?.deactivatedAt).toBeUndefined();
             const events = await AccountEvent.find({ user: user._id }).sort({ createdAt: 1 });
             expect(events.map((e) => e.type)).toEqual(['deactivated', 'reactivated']);
+        });
+
+        it('does not change tokenVersion, so the sign-in token keeps working', async () => {
+            const user = await createTestUser({ email: 'react-tv@example.com', password: 'TestPass123' });
+            await settingsService.deactivateAccount(user._id.toString(), 'TestPass123');
+
+            await settingsService.reactivateAccount(user._id.toString());
+
+            const updated = await User.findById(user._id).select('+tokenVersion');
+            expect(updated?.tokenVersion).toBe(1);
         });
 
         it('is a no-op for an account that is already active', async () => {

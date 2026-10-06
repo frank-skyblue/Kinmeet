@@ -10,6 +10,9 @@ export interface AuthContextType {
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   reactivateAccount: () => Promise<void>;
+  /** Set when this device's session ended because the account was deactivated. */
+  deactivatedEmail: string | null;
+  dismissDeactivated: () => void;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);

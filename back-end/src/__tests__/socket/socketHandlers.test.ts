@@ -24,6 +24,7 @@ import { createTestUser, getAuthToken } from '../helpers';
 import { Connection } from '../../models/Connection';
 import { Message } from '../../models/Message';
 import { User } from '../../models/User';
+import { settingsService } from '../../services/settingsService';
 import { notificationService } from '../../services/notificationService';
 
 let httpServer: HTTPServer;
@@ -114,6 +115,40 @@ describe('Socket.IO Handlers', () => {
 
     expect(error.message).toContain('Account deactivated');
     socket.disconnect();
+  });
+
+  it('rejects connection with a revoked token', async () => {
+    const user = await createTestUser({ email: 'socket-revoked@test.com' });
+    const token = getAuthToken(user);
+    await User.updateOne({ _id: user._id }, { $inc: { tokenVersion: 1 } });
+
+    const socket = ioClient(`http://localhost:${port}`, {
+      auth: { token },
+      transports: ['websocket'],
+    });
+
+    const error = await new Promise<Error>((resolve) => {
+      socket.on('connect_error', resolve);
+    });
+
+    expect(error.message).toBe('Authentication error: Invalid token');
+    socket.disconnect();
+  });
+
+  it('closes open sockets on deactivation, and the old token cannot reconnect', async () => {
+    const user = await createTestUser({ email: 'socket-signout@test.com', password: 'TestPass123' });
+    const token = getAuthToken(user);
+    const client = await connectClient(token);
+
+    try {
+      const disconnected = new Promise<string>((resolve) => client.once('disconnect', resolve));
+      await settingsService.deactivateAccount(user._id.toString(), 'TestPass123');
+
+      expect(await disconnected).toBe('io server disconnect');
+      await expect(connectClient(token)).rejects.toThrow('Authentication error: Account deactivated');
+    } finally {
+      client.disconnect();
+    }
   });
 
   it('delivers messages in real-time', async () => {

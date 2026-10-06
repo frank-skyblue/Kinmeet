@@ -1,8 +1,5 @@
 import { Socket } from 'socket.io';
-import jwt from 'jsonwebtoken';
-import { JWT_SECRET } from '../config/env';
-import type { JwtPayload } from '../middleware/authMiddleware';
-import { isAccountDeactivated } from '../models/User';
+import { verifyAuthToken, type AuthTokenCheck } from '../middleware/authMiddleware';
 
 export const socketAuthMiddleware = async (socket: Socket, next: (err?: Error) => void) => {
   const token = socket.handshake.auth.token;
@@ -11,22 +8,23 @@ export const socketAuthMiddleware = async (socket: Socket, next: (err?: Error) =
     return next(new Error('Authentication error: No token provided'));
   }
 
-  let decoded: JwtPayload;
+  let verified: AuthTokenCheck;
   try {
-    decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
-  } catch (err) {
-    return next(new Error('Authentication error: Invalid token'));
-  }
-
-  try {
-    if (await isAccountDeactivated(decoded.id)) {
-      return next(new Error('Authentication error: Account deactivated'));
-    }
+    verified = await verifyAuthToken(token);
   } catch (err) {
     return next(new Error('Authentication error'));
   }
 
-  socket.data.userId = decoded.id;
-  socket.data.email = decoded.email;
+  const accountStatus = verified.valid ? verified.accountStatus : verified.revokedAccountStatus;
+  if (accountStatus === 'deactivated') {
+    return next(new Error('Authentication error: Account deactivated'));
+  }
+
+  if (!verified.valid) {
+    return next(new Error('Authentication error: Invalid token'));
+  }
+
+  socket.data.userId = verified.payload.id;
+  socket.data.email = verified.payload.email;
   next();
 };

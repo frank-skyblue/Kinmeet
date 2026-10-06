@@ -18,8 +18,8 @@ This document describes how the React SPA is structured: entry point, global sta
 
 ### Provider order (outer → inner)
 
-1. **`AuthProvider`** — JWT in `localStorage`, `user` / `token`, login/register/logout, `refreshUser`.
-2. **`SocketProvider`** — connects Socket.io when authenticated; exposes `socket` for real-time features.
+1. **`AuthProvider`** — JWT in `localStorage`, `user` / `token`, login/register/logout, `refreshUser`, `reactivateAccount`. Registers a handler with `services/api.ts` that clears the session when the API rejects the token (see [Data access](#data-access)).
+2. **`SocketProvider`** — connects Socket.io when authenticated and the account is active; exposes `socket` for real-time features.
 3. **`ChatInboxProvider`** — loads conversation list + unread count via REST; subscribes to socket events to keep inbox in sync; debounces refetch on visibility.
 4. **`ConnectionRequestsProvider`** — loads pending connection requests for nav badge / requests UI.
 5. **`Router`** — React Router `BrowserRouter` + `Routes`.
@@ -28,9 +28,9 @@ This document describes how the React SPA is structured: entry point, global sta
 
 ### Routing model
 
-- **Public:** `/login`, `/signup`, `/forgot-password`, `/reset-password`.
-- **Protected:** `Route element={<ProtectedRoute />}` wraps an `Outlet`; child `Route element={<Layout />}` wraps dashboard pages. Unauthenticated users are redirected to `/login`; `ProtectedRoute` shows a loading state while auth hydrates from storage.
-- **Layout children:** `/discover`, `/connections` (tabbed hub: **My kins** and **Requests**, `?tab=requests` for the requests panel), legacy `/requests` redirects to `/connections?tab=requests`, `/profile`, `/profile/:userId` (read-only view of a member), `/settings`, `/settings/account` (account management including delete account), `/settings/community-safety` (community guidelines and safety information), `/settings/support`, `/settings/support/contact`, `/settings/support/feedback`, `/chat`, `/chat/:userId` — all share `Layout` (nav, header chrome, chat entry).
+- **Public:** `/login`, `/signup`, `/forgot-password`, `/reset-password`, `/reactivate` (the reactivation prompt). It works signed in to a deactivated account, or signed out after this device's session ended because of deactivation, in which case it asks for the password first. Otherwise it redirects to `/login`, or to `/discover` for an active account.
+- **Protected:** `Route element={<ProtectedRoute />}` wraps an `Outlet`; child `Route element={<Layout />}` wraps dashboard pages. Unauthenticated users are redirected to `/login`, and deactivated accounts (including a session that just ended because of deactivation) to `/reactivate`; `ProtectedRoute` shows a loading state while auth hydrates from storage.
+- **Layout children:** `/discover`, `/connections` (tabbed hub: **My kins** and **Requests**, `?tab=requests` for the requests panel), legacy `/requests` redirects to `/connections?tab=requests`, `/profile`, `/profile/:userId` (read-only view of a member), `/settings`, `/settings/account` (account management including deactivate and delete account), `/settings/community-safety` (community guidelines and safety information), `/settings/support`, `/settings/support/contact`, `/settings/support/feedback`, `/chat`, `/chat/:userId` — all share `Layout` (nav, header chrome, chat entry).
 - **Fallbacks:** `/` and unknown paths `Navigate` to `/discover`.
 
 ---
@@ -42,7 +42,7 @@ This document describes how the React SPA is structured: entry point, global sta
 | **`types/index.ts`** | Shared domain/API TypeScript types. Prefer adding here over inline interfaces in components. |
 | **`constants/`** | Static options and validation helpers (e.g. profile options). Must not import from `components/`. |
 | **`utils/`** | Pure helpers (e.g. `getErrorMessage` in `error.ts`). |
-| **`services/api.ts`** | Axios instance with auth header interceptor; grouped exports: `authAPI` (login, register, checkEmail, logout, forgotPassword, resetPassword), `profileAPI`, `matchingAPI`, `connectionsAPI`, `chatAPI`, `blockAPI`, `feedbackAPI`, `supportAPI`; `getPhotoUrl()` for relative vs absolute image URLs; default `api` export. |
+| **`services/api.ts`** | Axios instance with an auth header request interceptor and a response interceptor for revoked sessions (`setSessionRevokedHandler`); grouped exports: `authAPI` (login, register, checkEmail, logout, forgotPassword, resetPassword), `profileAPI`, `matchingAPI`, `connectionsAPI`, `chatAPI`, `blockAPI`, `settingsAPI` (email, username, password, deactivate/reactivate account), `feedbackAPI`, `supportAPI`; `getPhotoUrl()` for relative vs absolute image URLs; default `api` export. |
 | **`services/socketService.ts`** | Singleton-style Socket.io client: `connect` / `disconnect` / `getSocket`. |
 | **`contexts/`** | React context + providers. Some features split **context definition** (`.ts`) from **provider component** (`.tsx`) to satisfy Fast Refresh when the file exports both hooks and non-component values. |
 | **`components/`** | Feature UI, grouped by domain: `auth/`, `dashboard/`, `matching/`, `connections/`, `chat/`, `profile/`, `settings/`, `common/`. |
@@ -67,8 +67,10 @@ Local and page-level state stay in components unless multiple distant trees need
 ## Data access
 
 - **HTTP:** Single `axios` base URL from `VITE_API_URL` (see README). Bearer token attached per request from `localStorage`.
+- **Revoked or expired sessions:** tokens carry the user's `tokenVersion` as `tv`, and deactivating an account increments it, which signs out every device. The API then answers **401** with a code saying why: **`ACCOUNT_DEACTIVATED`** when the token was revoked because the account is deactivated, otherwise **`INVALID_TOKEN`** (expired, revoked, or account deleted). The response interceptor passes the reason to the handler `AuthProvider` registered with `setSessionEndedHandler`. It clears the session; for a deactivation it also keeps the account's email (`deactivatedEmail`), so `ProtectedRoute` sends the device to `/reactivate` instead of `/login`. Other 401s (e.g. a wrong current password in settings) carry neither code and never sign the user out.
+- **Deactivated accounts:** a fresh sign-in to a deactivated account succeeds but is limited to reactivating, signing out, or deleting the account; other routes return **403 `ACCOUNT_DEACTIVATED`**. `utils/account.ts` (`activeUserOrNull`) lets providers treat such a session as signed out, so they don't fetch the inbox or requests or open a socket.
 - **Photos:** `getPhotoUrl(path)` resolves backend-relative paths against the API origin.
-- **WebSocket:** URL derived from API URL (strip `/api`); auth payload includes JWT.
+- **WebSocket:** URL derived from API URL (strip `/api`); auth payload includes JWT. When a session is revoked the server drops the socket (`io server disconnect`); `SocketProvider` then makes one authenticated request so the 401 handling above signs the device out.
 
 New REST surfaces should get typed payloads in `types/index.ts`, functions in `services/api.ts`, and callers in services/components — not ad hoc `fetch` scattered in UI.
 

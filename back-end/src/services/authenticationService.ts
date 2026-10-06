@@ -42,12 +42,18 @@ const authUserPayload = (user: IUser) => ({
     accountStatus: user.accountStatus ?? 'active',
 });
 
-const signAuthToken = (user: IUser) =>
-    jwt.sign(
-        { id: user._id.toString(), email: user.email, firstName: user.firstName },
+const signAuthToken = (user: IUser) => {
+    // tokenVersion is select: false; signing without it would issue a token that is
+    // already revoked for anyone whose version has been incremented.
+    if (typeof user.tokenVersion !== 'number') {
+        throw new Error('signAuthToken requires tokenVersion; select it with +tokenVersion');
+    }
+    return jwt.sign(
+        { id: user._id.toString(), email: user.email, firstName: user.firstName, tv: user.tokenVersion },
         JWT_SECRET,
         { expiresIn: '7d' },
     );
+};
 
 export interface LoginCredentials {
     email: string;
@@ -93,7 +99,7 @@ export interface LoginResponse {
 export const authenticationService = {
     login: async (credentials: LoginCredentials): Promise<LoginResponse> => {
         const { email, password } = credentials;
-        const user = await findUserByEmail(email);
+        const user = await findUserByEmail(email, '+tokenVersion');
         if (!user) throw new AppError(401, 'Invalid credentials');
 
         const isMatch = await user.comparePassword(password);

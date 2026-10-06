@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import type { Socket } from 'socket.io-client';
 import { socketService } from '../services/socketService';
+import { profileAPI } from '../services/api';
 import { useAuth } from './useAuth';
 import { activeUserOrNull } from '../utils/account';
 import { SocketContext } from './socket-context';
@@ -25,7 +26,15 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         setSocket(socketInstance);
 
         const handleConnect = () => setIsConnected(true);
-        const handleDisconnect = () => setIsConnected(false);
+        const handleDisconnect = (reason: Socket.DisconnectReason) => {
+          setIsConnected(false);
+          // The server drops sockets when the session is revoked, and socket.io won't
+          // reconnect on its own. Any authenticated request then confirms it: a 401
+          // INVALID_TOKEN signs this device out through the API interceptor.
+          if (reason === 'io server disconnect') {
+            void profileAPI.getProfile().catch(() => undefined);
+          }
+        };
 
         socketInstance.on('connect', handleConnect);
         socketInstance.on('disconnect', handleDisconnect);

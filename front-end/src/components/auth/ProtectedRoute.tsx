@@ -4,7 +4,7 @@ import { useAuth } from '../../contexts/useAuth';
 import { isAccountDeactivated } from '../../utils/account';
 
 const ProtectedRoute: React.FC = () => {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, deactivatedEmail } = useAuth();
 
   if (isLoading) {
     return (
@@ -18,7 +18,7 @@ const ProtectedRoute: React.FC = () => {
   }
 
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to={deactivatedEmail ? '/reactivate' : '/login'} replace />;
   }
 
   if (isAccountDeactivated(user)) {

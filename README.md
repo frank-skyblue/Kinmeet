@@ -309,6 +309,13 @@ Kinmeet/
 - `POST /api/chat/messages` - Send a message
 - `POST /api/chat/messages/read` - Mark messages as read
 
+### Settings
+- `PATCH /api/settings/email` - Change email (requires current password)
+- `PATCH /api/settings/username` - Change username
+- `PATCH /api/settings/password` - Change password (requires current password)
+- `POST /api/settings/account/deactivate` - Deactivate the account (requires current password); signs out every device
+- `POST /api/settings/account/reactivate` - Reactivate a deactivated account
+
 ### Block/Report
 - `POST /api/block/block` - Block a user
 - `DELETE /api/block/unblock/:userId` - Unblock a user
@@ -318,7 +325,7 @@ Kinmeet/
 ## 🔒 Security Features
 
 - Password hashing with bcryptjs
-- JWT-based authentication
+- JWT-based authentication with server-side revocation: each token carries the user's `tokenVersion`, and incrementing it (on account deactivation) signs out every device
 - Protected API routes
 - CORS configuration
 - Privacy-first design (no city-level location sharing)

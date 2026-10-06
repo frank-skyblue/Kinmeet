@@ -35,8 +35,10 @@ const DeactivateAccountModal: React.FC<DeactivateAccountModalProps> = ({ isOpen,
       return;
     }
 
-    await logout();
+    // Navigate first: this device's token is already revoked, so logout's requests end the
+    // session, and doing that on a protected page would redirect to /reactivate.
     navigate('/login', { replace: true, state: { flash: ACCOUNT_DEACTIVATED_MESSAGE } });
+    await logout();
   };
 
   const handleClose = () => {

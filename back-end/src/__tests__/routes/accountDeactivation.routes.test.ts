@@ -4,12 +4,18 @@ import { createTestApp, createTestUser, getAuthToken } from '../helpers';
 import { Block } from '../../models/Block';
 import { Connection } from '../../models/Connection';
 import { ConnectionRequest } from '../../models/ConnectionRequest';
+import { DeviceSubscription } from '../../models/DeviceSubscription';
 import { Message } from '../../models/Message';
 import { settingsService } from '../../services/settingsService';
 
 const app = createTestApp();
 
 const deactivate = (userId: string) => settingsService.deactivateAccount(userId, 'TestPass123');
+
+const signIn = async (email: string): Promise<string> => {
+    const res = await request(app).post('/api/auth/login').send({ email, password: 'TestPass123' });
+    return res.body.token;
+};
 
 // Alice stays active; Bob is the account that gets deactivated.
 const createPair = async () => {
@@ -68,19 +74,50 @@ describe('Account deactivation', () => {
         });
     });
 
-    describe('while deactivated, the account itself', () => {
-        it('is rejected with ACCOUNT_DEACTIVATED on regular routes', async () => {
+    describe('signing out every device', () => {
+        it('ends sessions from before deactivation on every route, including reactivation', async () => {
             const { bobToken, bobId } = await createPair();
             await deactivate(bobId);
 
-            for (const path of ['/api/profile/me', '/api/matching', '/api/connections', '/api/chat/conversations']) {
-                const res = await request(app).get(path).set('Authorization', `Bearer ${bobToken}`);
-                expect(res.status, path).toBe(403);
-                expect(res.body.code, path).toBe('ACCOUNT_DEACTIVATED');
+            const requests = [
+                request(app).get('/api/profile/me'),
+                request(app).get('/api/matching'),
+                request(app).post('/api/settings/account/reactivate'),
+                request(app).delete('/api/profile/me'),
+            ];
+            for (const req of requests) {
+                const res = await req.set('Authorization', `Bearer ${bobToken}`);
+                // 401: the session is over. ACCOUNT_DEACTIVATED tells the client why, so it
+                // can offer reactivation after the user signs in again.
+                expect(res.status).toBe(401);
+                expect(res.body.code).toBe('ACCOUNT_DEACTIVATED');
             }
         });
 
-        it('can still sign in, and the response reports the deactivated status', async () => {
+        it('removes the push subscriptions of every device', async () => {
+            const { bob, bobId } = await createPair();
+            await DeviceSubscription.create([
+                { userId: bob._id, channel: 'web_push', token: 'laptop' },
+                { userId: bob._id, channel: 'web_push', token: 'phone' },
+            ]);
+
+            await deactivate(bobId);
+
+            expect(await DeviceSubscription.countDocuments({ userId: bob._id })).toBe(0);
+        });
+
+        it('leaves other users signed in', async () => {
+            const { aliceToken, bobId } = await createPair();
+            await deactivate(bobId);
+
+            const res = await request(app).get('/api/profile/me').set('Authorization', `Bearer ${aliceToken}`);
+
+            expect(res.status).toBe(200);
+        });
+    });
+
+    describe('while deactivated, after signing in again', () => {
+        it('reports the deactivated status at sign-in', async () => {
             const { bobId } = await createPair();
             await deactivate(bobId);
 
@@ -92,16 +129,29 @@ describe('Account deactivation', () => {
             expect(res.body.user.accountStatus).toBe('deactivated');
         });
 
-        it('can sign out and unregister its push device', async () => {
-            const { bobToken, bobId } = await createPair();
+        it('is rejected with ACCOUNT_DEACTIVATED on regular routes', async () => {
+            const { bobId } = await createPair();
             await deactivate(bobId);
+            const token = await signIn('bob@test.com');
+
+            for (const path of ['/api/profile/me', '/api/matching', '/api/connections', '/api/chat/conversations']) {
+                const res = await request(app).get(path).set('Authorization', `Bearer ${token}`);
+                expect(res.status, path).toBe(403);
+                expect(res.body.code, path).toBe('ACCOUNT_DEACTIVATED');
+            }
+        });
+
+        it('can sign out and unregister its push device', async () => {
+            const { bobId } = await createPair();
+            await deactivate(bobId);
+            const token = await signIn('bob@test.com');
 
             const logout = await request(app)
                 .post('/api/auth/logout')
-                .set('Authorization', `Bearer ${bobToken}`);
+                .set('Authorization', `Bearer ${token}`);
             const unregister = await request(app)
                 .delete('/api/notifications/devices')
-                .set('Authorization', `Bearer ${bobToken}`)
+                .set('Authorization', `Bearer ${token}`)
                 .send({ channel: 'web_push', token: 'device-token' });
 
             expect(logout.status).toBe(200);
@@ -109,26 +159,28 @@ describe('Account deactivation', () => {
         });
 
         it('can permanently delete itself', async () => {
-            const { bobToken, bobId } = await createPair();
+            const { bobId } = await createPair();
             await deactivate(bobId);
+            const token = await signIn('bob@test.com');
 
             const res = await request(app)
                 .delete('/api/profile/me')
-                .set('Authorization', `Bearer ${bobToken}`);
+                .set('Authorization', `Bearer ${token}`);
 
             expect(res.status).toBe(200);
         });
 
-        it('regains normal access after reactivating', async () => {
-            const { bobToken, bobId } = await createPair();
+        it('regains normal access with the same token after reactivating', async () => {
+            const { bobId } = await createPair();
             await deactivate(bobId);
+            const token = await signIn('bob@test.com');
 
             const reactivate = await request(app)
                 .post('/api/settings/account/reactivate')
-                .set('Authorization', `Bearer ${bobToken}`);
+                .set('Authorization', `Bearer ${token}`);
             const profile = await request(app)
                 .get('/api/profile/me')
-                .set('Authorization', `Bearer ${bobToken}`);
+                .set('Authorization', `Bearer ${token}`);
 
             expect(reactivate.status).toBe(200);
             expect(reactivate.body.accountStatus).toBe('active');
@@ -242,7 +294,7 @@ describe('Account deactivation', () => {
 
     describe('after reactivation', () => {
         it('restores visibility and messaging, and keeps blocks in place', async () => {
-            const { alice, bob, aliceToken, bobToken, bobId } = await createPair();
+            const { alice, bob, aliceToken, bobId } = await createPair();
             const carol = await createTestUser({ email: 'carol@test.com', firstName: 'Carol' });
             await Connection.create({ user1: alice._id, user2: bob._id });
             await Block.create({ blocker: carol._id, blocked: bob._id });
@@ -250,7 +302,7 @@ describe('Account deactivation', () => {
 
             await request(app)
                 .post('/api/settings/account/reactivate')
-                .set('Authorization', `Bearer ${bobToken}`);
+                .set('Authorization', `Bearer ${await signIn('bob@test.com')}`);
 
             const kins = await request(app).get('/api/connections').set('Authorization', `Bearer ${aliceToken}`);
             const message = await request(app)

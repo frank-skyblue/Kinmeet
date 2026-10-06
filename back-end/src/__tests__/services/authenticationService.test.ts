@@ -31,6 +31,7 @@ describe('authenticationService', () => {
 
       const decoded = jwt.verify(result.token!, process.env.JWT_SECRET!) as Record<string, unknown>;
       expect(decoded.email).toBe('new@example.com');
+      expect(decoded.tv).toBe(0);
 
       const user = await User.findOne({ email: 'new@example.com' });
       expect(user?.gender).toBe('female');
@@ -257,6 +258,30 @@ describe('authenticationService', () => {
       expect(result.success).toBe(true);
       expect(result.token).toBeDefined();
       expect(result.user?.email).toBe('login@test.com');
+    });
+
+    it('signs the token with the current tokenVersion', async () => {
+      const user = await createTestUser({ email: 'versioned@test.com', password: 'TestPass123' });
+      await User.updateOne({ _id: user._id }, { $inc: { tokenVersion: 2 } });
+
+      const result = await authenticationService.login({
+        email: 'versioned@test.com',
+        password: 'TestPass123',
+      });
+
+      const decoded = jwt.verify(result.token!, process.env.JWT_SECRET!) as Record<string, unknown>;
+      expect(decoded.tv).toBe(2);
+    });
+
+    it('does not return tokenVersion in the user payload', async () => {
+      await createTestUser({ email: 'payload@test.com', password: 'TestPass123' });
+
+      const result = await authenticationService.login({
+        email: 'payload@test.com',
+        password: 'TestPass123',
+      });
+
+      expect(result.user).not.toHaveProperty('tokenVersion');
     });
 
     it('logs in with mixed-case email', async () => {

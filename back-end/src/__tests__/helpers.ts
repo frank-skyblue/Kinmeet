@@ -80,9 +80,10 @@ export const createTestUser = async (overrides: Partial<TestUserData> = {}): Pro
   return user;
 };
 
+// Mirrors signAuthToken. A freshly created user's tokenVersion is 0.
 export const getAuthToken = (user: IUser): string => {
   return jwt.sign(
-    { id: user._id.toString(), email: user.email, firstName: user.firstName },
+    { id: user._id.toString(), email: user.email, firstName: user.firstName, tv: user.tokenVersion ?? 0 },
     process.env.JWT_SECRET!,
     { expiresIn: '1h' },
   );
