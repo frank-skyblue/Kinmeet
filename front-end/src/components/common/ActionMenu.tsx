@@ -29,7 +29,7 @@ const MENU_WIDTH: Record<'sm' | 'md', string> = {
 };
 
 const ITEM_VARIANT: Record<'default' | 'destructive', string> = {
-  default: 'text-kin-navy hover:bg-kin-beige focus-visible:bg-kin-beige',
+  default: 'text-foreground hover:bg-surface-muted focus-visible:bg-canvas',
   destructive: 'text-kin-coral-700 hover:bg-kin-coral-50 focus-visible:bg-kin-coral-50',
 };
 
@@ -96,7 +96,7 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
           swallow(e);
           setIsOpen((open) => !open);
         }}
-        className={`flex ${TRIGGER_SIZE[size]} items-center justify-center rounded-kin-sm text-kin-navy transition hover:bg-kin-stone-100 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral`}
+        className={`flex ${TRIGGER_SIZE[size]} items-center justify-center rounded-kin-sm text-foreground transition hover:bg-surface-muted cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring`}
       >
         <span className="sr-only">Open menu</span>
         <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
@@ -111,7 +111,7 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
           id={menuId}
           role="menu"
           aria-labelledby={triggerId}
-          className={`absolute right-0 top-full z-20 mt-1 ${MENU_WIDTH[size]} rounded-kin-sm border border-kin-stone-200 bg-white py-1 shadow-kin-strong`}
+          className={`absolute right-0 top-full z-20 mt-1 ${MENU_WIDTH[size]} rounded-kin-sm border border-border bg-surface py-1 shadow-kin-strong`}
         >
           {items.map((item) => (
             <li key={item.label} role="presentation">

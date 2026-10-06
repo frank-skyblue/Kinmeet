@@ -15,6 +15,7 @@ import type {
   ChatUserTypingPayload,
   UserProfile,
 } from '../../types';
+import { primaryActionClass, textFieldClass } from '../../constants/ui';
 import {
   formatMessageTime,
   groupMessagesByDate,
@@ -227,24 +228,24 @@ const ChatThread: React.FC<ChatThreadProps> = ({ userId }) => {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-[50vh] flex-1 items-center justify-center bg-kin-beige">
+      <div className="flex min-h-[50vh] flex-1 items-center justify-center bg-canvas">
         <div className="text-center">
           <div className="mx-auto mb-4 h-16 w-16 animate-spin rounded-full border-b-2 border-kin-coral" />
-          <p className="font-inter text-kin-navy">Loading conversation...</p>
+          <p className="font-inter text-foreground">Loading conversation...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col bg-kin-beige">
-      <div className="shrink-0 border-b border-kin-stone-200 bg-white px-4 py-4 shadow-kin-soft md:px-6">
+    <div className="flex min-h-0 flex-1 flex-col bg-canvas">
+      <div className="shrink-0 border-b border-border bg-surface px-4 py-4 shadow-kin-soft md:px-6">
         <div className="mx-auto flex max-w-5xl items-center justify-between">
           <div className="flex items-center gap-3 md:gap-4">
             <button
               type="button"
               onClick={handleBackToInbox}
-              className="text-kin-navy transition hover:text-kin-coral md:hidden"
+              className="text-foreground transition hover:text-kin-coral md:hidden"
               aria-label="Back to inbox"
             >
               <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -269,7 +270,7 @@ const ChatThread: React.FC<ChatThreadProps> = ({ userId }) => {
             ) : otherUser && (
               <Link
                 to={`/profile/${userId}`}
-                className="flex min-w-0 items-center gap-3 rounded-kin-sm outline-none transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-kin-coral focus-visible:ring-offset-2 md:gap-4"
+                className="flex min-w-0 items-center gap-3 rounded-kin-sm outline-none transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:gap-4"
                 aria-label={`View ${otherUser.firstName} ${otherUser.lastName}'s profile`}
               >
                 {otherUser.photo ? (
@@ -285,10 +286,10 @@ const ChatThread: React.FC<ChatThreadProps> = ({ userId }) => {
                 )}
 
                 <div className="min-w-0 text-left">
-                  <h2 className="truncate font-montserrat text-base font-bold text-kin-navy md:text-lg">
+                  <h2 className="truncate font-montserrat text-base font-bold text-foreground md:text-lg">
                     {otherUser.firstName} {otherUser.lastName}
                   </h2>
-                  <p className="truncate font-inter text-xs text-kin-teal md:text-sm">
+                  <p className="truncate font-inter text-xs text-muted md:text-sm">
                     {otherUser.currentProvince}, {otherUser.currentCountry}
                   </p>
                 </div>
@@ -299,7 +300,7 @@ const ChatThread: React.FC<ChatThreadProps> = ({ userId }) => {
           <div className="flex items-center gap-2">
             {!isConnected && (
               <div className="flex items-center gap-2 font-inter text-sm text-kin-coral">
-                <div className="h-2 w-2 animate-pulse rounded-full bg-kin-coral" />
+                <div className="h-2 w-2 animate-pulse rounded-full bg-primary" />
                 Reconnecting...
               </div>
             )}
@@ -324,10 +325,10 @@ const ChatThread: React.FC<ChatThreadProps> = ({ userId }) => {
           {messages.length === 0 ? (
             <div className="py-12 text-center md:py-16">
               <div className="mb-4 text-5xl md:text-6xl">💬</div>
-              <h3 className="mb-2 font-montserrat text-lg font-bold text-kin-navy md:text-xl">
+              <h3 className="mb-2 font-montserrat text-lg font-bold text-foreground md:text-xl">
                 Start the conversation
               </h3>
-              <p className="font-inter text-kin-teal">Send a message to begin chatting!</p>
+              <p className="font-inter text-muted">Send a message to begin chatting!</p>
             </div>
           ) : (
             messageDateGroups.map((group) => (
@@ -336,7 +337,7 @@ const ChatThread: React.FC<ChatThreadProps> = ({ userId }) => {
                   className="sticky top-0 z-10 flex justify-center py-2"
                   data-testid="chat-date-separator"
                 >
-                  <span className="rounded-full bg-white px-4 py-1 font-inter text-xs font-medium text-kin-teal shadow-kin-soft">
+                  <span className="rounded-full bg-surface px-4 py-1 font-inter text-xs font-medium text-muted shadow-kin-soft">
                     {group.dateLabel}
                   </span>
                 </div>
@@ -360,8 +361,8 @@ const ChatThread: React.FC<ChatThreadProps> = ({ userId }) => {
                         onKeyDown={(event) => handleMessageKeyDown(event, message._id)}
                         className={`max-w-xs cursor-pointer rounded-kin-lg px-4 py-3 font-inter transition duration-200 hover:shadow-kin-medium lg:max-w-md ${
                           isOwn
-                            ? 'bg-kin-coral text-white shadow-kin-soft hover:bg-kin-coral-600'
-                            : 'bg-white text-kin-navy shadow-kin-soft hover:bg-kin-beige'
+                            ? `${primaryActionClass} shadow-kin-soft`
+                            : 'bg-surface text-foreground shadow-kin-soft hover:bg-surface-muted'
                         }`}
                       >
                         <p className="wrap-break-word whitespace-pre-wrap">{message.content}</p>
@@ -369,7 +370,7 @@ const ChatThread: React.FC<ChatThreadProps> = ({ userId }) => {
                       {isSelected && (
                         <p
                           data-testid="chat-message-timestamp"
-                          className={`mt-1 px-1 font-inter text-xs ${isOwn ? 'text-kin-teal' : 'text-kin-teal'}`}
+                          className={`mt-1 px-1 font-inter text-xs ${isOwn ? 'text-muted' : 'text-muted'}`}
                         >
                           {formatMessageTime(message.createdAt)}
                         </p>
@@ -383,7 +384,7 @@ const ChatThread: React.FC<ChatThreadProps> = ({ userId }) => {
 
           {isTyping && (
             <div className="flex justify-start">
-              <div className="rounded-kin-lg bg-white px-4 py-3 shadow-kin-soft">
+              <div className="rounded-kin-lg bg-surface px-4 py-3 shadow-kin-soft">
                 <div className="flex gap-1">
                   <div className="h-2 w-2 animate-bounce rounded-full bg-kin-teal" />
                   <div className="h-2 w-2 animate-bounce rounded-full bg-kin-teal delay-150" />
@@ -397,16 +398,16 @@ const ChatThread: React.FC<ChatThreadProps> = ({ userId }) => {
         </div>
       </div>
 
-      <div className="shrink-0 border-t border-kin-stone-200 bg-white px-4 py-4 shadow-kin-soft md:px-6">
+      <div className="shrink-0 border-t border-border bg-surface px-4 py-4 shadow-kin-soft md:px-6">
         <form onSubmit={handleSendMessage} className="mx-auto max-w-3xl">
           <div className="flex gap-3">
             <input
               type="text"
               value={newMessage}
               onChange={handleInputChange}
-              placeholder={isPeerUnavailable ? 'This account is unavailable' : 'Type a message...'}
-              className="flex-1 rounded-kin-sm border border-kin-stone-300 px-4 py-3 font-inter outline-none transition focus:border-transparent focus:ring-2 focus:ring-kin-coral"
-              disabled={isSending || !isConnected || isPeerUnavailable}
+              placeholder="Type a message..."
+              className={`${textFieldClass} flex-1 rounded-kin-sm px-4 py-3 transition`}
+              disabled={isSending || !isConnected}
               aria-label="Type a message"
             />
             <button
@@ -416,7 +417,7 @@ const ChatThread: React.FC<ChatThreadProps> = ({ userId }) => {
               aria-label="Send message"
             >
               {isSending ? (
-                <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-white" />
+                <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-primary-foreground" />
               ) : (
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path

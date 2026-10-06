@@ -121,10 +121,10 @@ const ScreenshotDropzone: React.FC<ScreenshotDropzoneProps> = ({
     <div>
       <p
         id={labelId}
-        className="block text-sm font-semibold font-inter text-kin-navy mb-2"
+        className="block text-sm font-semibold font-inter text-foreground mb-2"
       >
         Screenshots{' '}
-        <span className="font-normal text-kin-navy/50">(optional)</span>
+        <span className="font-normal text-foreground/50">(optional)</span>
       </p>
 
       <button
@@ -141,17 +141,17 @@ const ScreenshotDropzone: React.FC<ScreenshotDropzoneProps> = ({
         disabled={isDropzoneDisabled}
         aria-disabled={isDropzoneDisabled}
         aria-label={dropzoneLabel}
-        className={`w-full rounded-kin-sm border border-dashed px-4 py-3 text-left transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral ${
+        className={`w-full rounded-kin-sm border border-dashed px-4 py-3 text-left transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
           isDropzoneDisabled
-            ? 'cursor-not-allowed border-kin-stone-300 bg-kin-stone-100 opacity-50'
+            ? 'cursor-not-allowed border-border bg-surface-muted opacity-50'
             : isDragActive
-              ? 'border-kin-teal bg-kin-beige'
-              : 'border-kin-stone-300 bg-kin-stone-100 hover:border-kin-teal hover:bg-kin-beige cursor-pointer'
+              ? 'border-kin-teal bg-canvas'
+              : 'border-border bg-surface-muted hover:border-kin-teal hover:bg-surface-muted cursor-pointer'
         }`}
       >
         <span
           className={`inline-flex items-center gap-2 text-sm font-semibold font-inter ${
-            isDropzoneDisabled ? 'text-kin-navy/50' : 'text-kin-teal'
+            isDropzoneDisabled ? 'text-foreground/50' : 'text-muted'
           }`}
         >
           <svg
@@ -170,7 +170,7 @@ const ScreenshotDropzone: React.FC<ScreenshotDropzoneProps> = ({
           </svg>
           {dropzoneLabel}
         </span>
-        <span className="mt-1 block text-xs font-inter text-kin-navy/60">
+        <span className="mt-1 block text-xs font-inter text-foreground/60">
           JPG, PNG, WebP or GIF · Up to 3 files · 5 MB each
         </span>
       </button>
@@ -189,16 +189,16 @@ const ScreenshotDropzone: React.FC<ScreenshotDropzoneProps> = ({
 
       {files.length > 0 && (
         <div className="mt-3">
-          <p className="text-xs font-inter text-kin-navy/60 mb-2">
+          <p className="text-xs font-inter text-foreground/60 mb-2">
             {files.length}/{MAX_SCREENSHOTS} selected
           </p>
           <ul className="space-y-2" aria-label="Selected screenshots">
             {files.map((file, index) => (
               <li
                 key={`${file.name}-${file.lastModified}-${index}`}
-                className="flex items-center justify-between gap-3 rounded-kin-sm border border-kin-stone-200 px-3 py-2"
+                className="flex items-center justify-between gap-3 rounded-kin-sm border border-border px-3 py-2"
               >
-                <span className="min-w-0 truncate text-sm font-inter text-kin-navy">
+                <span className="min-w-0 truncate text-sm font-inter text-foreground">
                   {file.name}
                 </span>
                 <button

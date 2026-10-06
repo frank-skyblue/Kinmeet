@@ -1,0 +1,29 @@
+/*
+  Copy this file to add a theme. Change the colors below, then register the name:
+  1. Import the new file from src/index.css.
+  2. Add the name to THEME_PREFERENCES in src/constants/themes.ts.
+  3. Add the name to the allowed map in index.html.
+  Full steps: front-end/THEME_IMPLEMENTATION.md
+*/
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+  --canvas: #f9f1e3;
+  --surface: #ffffff;
+  --surface-muted: #f9f1e3;
+  --surface-hover: #f0e0c0;
+  --foreground: #113b50;
+  --muted: #4f7a72;
+  --border: #d7d3cf;
+  --primary: #f47a5f;
+  --primary-hover: #f15a3a;
+  --primary-foreground: #ffffff;
+  --secondary: #d7d3cf;
+  --secondary-hover: #c3bdb7;
+  --secondary-foreground: #113b50;
+  --ring: #f47a5f;
+  --overlay: rgb(0 0 0 / 0.5);
+  --shadow-soft: rgb(17 59 80 / 0.08);
+  --shadow-medium: rgb(17 59 80 / 0.12);
+  --shadow-strong: rgb(17 59 80 / 0.16);
+}

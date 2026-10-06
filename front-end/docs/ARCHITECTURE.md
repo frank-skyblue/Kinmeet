@@ -9,8 +9,9 @@ This document describes how the React SPA is structured: entry point, global sta
 | Piece | Role |
 |--------|------|
 | `index.html` | Vite mount; `#root` |
-| `src/main.tsx` | `StrictMode`, renders `App` |
-| `src/index.css` | Tailwind v4 / global styles |
+| `src/main.tsx` | `StrictMode`, `ThemeProvider`, renders `App` |
+| `src/index.css` | Tailwind v4 entry. Imports `src/styles/` (palette, semantic roles, themes, base). |
+| `src/styles/` | Design tokens. Brand scales stay fixed. Each theme file assigns the same role variables. |
 
 ---
 
@@ -18,8 +19,12 @@ This document describes how the React SPA is structured: entry point, global sta
 
 ### Provider order (outer → inner)
 
+
+Inside `App`:
+
 1. **`AuthProvider`** — JWT in `localStorage`, `user` / `token`, login/register/logout, `refreshUser`, `reactivateAccount`. Registers a handler with `services/api.ts` that clears the session when the API rejects the token (see [Data access](#data-access)).
 2. **`SocketProvider`** — connects Socket.io when authenticated and the account is active; exposes `socket` for real-time features.
+`ThemeProvider` wraps the tree in `main.tsx`, outside auth, so public pages use the same theme. It stores the preference in `localStorage` and sets `data-theme` on `<html>`. The only registered theme right now is `light`.
 3. **`ChatInboxProvider`** — loads conversation list + unread count via REST; subscribes to socket events to keep inbox in sync; debounces refetch on visibility.
 4. **`ConnectionRequestsProvider`** — loads pending connection requests for nav badge / requests UI.
 5. **`Router`** — React Router `BrowserRouter` + `Routes`.
@@ -39,8 +44,8 @@ This document describes how the React SPA is structured: entry point, global sta
 
 | Area | Responsibility |
 |------|----------------|
-| **`types/index.ts`** | Shared domain/API TypeScript types. Prefer adding here over inline interfaces in components. |
-| **`constants/`** | Static options and validation helpers (e.g. profile options). Must not import from `components/`. |
+| **`styles/`** | Tailwind theme layers: brand palette, semantic roles, per-theme assignments, and global base styles. |
+| **`constants/`** | Static options, validation helpers, and shared UI class strings (`ui.ts`). Must not import from `components/`. |
 | **`utils/`** | Pure helpers (e.g. `getErrorMessage` in `error.ts`). |
 | **`services/api.ts`** | Axios instance with an auth header request interceptor and a response interceptor for revoked sessions (`setSessionRevokedHandler`); grouped exports: `authAPI` (login, register, checkEmail, logout, forgotPassword, resetPassword), `profileAPI`, `matchingAPI`, `connectionsAPI`, `chatAPI`, `blockAPI`, `settingsAPI` (email, username, password, deactivate/reactivate account), `feedbackAPI`, `supportAPI`; `getPhotoUrl()` for relative vs absolute image URLs; default `api` export. |
 | **`services/socketService.ts`** | Singleton-style Socket.io client: `connect` / `disconnect` / `getSocket`. |
@@ -55,6 +60,7 @@ This document describes how the React SPA is structured: entry point, global sta
 
 | Context | Source files | Consumption |
 |---------|----------------|-------------|
+| Theme | `theme-context.ts`, `ThemeProvider.tsx` | `useTheme()` — preference, resolved theme, and `setPreference`. |
 | Auth | `AuthContext.tsx` | `useAuth()` — app-wide identity and token. |
 | Socket | `SocketContext.tsx` | `useSocket()` — real-time connection after login. |
 | Chat inbox | `chatInboxContext.ts`, `ChatInboxProvider.tsx` | `useChatInbox()` — conversations, unread count, refetch, merge helpers for new messages. |

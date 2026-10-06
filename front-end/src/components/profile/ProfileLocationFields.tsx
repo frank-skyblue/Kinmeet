@@ -55,8 +55,8 @@ const ProfileLocationFields: React.FC<ProfileLocationFieldsProps> = ({
   };
 
   return (
-    <div className="space-y-4 border-t border-kin-stone-200 pt-4">
-      <p className="text-sm font-semibold font-montserrat text-kin-navy">
+    <div className="space-y-4 border-t border-border pt-4">
+      <p className="text-sm font-semibold font-montserrat text-foreground">
         Where you live now
       </p>
       <CitySearchInput
@@ -88,9 +88,9 @@ const ProfileLocationFields: React.FC<ProfileLocationFieldsProps> = ({
         }
       />
       {!manualCountryMode ? (
-        <div className="rounded-kin-sm border border-kin-stone-200 bg-kin-stone-50 px-4 py-3">
-          <p className="text-sm font-medium font-inter text-kin-navy mb-1">Country</p>
-          <p className="text-kin-navy font-inter">
+        <div className="rounded-kin-sm border border-border bg-surface-muted px-4 py-3">
+          <p className="text-sm font-medium font-inter text-foreground mb-1">Country</p>
+          <p className="text-foreground font-inter">
             {currentCountry ? (
               <CountryWithFlag country={currentCountry} />
             ) : (
@@ -100,7 +100,7 @@ const ProfileLocationFields: React.FC<ProfileLocationFieldsProps> = ({
           <button
             type="button"
             onClick={() => setManualCountryMode(true)}
-            className="mt-2 text-sm font-semibold text-kin-teal hover:text-kin-teal-700 cursor-pointer underline"
+            className="mt-2 text-sm font-semibold text-muted hover:text-kin-teal-700 cursor-pointer underline"
             aria-label="Pick country and province manually"
           >
             Change country or province manually
@@ -122,7 +122,7 @@ const ProfileLocationFields: React.FC<ProfileLocationFieldsProps> = ({
           <button
             type="button"
             onClick={() => setManualCountryMode(false)}
-            className="text-sm font-semibold text-kin-teal hover:text-kin-teal-700 cursor-pointer underline"
+            className="text-sm font-semibold text-muted hover:text-kin-teal-700 cursor-pointer underline"
             aria-label="Use worldwide province list instead"
           >
             Use worldwide province list instead

@@ -14,7 +14,7 @@ alwaysApply: true
 - **`utils/`** — shared helpers (e.g. `getErrorMessage`).
 - **`constants/`** — static data and validation. Must not import from components.
 - **`services/`** — API client with typed payloads. No `any`.
-- **`contexts/`** — Auth and Socket providers.
+- **`contexts/`** — Auth, Socket, and Theme providers.
 - **`components/`** — feature-organized (`auth/`, `chat/`, `profile/`, `common/`, etc.).
 
 ## Conventions
@@ -25,7 +25,7 @@ alwaysApply: true
 - Reuse `DynamicListField`, `LookingForCheckboxes`, `validatePhotoFile()` — don't reinvent.
 - Protected routes: `<ProtectedRoute />` wraps `<Layout />` via nested `<Route element>`.
 - No `any` — type all payloads, catch blocks, and context values.
-- Use Tailwind for all styling — no inline styles or CSS files.
+- Use Tailwind for component styling. Do not add feature CSS files or inline styles. Design tokens live only in `src/styles/`.
 - Prefix event handlers with `handle` (e.g. `handleClick`, `handleSubmit`).
 - Add accessibility attrs: `aria-label`, `tabIndex`, `role` where appropriate.
 - Don't use unnecessary `useCallback` and `useMemo`.

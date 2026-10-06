@@ -10,6 +10,7 @@ import type { SupportIssueType } from '../../types';
 import { getErrorMessage } from '../../utils/error';
 import SearchableSelect from '../common/SearchableSelect';
 import ScreenshotDropzone from '../common/ScreenshotDropzone';
+import { surfaceCardClass } from '../../constants/ui';
 
 const supportIssueTypeOptions = SUPPORT_ISSUE_TYPES.map((option) => ({
   value: option,
@@ -89,13 +90,13 @@ const ContactSupport: React.FC = () => {
   };
 
   return (
-    <div className="bg-kin-beige py-8 px-4">
+    <div className="bg-canvas py-8 px-4">
       <div className="max-w-3xl mx-auto">
-        <div className="bg-white rounded-kin-xl shadow-kin-strong overflow-hidden">
+        <div className={`${surfaceCardClass} rounded-kin-xl overflow-hidden`}>
           <div className="px-8 py-8">
             <Link
               to="/settings/support"
-              className="inline-flex items-center gap-1 text-sm font-inter text-kin-teal hover:text-kin-teal-700 transition mb-6 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral"
+              className="inline-flex items-center gap-1 text-sm font-inter text-muted hover:text-kin-teal-700 transition mb-6 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
               aria-label="Back to Support"
             >
               <svg
@@ -115,10 +116,10 @@ const ContactSupport: React.FC = () => {
               Support
             </Link>
 
-            <h1 className="text-3xl font-bold font-montserrat text-kin-navy mb-2">
+            <h1 className="text-3xl font-bold font-montserrat text-foreground mb-2">
               Contact Support
             </h1>
-            <p className="text-kin-navy font-inter mb-8">
+            <p className="text-foreground font-inter mb-8">
               Need help with something? Send us a message and we’ll get back to you as soon as
               possible.
             </p>
@@ -156,10 +157,10 @@ const ContactSupport: React.FC = () => {
                 <div>
                   <label
                     htmlFor="support-subject"
-                    className="block text-sm font-semibold font-inter text-kin-navy mb-2"
+                    className="block text-sm font-semibold font-inter text-foreground mb-2"
                   >
                     Subject{' '}
-                    <span className="font-normal text-kin-navy/50">(optional)</span>
+                    <span className="font-normal text-foreground/50">(optional)</span>
                   </label>
                   <div className="relative">
                     <input
@@ -167,7 +168,7 @@ const ContactSupport: React.FC = () => {
                       type="text"
                       value={subject}
                       onChange={handleSubjectChange}
-                      className="w-full px-4 py-3 pr-16 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent font-inter text-kin-navy"
+                      className="w-full px-4 py-3 pr-16 border border-border rounded-kin-sm focus:ring-2 focus:ring-ring focus:border-transparent font-inter text-foreground"
                       maxLength={SUPPORT_SUBJECT_MAX_LENGTH}
                       aria-describedby="support-subject-count"
                     />
@@ -176,7 +177,7 @@ const ContactSupport: React.FC = () => {
                       className={`pointer-events-none absolute bottom-3 right-3 text-xs font-inter ${
                         subject.length >= SUPPORT_SUBJECT_MAX_LENGTH
                           ? 'text-kin-coral'
-                          : 'text-kin-navy/50'
+                          : 'text-foreground/50'
                       }`}
                     >
                       {subject.length} / {SUPPORT_SUBJECT_MAX_LENGTH}
@@ -187,7 +188,7 @@ const ContactSupport: React.FC = () => {
                 <div>
                   <label
                     htmlFor="support-message"
-                    className="block text-sm font-semibold font-inter text-kin-navy mb-2"
+                    className="block text-sm font-semibold font-inter text-foreground mb-2"
                   >
                     Message
                     <span className="text-kin-coral ml-1">*</span>
@@ -197,7 +198,7 @@ const ContactSupport: React.FC = () => {
                       id="support-message"
                       value={message}
                       onChange={handleMessageChange}
-                      className="w-full px-4 pt-3 pb-8 pr-16 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent font-inter text-kin-navy"
+                      className="w-full px-4 pt-3 pb-8 pr-16 border border-border rounded-kin-sm focus:ring-2 focus:ring-ring focus:border-transparent font-inter text-foreground"
                       rows={6}
                       maxLength={SUPPORT_MESSAGE_MAX_LENGTH}
                       aria-describedby="support-message-count"
@@ -208,7 +209,7 @@ const ContactSupport: React.FC = () => {
                       className={`pointer-events-none absolute bottom-3 right-3 text-xs font-inter ${
                         message.length >= SUPPORT_MESSAGE_MAX_LENGTH
                           ? 'text-kin-coral'
-                          : 'text-kin-navy/50'
+                          : 'text-foreground/50'
                       }`}
                     >
                       {message.length} / {SUPPORT_MESSAGE_MAX_LENGTH}
@@ -231,12 +232,12 @@ const ContactSupport: React.FC = () => {
                   labelId="support-screenshots-label"
                 />
 
-                <label className="flex items-center gap-3 text-sm font-inter text-kin-navy hover:cursor-pointer">
+                <label className="flex items-center gap-3 text-sm font-inter text-foreground hover:cursor-pointer">
                   <input
                     type="checkbox"
                     checked={followUp}
                     onChange={(e) => setFollowUp(e.target.checked)}
-                    className="h-5 w-5 shrink-0 rounded border-kin-stone-300 text-kin-coral focus:ring-kin-coral hover:cursor-pointer"
+                    className="h-5 w-5 shrink-0 rounded border-border text-kin-coral focus:ring-ring hover:cursor-pointer"
                   />
                   <span>Allow KinMeet to contact me about this support request.</span>
                 </label>
