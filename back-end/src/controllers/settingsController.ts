@@ -30,3 +30,18 @@ export const changePassword = asyncHandler(async (req: AuthRequest, res: Respons
     await settingsService.changePassword(req.user!.id, currentPassword, newPassword);
     return res.status(200).json({ success: true, message: 'Password updated successfully' });
 });
+
+export const deactivateAccount = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { currentPassword } = req.body as { currentPassword: string };
+    await settingsService.deactivateAccount(req.user!.id, currentPassword);
+    return res.status(200).json({ success: true, message: 'Account deactivated successfully' });
+});
+
+export const reactivateAccount = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const result = await settingsService.reactivateAccount(req.user!.id);
+    return res.status(200).json({
+        success: true,
+        message: 'Account reactivated successfully',
+        ...result,
+    });
+});

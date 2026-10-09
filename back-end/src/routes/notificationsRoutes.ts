@@ -1,5 +1,5 @@
 import express from 'express';
-import { authenticateJWT } from '../middleware/authMiddleware';
+import { authenticateJWT, authenticateJWTAllowDeactivated } from '../middleware/authMiddleware';
 import { validate } from '../middleware/validate';
 import {
     registerNotificationDeviceSchema,
@@ -9,9 +9,17 @@ import { registerDevice, unregisterDevice } from '../controllers/notificationsCo
 
 const router = express.Router();
 
+// Registered before router.use(authenticateJWT): signing out of a deactivated account
+// still removes this device's push subscription.
+router.delete(
+    '/devices',
+    authenticateJWTAllowDeactivated,
+    validate(unregisterNotificationDeviceSchema),
+    unregisterDevice,
+);
+
 router.use(authenticateJWT);
 
 router.post('/devices', validate(registerNotificationDeviceSchema), registerDevice);
-router.delete('/devices', validate(unregisterNotificationDeviceSchema), unregisterDevice);
 
 export default router;

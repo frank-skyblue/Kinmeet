@@ -5,6 +5,7 @@ import { CHAT_SOCKET_EVENTS } from '../constants/chatSocketEvents';
 import type { ChatConversationSummary, ChatMessage } from '../types';
 import { ChatInboxContext } from './chatInboxContext';
 import { useAuth } from './useAuth';
+import { activeUserOrNull } from '../utils/account';
 import { useSocket } from './useSocket';
 
 interface ChatInboxProviderProps {
@@ -12,7 +13,8 @@ interface ChatInboxProviderProps {
 }
 
 export const ChatInboxProvider: React.FC<ChatInboxProviderProps> = ({ children }) => {
-  const { user, isLoading: authLoading } = useAuth();
+  const { user: authUser, isLoading: authLoading } = useAuth();
+  const user = activeUserOrNull(authUser);
   const { socket } = useSocket();
   const [conversations, setConversations] = useState<ChatConversationSummary[]>([]);
   const [unreadConversationCount, setUnreadConversationCount] = useState(0);

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import DeleteAccountModal from '../profile/DeleteAccountModal';
+import DeactivateAccountModal from './DeactivateAccountModal';
 import AccountEmailSection from './AccountEmailSection';
 import AccountUsernameSection from './AccountUsernameSection';
 import AccountPasswordSection from './AccountPasswordSection';
@@ -8,6 +9,7 @@ import { surfaceCardClass } from '../../constants/ui';
 
 const AccountSettings: React.FC = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showDeactivateConfirm, setShowDeactivateConfirm] = useState(false);
 
   return (
     <>
@@ -37,9 +39,10 @@ const AccountSettings: React.FC = () => {
                 Settings &amp; Privacy
               </Link>
 
-              <h1 className="text-3xl font-bold font-montserrat text-foreground mb-2">Account</h1>
-              <p className="text-foreground font-inter mb-8">
-                Manage your account settings and permanently remove your KinMeet profile.
+              <h1 className="text-3xl font-bold font-montserrat text-kin-navy mb-2">Account</h1>
+              <p className="text-kin-navy font-inter mb-8">
+                Manage your account settings, take a break, or permanently remove your KinMeet
+                profile.
               </p>
 
               <div className="divide-y divide-border mb-8">
@@ -47,6 +50,26 @@ const AccountSettings: React.FC = () => {
                 <AccountUsernameSection />
                 <AccountPasswordSection />
               </div>
+
+              <section aria-labelledby="deactivate-account-heading" className="mb-8">
+                <h2
+                  id="deactivate-account-heading"
+                  className="text-sm font-semibold font-inter text-kin-navy mb-3"
+                >
+                  Deactivate Account
+                </h2>
+                <p className="text-kin-navy font-inter mb-4">
+                  Temporarily hide your profile and pause notifications. Your kins, messages, and
+                  profile are saved, and you can reactivate by signing in.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setShowDeactivateConfirm(true)}
+                  className="w-full sm:w-auto bg-kin-stone-200 text-kin-navy px-6 py-3 rounded-kin-sm font-semibold font-montserrat hover:bg-kin-stone-300 cursor-pointer transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral"
+                >
+                  Deactivate Account
+                </button>
+              </section>
 
               <section aria-labelledby="delete-account-heading">
                 <h2
@@ -70,6 +93,11 @@ const AccountSettings: React.FC = () => {
           </div>
         </div>
       </div>
+
+      <DeactivateAccountModal
+        isOpen={showDeactivateConfirm}
+        onClose={() => setShowDeactivateConfirm(false)}
+      />
 
       <DeleteAccountModal
         isOpen={showDeleteConfirm}
