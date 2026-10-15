@@ -5,7 +5,6 @@
   3. Add the name to the allowed map in index.html.
   Full steps: front-end/THEME_IMPLEMENTATION.md
 */
-:root,
 [data-theme='dark'] {
 	color-scheme: dark;
 	--canvas: #0f172a;
