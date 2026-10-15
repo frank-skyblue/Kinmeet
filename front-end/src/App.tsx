@@ -19,19 +19,23 @@ import CommunitySafety from './components/settings/CommunitySafety';
 import Support from './components/settings/Support';
 import GiveFeedback from './components/settings/GiveFeedback';
 import ContactSupport from './components/settings/ContactSupport';
-import PrivacyManagement from './components/settings/PrivacyManagement'
+import PrivacyManagement from './components/settings/PrivacyManagement';
 import BlockedAccounts from './components/settings/BlockedAccounts';
 import AdminPage from './components/admin/AdminPage';
+import AppearanceSettings from './components/settings/ApperanceSettings';
+import { ThemeProvider } from './contexts/ThemeProvider';
 
 const UserProviders = () => (
   <AuthProvider>
-    <SocketProvider>
-      <ChatInboxProvider>
-        <ConnectionRequestsProvider>
-          <Outlet />
-        </ConnectionRequestsProvider>
-      </ChatInboxProvider>
-    </SocketProvider>
+		<ThemeProvider>
+			<SocketProvider>
+				<ChatInboxProvider>
+					<ConnectionRequestsProvider>
+						<Outlet />
+					</ConnectionRequestsProvider>
+				</ChatInboxProvider>
+			</SocketProvider>
+		</ThemeProvider>
   </AuthProvider>
 );
 
@@ -59,6 +63,7 @@ const App = () => {
               <Route path="/profile/:userId" element={<Profile />} />
               <Route path="/settings" element={<SettingsPrivacy />} />
               <Route path="/settings/account" element={<AccountSettings />} />
+							<Route path="/settings/appearance" element={<AppearanceSettings />} />
               <Route path="/settings/community-safety" element={<CommunitySafety />} />
               <Route path="/settings/support" element={<Support />} />
               <Route path="/settings/support/contact" element={<ContactSupport />} />
