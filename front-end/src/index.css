@@ -3,5 +3,6 @@
 @import "./styles/semantic.css";
 /* Import each theme file from src/styles/themes/. See THEME_IMPLEMENTATION.md. */
 @import "./styles/themes/light.css";
+@import "./styles/themes/dark.css";
 @import "./styles/base.css";
 @custom-variant dark (&:where(.dark, .dark *));
