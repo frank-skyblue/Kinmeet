@@ -5,6 +5,7 @@ import { useChatInbox } from "../../contexts/chatInboxContext";
 import { useConnectionRequests } from "../../contexts/connectionRequestsContext";
 import { getPhotoUrl } from "../../services/api";
 import Logo from "../common/Logo";
+import useTheme from "../../contexts/useTheme";
 
 type NavItem = {
   path: string;
@@ -66,6 +67,7 @@ const Layout: React.FC = () => {
   const { unreadConversationCount } = useChatInbox();
   const { pendingRequestCount } = useConnectionRequests();
   const [showMenu, setShowMenu] = useState(false);
+	const {isDark} = useTheme();
 
   const handleLogout = async () => {
     await logout();
@@ -129,7 +131,7 @@ const Layout: React.FC = () => {
                       to={item.path}
                       className={`relative inline-flex items-center px-4 py-2 text-sm font-medium font-inter rounded-kin-sm transition ${
                         isNavActive(item)
-                          ? "text-kin-coral bg-kin-coral-50 shadow-kin-soft"
+                          ? (isDark() ? 'bg-secondary text-foreground shadow-kin-soft' : "text-kin-coral bg-kin-coral-50 shadow-kin-soft")
                           : "text-foreground hover:text-kin-coral hover:bg-surface-muted"
                       }`}
                       aria-label={
