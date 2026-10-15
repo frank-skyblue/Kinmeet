@@ -25,7 +25,7 @@ export function ThemeProvider({
 			localStorage.setItem(THEME_STORAGE_KEY, theme);
 
 			// Apply the theme globally (e.g. Tailwind's dark mode).
-			// document.documentElement.classList.toggle('dark', theme === 'dark');
+			document.documentElement.classList.toggle('dark', theme === 'dark');
 		},
 		[theme],
 	);
