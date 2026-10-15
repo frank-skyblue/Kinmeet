@@ -173,7 +173,7 @@ const Layout: React.FC = () => {
                 to="/chat"
                 className={`inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-kin-sm transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
                   isChatRoute
-                    ? "text-kin-coral bg-kin-coral-50 shadow-kin-soft"
+                    ? (isDark() ? 'shadow-kin-soft text-primary bg-secondary' : "text-primary bg-kin-coral-50 shadow-kin-soft")
                     : "text-foreground hover:bg-surface-muted hover:text-kin-coral"
                 }`}
                 aria-label={chatAriaLabel}
