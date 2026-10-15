@@ -11,7 +11,7 @@ export default function AppearanceSettings() {
 						<div className="p-8">
 							<Link
 								to="/settings"
-								className="inline-flex items-center gap-1 text-sm font-inter text-muted hover:text-kin-teal-700 transition mb-6 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+								className="inline-flex items-center gap-1 text-sm font-inter text-muted hover:text-foreground transition mb-6 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
 								aria-label="Back to Settings and Privacy"
 							>
 								<span>

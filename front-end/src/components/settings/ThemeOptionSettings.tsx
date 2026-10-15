@@ -12,25 +12,25 @@ export default function ThemeOptionSettings() {
 
 	return (
 		<>
-			<div className="border border-kin-beige-600 rounded-kin-sm px-4 py-5 shadow-kin-stone shadow-xs">
+			<div className="border border-border rounded-kin-sm px-4 py-5 shadow-kin-soft">
 				<fieldset>
-					<div className="flex items-center justify-between border-b border-kin-beige-600/75 pb-4">
+					<div className="flex items-center justify-between border-b border-border/75 pb-4">
 						<div className="flex items-center justify-start w-full">
 							<label htmlFor="light-mode">
 								<LightModeIcon />
 							</label>
 
-							<span className="ml-4 w-full">
+							<label className="ml-4 w-full" htmlFor="light-mode">
 								<h3 className="font-bold">
 									<label htmlFor="light-mode">Light Mode</label>
 								</h3>
 								<label
 									htmlFor="light-mode"
-									className="inline-block pt-1.5 text-kin-stone-800/75"
+									className="inline-block pt-1.5 text-foreground"
 								>
 									A light background with dark text
 								</label>
-							</span>
+							</label>
 						</div>
 
 						<input
@@ -39,7 +39,7 @@ export default function ThemeOptionSettings() {
 							name="theme"
 							value="light"
 							onChange={handleThemeChange}
-							className="appearance-none grid place-content-center size-5 rounded-full border-2 border-gray-300 cursor-pointer transition-colors checked:bg-orange-500 checked:border-orange-500 before:content-[''] before:size-2 before:rounded-full before:bg-white before:scale-0 before:transition-transform checked:before:scale-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
+							className="appearance-none grid place-content-center size-5 rounded-full border-2 border-gray-300 cursor-pointer transition-colors checked:bg-primary checked:border-primary before:content-[''] before:size-2 before:rounded-full before:bg-surface before:scale-0 before:transition-transform checked:before:scale-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
 							checked={theme === 'light'}
 						/>
 					</div>
@@ -50,17 +50,17 @@ export default function ThemeOptionSettings() {
 								<DarkModeIcon />
 							</label>
 
-							<span className="ml-4 w-full">
+							<label className="ml-4 w-full" htmlFor="dark-mode">
 								<h3 className="font-bold">
 									<label htmlFor="dark-mode">Dark Mode</label>
 								</h3>
 								<label
 									htmlFor="dark-mode"
-									className="inline-block pt-1.5 text-kin-stone-800/75"
+									className="inline-block pt-1.5 text-foreground"
 								>
 									A dark background with light text
 								</label>
-							</span>
+							</label>
 						</div>
 
 						<input
@@ -69,7 +69,7 @@ export default function ThemeOptionSettings() {
 							name="theme"
 							value="dark"
 							onChange={handleThemeChange}
-							className="appearance-none grid place-content-center size-5 rounded-full border-2 border-gray-300 cursor-pointer transition-colors checked:bg-orange-500 checked:border-orange-500 before:content-[''] before:size-2 before:rounded-full before:bg-white before:scale-0 before:transition-transform checked:before:scale-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
+							className="appearance-none grid place-content-center size-5 rounded-full border-2 border-gray-300 cursor-pointer transition-colors checked:bg-primary checked:border-primary before:content-[''] before:size-2 before:rounded-full before:bg-surface before:scale-0 before:transition-transform checked:before:scale-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
 							checked={theme === 'dark'}
 						/>
 					</div>
