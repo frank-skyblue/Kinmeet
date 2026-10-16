@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { getPhotoUrl } from "../../services/api";
 import { useChatInbox } from "../../contexts/chatInboxContext";
 import type { ChatMessage } from "../../types";
+import { describeMessagePreview } from "../../utils/chatMedia";
 
 const CHAT_BUBBLE_ICON =
   "M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z";
@@ -11,10 +12,7 @@ interface ChatSidebarProps {
   activeUserId?: string;
 }
 
-const formatPreview = (msg: ChatMessage | null) => {
-  if (!msg) return "No messages yet";
-  return msg.content.length > 56 ? `${msg.content.slice(0, 56)}…` : msg.content;
-};
+const formatPreview = (msg: ChatMessage | null) => describeMessagePreview(msg);
 
 const formatSidebarTime = (dateString: string | undefined) => {
   if (!dateString) return "";

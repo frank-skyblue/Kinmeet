@@ -372,6 +372,31 @@ graph TD
 - [ ] While in a thread, stop the back-end (or kill network) → header shows **"Reconnecting…"** and the input/send are **disabled**.
 - [ ] Restart back-end → indicator returns to **"Connected"** and sending re-enables.
 
+### 8.7 Photos
+**Precondition:** two connected users in two browsers (as in §8.4). Cloudinary keys configured.
+- [ ] Photo button → pick a JPEG/PNG → the photo appears at once with a progress bar, then B receives it within a few seconds. The inbox shows **"📷 Photo"**.
+- [ ] Click the photo → full-size viewer; Escape or the backdrop closes it.
+- [ ] iPhone (Safari): a HEIC photo sends and displays as a normal image.
+- [ ] **Privacy:** right-click → copy image address. The URL contains `/authenticated/s--…--/` (signed). Remove the `s--…--` part and open it → Cloudinary refuses it.
+- [ ] **GPS stripped:** send a phone photo with location data, download the delivered image, and check with `exiftool` (or an online EXIF viewer) → no GPS fields.
+- [ ] **Edge:** a file over 5 MB → "Photos must be under 5 MB", nothing uploaded. A PDF → "Please choose an image file".
+- [ ] **Edge:** turn off the network during the upload → the bubble shows **Retry / Remove**; Retry after reconnecting sends it once (no duplicate for B).
+- [ ] Refresh the page → the photo still shows (links are signed again on every load).
+
+### 8.8 Voice messages
+- [ ] Microphone button → allow the microphone → "Recording 0:03 / 2:00" → **Send** → B receives a voice bubble with waveform and length; **Play** works. The inbox shows **"🎤 Voice message · 0:03"**.
+- [ ] Record in **Chrome** and play in **Safari** (and the reverse) → plays in both (delivered as MP3).
+- [ ] **Cancel** during recording → nothing sent. A tap shorter than 1 second → "Voice message is too short".
+- [ ] Recording stops and sends by itself at **2:00**.
+- [ ] **Edge:** deny microphone permission → "Microphone access was denied…".
+- [ ] **Offline push:** with B closed, A sends a photo / voice message → B's push says "sent you a photo" / "sent you a voice message" (requires web push config).
+
+### 8.9 Media cleanup and limits (API / server)
+- [ ] `POST /api/chat/attachments/sign` for a **non-connected** user → 403. More than 30 requests in a minute → 429.
+- [ ] Sending a message with a made-up `attachment.signature` → 400 "Invalid upload receipt"; with an attachment older than 15 minutes → 410.
+- [ ] **With `CLOUDINARY_NOTIFICATION_URL` set** (public URL or tunnel): after sending, the message's `bytes`/`width`/`height` (or `durationMs`) match Cloudinary's values. A file over the limits is removed and shows "Photo unavailable" / "Voice message unavailable".
+- [ ] Delete an account that sent and received media → its chat files are gone from Cloudinary (`kinmeet-dev/chat/…` in the Media Library).
+
 ---
 
 ## 9. Blocking & reporting
@@ -486,6 +511,7 @@ Copy this into your run sheet and mark **Pass / Fail / N/A**.
 [ ] Forgot → reset via link → login with new password
 [ ] Reset edge (no token / used token / expired)
 [ ] Logout + protected-route redirect + refresh persistence
+[ ] Chat photo + voice message: send, receive live, play/view, survive refresh; retry after a failed upload
 [ ] Own profile shows age + gender + full name + Edit button
 [ ] Other profile: last name hidden until connected; shown after accept
 [ ] Profile edit save + validations; photo add/replace/remove

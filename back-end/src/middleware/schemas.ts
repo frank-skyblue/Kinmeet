@@ -3,6 +3,12 @@ import { normalizeEmail } from '../utils/email';
 import { FEEDBACK_CATEGORIES } from '../models/Feedback';
 import { REPORT_REASONS, REPORT_STATUSES } from '../models/Report';
 import { SUPPORT_ISSUE_TYPES } from '../models/SupportRequest';
+import {
+    CHAT_MEDIA_KINDS,
+    CHAT_MEDIA_LIMITS,
+    CHAT_THUMBNAIL_MAX_LENGTH,
+    CHAT_WAVEFORM_MAX_BARS,
+} from '../config/chatMedia';
 
 export const objectId = z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid ID format');
 const requiredString = (field: string, maxLength: number) =>
@@ -69,9 +75,44 @@ const feedbackMessageField = z.preprocess(
 export const objectIdParam = (name: string) =>
     z.object({ [name]: objectId });
 
-export const sendMessageSchema = z.object({
+// Cloudinary's receipt (signature verified by the service) plus display details the client
+// measured. Those details aren't signed, so they're only range-checked here.
+const attachmentReceiptSchema = z.object({
+    id: objectId,
+    version: z.number().int().positive(),
+    signature: z.string().regex(/^[0-9a-f]{40,64}$/i, 'Invalid upload receipt'),
+    width: z.number().int().positive().max(CHAT_MEDIA_LIMITS.image.maxDimension).optional(),
+    height: z.number().int().positive().max(CHAT_MEDIA_LIMITS.image.maxDimension).optional(),
+    thumbnail: z
+        .string()
+        .max(CHAT_THUMBNAIL_MAX_LENGTH)
+        .regex(/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/, 'Invalid thumbnail')
+        .optional(),
+    durationMs: z
+        .number()
+        .int()
+        .positive()
+        .max(CHAT_MEDIA_LIMITS.voice.maxDurationMs + CHAT_MEDIA_LIMITS.voice.durationToleranceMs)
+        .optional(),
+    waveform: z.array(z.number().int().min(0).max(255)).max(CHAT_WAVEFORM_MAX_BARS).optional(),
+});
+
+export const sendMessageSchema = z
+    .object({
+        receiverId: objectId,
+        // Required for text; an optional caption for an image.
+        content: z.string().trim().max(5000, 'Message is too long').optional(),
+        attachment: attachmentReceiptSchema.optional(),
+        clientMessageId: z.string().trim().min(1).max(100).optional(),
+    })
+    .refine((data) => Boolean(data.content) || Boolean(data.attachment), {
+        message: 'Message cannot be empty',
+        path: ['content'],
+    });
+
+export const signAttachmentSchema = z.object({
     receiverId: objectId,
-    content: z.string().trim().min(1, 'Message cannot be empty').max(5000, 'Message is too long'),
+    kind: z.enum(CHAT_MEDIA_KINDS),
 });
 
 export const markAsReadSchema = z.object({
