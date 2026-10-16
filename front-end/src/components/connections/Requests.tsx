@@ -7,7 +7,6 @@ import ActionMenu from "../common/ActionMenu";
 import ReportUserModal from "../common/ReportUserModal";
 import type { ConnectionRequestItem } from "../../types";
 import ConnectionsPaginationNav from "./ConnectionsPaginationNav";
-import { primaryActionClass, secondaryActionClass } from '../../constants/ui';
 
 export type RequestsProps = {
   /** When true, used inside ConnectionsHub: no page chrome, no outer padding/bg. */
