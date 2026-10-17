@@ -94,6 +94,28 @@
       "name": "JavaScript Debug Terminal",
       "request": "launch",
       "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "node-terminal",
+      "request": "launch",
+      "name": "Start Mobile (Expo)",
+      "command": "npm start",
+      "cwd": "${workspaceFolder}/mobile",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "http://localhost:8080/api"
+      }
+    },
+    {
+      "type": "node-terminal",
+      "request": "launch",
+      "name": "Start Mobile (Android)",
+      "command": "npm run android",
+      "cwd": "${workspaceFolder}/mobile",
+      // The emulator reaches the host machine at 10.0.2.2, not localhost.
+      // A physical device needs your computer's LAN address in mobile/.env instead.
+      "env": {
+        "EXPO_PUBLIC_API_URL": "http://10.0.2.2:8080/api"
+      }
     }
   ],
   "compounds": [
@@ -106,6 +128,19 @@
       "presentation": {
         "hidden": false,
         "group": "Full Stack",
+        "order": 1
+      },
+      "stopAll": true
+    },
+    {
+      "name": "Run Mobile + Backend",
+      "configurations": [
+        "Debug Backend with Nodemon",
+        "Start Mobile (Android)"
+      ],
+      "presentation": {
+        "hidden": false,
+        "group": "Mobile",
         "order": 1
       },
       "stopAll": true

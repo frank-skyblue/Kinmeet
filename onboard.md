@@ -7,8 +7,8 @@ Your **first read** for working on Kinmeet: environment, how to run things, CI e
 ## First day checklist
 
 1. **Node 22** — from the repo root: `nvm install` (once) and `nvm use` (see [`.nvmrc`](.nvmrc)).
-2. **Dependencies** — in both `back-end/` and `front-end/`: `npm ci` (see [Dependencies](#dependencies-npm-ci-vs-npm-install)).
-3. **Env files** — create `back-end/.env` (and `front-end/.env` if needed). Never commit them. Ask your lead for shared secrets (Atlas, Cloudinary, JWT, etc.).
+2. **Dependencies** — in `back-end/`, `front-end/`, and `mobile/`: `npm ci` (see [Dependencies](#dependencies-npm-ci-vs-npm-install)).
+3. **Env files** — create `back-end/.env` (and `front-end/.env` or `mobile/.env` if needed). Never commit them. Ask your lead for shared secrets (Atlas, Cloudinary, JWT, etc.).
 4. **MongoDB** — local install, [Docker](#local-mongodb-with-docker), or Atlas; `MONGODB_URI` must match where Mongo is listening.
 5. **Run the stack** — [Run the app locally](#run-the-app-locally).
 6. **Optional seed data** — [Seed users](#seed-users-demo-data) so you can log in with fixed accounts and exercise connections, chat, requests, and blocks.
@@ -23,8 +23,9 @@ Use **two terminals** from the repo root (after `back-end/.env` and `front-end/.
 |----------|-------------|----------------|-------------------------|
 | 1        | `back-end/` | `npm run dev`  | API `http://localhost:8080` |
 | 2        | `front-end/` | `npm run dev` | App `http://localhost:5173` |
+| 3 (optional) | `mobile/` | `npm run android` | Expo on an Android emulator or device |
 
-The front-end expects the API (see `VITE_API_URL` in the README — typically `http://localhost:8080/api`).
+The front-end expects the API (see `VITE_API_URL` in the README — typically `http://localhost:8080/api`). The mobile app uses `EXPO_PUBLIC_API_URL` (see [mobile/README.md](mobile/README.md)). `npm run ios` exists for a later iOS release and is not the current store target.
 
 ---
 
@@ -80,8 +81,10 @@ For the **exact** edge list, request targets, block list, and message threads, r
 |------|--------|
 | **Backend** (`back-end/`) | Node.js, Express, TypeScript, MongoDB + Mongoose, JWT (bcryptjs), Zod, Socket.io, Cloudinary, Multer |
 | **Frontend** (`front-end/`) | React 19, TypeScript, Vite, React Router, Tailwind CSS, Axios, Socket.io client |
+| **Mobile** (`mobile/`) | Expo, React Native, TypeScript, React Navigation, NativeWind, Axios, SecureStore. Android first; iOS bundle id is already configured |
 | **Backend tests** | Vitest, Supertest, `mongodb-memory-server` — `back-end/src/__tests__/` |
 | **Frontend tests** | Vitest, Testing Library — `front-end/src/**/__tests__/` |
+| **Mobile tests** | Jest, React Native Testing Library — `mobile/src/**/__tests__/` |
 | **E2E** | Playwright — `front-end/playwright.config.ts` |
 
 ---
@@ -101,7 +104,7 @@ URLs, dashboards, and credentials are **team-internal**. Do not commit real secr
 
 ## Environment variables
 
-- **`back-end/.env`** and optionally **`front-end/.env`** — required names and example placeholders are in the [README](README.md) (Getting Started).
+- **`back-end/.env`**, and optionally **`front-end/.env`** and **`mobile/.env`** — required names and example placeholders are in the [README](README.md) (Getting Started).
 - **Secrets** (Atlas URI, Cloudinary, JWT, etc.) — get them from your team lead or approved secret store.
 
 ---
@@ -135,8 +138,10 @@ Native MongoDB or Atlas: see the [README](README.md).
 |------|---------|
 | `back-end/` | REST API + Socket.io server |
 | `front-end/` | Vite + React SPA |
+| `mobile/` | Expo app (Android first, iOS configured) |
 | `.cursor/rules/` | Architecture and conventions for humans and AI assistants |
 | `front-end/docs/ARCHITECTURE.md` | Frontend system map (update when you change routing, providers, or `services/api.ts` organization) |
+| `mobile/docs/ARCHITECTURE.md` | Mobile system map (update when you change navigation, providers, or `services/api.ts` organization) |
 
 ---
 
@@ -151,6 +156,7 @@ Native MongoDB or Atlas: see the [README](README.md).
 
 - **Backend** — Add or update route/service tests when HTTP behavior changes (`back-end/src/__tests__/`).
 - **Frontend** — Add or update tests when UI behavior is non-trivial or easy to regress (`front-end/src/**/__tests__/`).
+- **Mobile** — Add or update tests when navigation or session behavior changes (`mobile/src/**/__tests__/`).
 
 ### Commands
 
@@ -159,6 +165,7 @@ Native MongoDB or Atlas: see the [README](README.md).
 | `back-end/` | `npm test`, `npm run test:watch` |
 | `front-end/` | `npm test`, `npm run test:watch` |
 | `front-end/` (E2E) | `npx playwright test` — needs Mongo on `localhost:27017` for local runs; see `playwright.config.ts` |
+| `mobile/` | `npm test`, `npm run typecheck` |
 
 Backend unit tests use an **in-memory MongoDB** — no running database required for `npm test` in `back-end/`.
 
@@ -175,7 +182,7 @@ Backend unit tests use an **in-memory MongoDB** — no running database required
 
 ## Dependencies: `npm ci` vs `npm install`
 
-- After **clone** or when **lockfiles did not change**, prefer **`npm ci`** in **`back-end/`** and **`front-end/`** so installs match `package-lock.json` and CI.
+- After **clone** or when **lockfiles did not change**, prefer **`npm ci`** in **`back-end/`**, **`front-end/`**, and **`mobile/`** so installs match `package-lock.json` and CI.
 - When you **add, upgrade, or remove** packages, use **`npm install`**, then commit **`package.json`** and **`package-lock.json`** together.
 - Use **Node 22** (see `.nvmrc`) to avoid noisy lockfile churn.
 
@@ -192,6 +199,7 @@ Backend unit tests use an **in-memory MongoDB** — no running database required
 
 - `npm test` in **`back-end/`** and **`front-end/`**.
 - `npx tsc --noEmit` in **both** packages (CI runs this too).
+- If you changed **`mobile/`**, also run `npm test` and `npm run typecheck` there.
 
 ---
 

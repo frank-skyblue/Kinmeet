@@ -51,6 +51,16 @@ KinMeet is a social networking application that connects people from the same ho
 - **Axios** for API calls
 - **Socket.io** client for real-time updates
 
+### Mobile
+- **Expo** (SDK 57) with **React Native** and **TypeScript**
+- **React Navigation** for native stacks and tabs
+- **NativeWind** (Tailwind) for styling
+- **Axios** for API calls
+- **expo-secure-store** for the session
+- **Socket.io** client for real-time updates (not connected on launch yet)
+
+Android is the first release target. The iOS bundle id is already set in `mobile/app.config.ts`.
+
 ## 📋 Prerequisites
 
 - **Node.js 22** (managed via `.nvmrc` — see below)
@@ -122,6 +132,21 @@ Create a `front-end/.env` file (optional):
 VITE_API_URL=http://localhost:8080/api
 ```
 
+### Mobile app (Android first)
+
+```bash
+cd mobile
+npm ci
+```
+
+Copy `mobile/.env.example` to `mobile/.env`:
+
+```env
+EXPO_PUBLIC_API_URL=http://localhost:8080/api
+```
+
+On the Android emulator, point that URL at `http://10.0.2.2:8080/api` so the app can reach an API running on your machine. `npm run ios` is available for a later iOS release. See [mobile/README.md](mobile/README.md).
+
 ### 5. Start MongoDB
 
 If using a local installation:
@@ -180,6 +205,15 @@ cd front-end
 npm test              # single run
 npm run test:watch    # watch mode
 npm run test:coverage # with coverage report
+```
+
+### Mobile Tests (Jest + React Native Testing Library)
+
+```bash
+cd mobile
+npm test              # single run
+npm run test:watch    # watch mode
+npm run typecheck
 ```
 
 ### E2E Tests (Playwright)
