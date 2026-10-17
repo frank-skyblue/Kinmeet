@@ -236,7 +236,8 @@ graph TD
 - [ ] User menu (top-right avatar) → **Sign Out** → redirected to `/login`; local session cleared.
 - [ ] After logout, navigating to `/discover` (or any protected URL) → redirected to `/login`.
 - [ ] **Session persistence:** log in, refresh the page → still logged in (token in `localStorage`). Brief full-screen "Loading…" spinner during auth hydration is expected.
-- [ ] **Known:** the JWT is **not** server-invalidated on logout (valid ~7 days) — not observable in normal UI use.
+- [ ] **Expired or revoked session:** when the API rejects the token (401 with `code: "INVALID_TOKEN"`), the app clears the session and redirects to `/login` on the next request. Easiest to trigger via **Deactivate Account** in another browser (§10.6).
+- [ ] **Known:** **Sign Out** only clears this device's token; the JWT itself is **not** server-invalidated (valid ~7 days). Only deactivation revokes sessions server-side (§12 #5).
 
 ---
 
@@ -422,6 +423,19 @@ Get a token by logging in via `POST /api/auth/login`, then set `Authorization: B
 - [ ] Verify cleanup: the deleted user disappears from other users' **kins**, **requests**, and their **Discover**; conversations with them are gone from partners' inboxes.
 - [ ] **Edge:** try to log in with the deleted account → fails.
 
+### 10.6 Deactivate & reactivate account
+**Setup:** log in as the same user in **two browsers** (A and B, see §1). In B, open a chat with a kin so a socket is connected.
+
+- [ ] A: Deactivate Account → modal shows the "Taking a break?" explanation, says deactivation is temporary and separate from deletion, and asks for the current password. **Deactivate Account** is disabled until a password is entered.
+- [ ] **Edge:** wrong password → inline error; you stay signed in and the account stays active.
+- [ ] Correct password → A lands on `/login` with "Your account has been deactivated. Sign in whenever you're ready to reactivate it."
+- [ ] B (every device signed out): the chat shows **Reconnecting…** and B is sent to the **reactivation prompt** almost immediately; if not, the next click that calls the API does it. The prompt asks for B's password (B's old session is revoked). Reusing B's old token via API → **401** `ACCOUNT_DEACTIVATED`.
+- [ ] B: wrong password → error, still deactivated. Correct password → **Reactivate Account** → lands on Discover. **Stay Deactivated** → `/login` without signing in. Refreshing on the prompt → `/login`.
+- [ ] Another user: the account is gone from **Discover** and **My Kins**, its pending request is hidden, and its profile shows as not found. Existing chat history stays, with the name shown as **Unavailable**, no profile link, and the message box disabled.
+- [ ] Sign in again → "Your account is currently deactivated. Would you like to reactivate it?" **Stay Deactivated** → back to `/login`, still deactivated. Visiting `/discover` while on the prompt redirects back to it.
+- [ ] Sign in → **Reactivate Account** → lands on Discover; kins, chats, and profile are restored; other users see the account again. No backlog of notifications arrives for messages sent while deactivated (new messages to it were refused).
+- [ ] **Edge:** after deactivating, Delete Account is still possible from a fresh sign-in (API: `DELETE /api/profile/me` with the new token → 200).
+
 ---
 
 ## 11. Cross-cutting: navigation, responsive, a11y, states
@@ -459,7 +473,7 @@ These are **current, intended/known** behaviors — verify them, but they are **
 | 2 | **No minimum age** — DOB under 18 is accepted. | Signup / Profile |
 | 3 | **Signup Step 1 & password-change client validation only check length / confirm-match**; strength (upper/lower/digit) is enforced by the **server**. | Auth / Settings |
 | 4 | **Forgot-password & signup email check reveal whether an email is registered** (404 vs 200 / availability). | Auth |
-| 5 | **Logout does not invalidate the JWT** server-side (valid ~7 days). | Auth |
+| 5 | **Sign Out does not invalidate the JWT** server-side (valid ~7 days); it only clears this device. Deactivation is the one action that revokes every session, by incrementing the user's `tokenVersion`. | Auth |
 | 6 | **Pass is a no-op** — passed users reappear on refresh; no server-side "passed" list. | Discovery |
 | 7 | **Ignored requests are permanent** — the row is kept, so the sender can't re-request (and the pair won't re-match) until a connection removal/block clears it. | Requests |
 | 8 | **No sender "cancel request"** and **no outgoing-requests UI**. | Requests |
@@ -486,6 +500,7 @@ Copy this into your run sheet and mark **Pass / Fail / N/A**.
 [ ] Forgot → reset via link → login with new password
 [ ] Reset edge (no token / used token / expired)
 [ ] Logout + protected-route redirect + refresh persistence
+[ ] Deactivate (wrong pw blocked) → second browser signed out → hidden from others → sign in → reactivate restores
 [ ] Own profile shows age + gender + full name + Edit button
 [ ] Other profile: last name hidden until connected; shown after accept
 [ ] Profile edit save + validations; photo add/replace/remove

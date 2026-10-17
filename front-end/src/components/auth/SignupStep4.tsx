@@ -5,6 +5,7 @@ import {
 } from "../../constants/profileOptions";
 import DynamicListField from "../common/DynamicListField";
 import LookingForCheckboxes from "../common/LookingForCheckboxes";
+import { primaryActionClass, secondaryActionClass } from '../../constants/ui';
 
 interface SignupStep4Props {
   languages: string[];
@@ -60,7 +61,7 @@ const SignupStep4: React.FC<SignupStep4Props> = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <h2 className="text-2xl font-bold font-montserrat text-kin-navy mb-4">
+      <h2 className="text-2xl font-bold font-montserrat text-foreground mb-4">
         Languages & Interests
       </h2>
 
@@ -98,14 +99,14 @@ const SignupStep4: React.FC<SignupStep4Props> = ({
         <button
           type="button"
           onClick={onBack}
-          className="flex-1 bg-kin-stone-200 text-kin-navy py-4 px-4 rounded-kin-sm font-bold font-montserrat text-lg hover:bg-kin-stone-300 transition-all duration-200 shadow-kin-soft hover:shadow-kin-medium"
+          className={`${secondaryActionClass} flex-1 py-4 px-4 rounded-kin-sm font-bold font-montserrat text-lg transition-all duration-200 shadow-kin-soft hover:shadow-kin-medium`}
         >
           Back
         </button>
         <button
           type="submit"
           disabled={isLoading}
-          className="flex-1 bg-kin-coral text-white py-4 px-4 rounded-kin-sm font-bold font-montserrat text-lg hover:bg-kin-coral-600 focus:ring-4 focus:ring-kin-coral-300 shadow-kin-medium hover:shadow-kin-strong transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          className={`${primaryActionClass} flex-1 py-4 px-4 rounded-kin-sm font-bold font-montserrat text-lg focus:ring-4 focus:ring-ring shadow-kin-medium hover:shadow-kin-strong transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed`}
         >
           {isLoading ? "Creating Account..." : "Complete Signup"}
         </button>

@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import SignupStep1 from '../SignupStep1';
 import { authAPI } from '../../../services/api';
+import { PASSWORD_HINT } from '../../../constants/validation';
 
 vi.mock('../../../services/api', () => ({
   authAPI: {
@@ -136,6 +137,23 @@ describe('SignupStep1', () => {
       'Please enter your password.',
     );
     expect(mockCheckEmail).not.toHaveBeenCalled();
+  });
+
+  it('shows field-specific error when password is too weak', async () => {
+    const user = userEvent.setup();
+    render(
+      <SignupStep1
+        {...defaultProps}
+        password="password1"
+        confirmPassword="password1"
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+
+    expect(defaultProps.setError).toHaveBeenCalledWith(PASSWORD_HINT);
+    expect(mockCheckEmail).not.toHaveBeenCalled();
+    expect(defaultProps.onNext).not.toHaveBeenCalled();
   });
 
   it('shows field-specific error when confirm password is empty', async () => {

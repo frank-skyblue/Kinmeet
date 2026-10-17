@@ -3,8 +3,6 @@ import { AuthRequest } from '../middleware/authMiddleware';
 import { asyncHandler } from '../middleware/errorHandler';
 import { supportService } from '../services/supportService';
 
-export { supportUpload } from '../services/supportService';
-
 export const submitSupportRequest = asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user!.id;
     const { issueType, subject, message, followUp } = req.body;

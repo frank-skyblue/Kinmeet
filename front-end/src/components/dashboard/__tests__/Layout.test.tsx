@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { render } from "@testing-library/react";
 import Layout from "../Layout";
+import { ThemeProvider } from "../../../contexts/ThemeProvider";
 
 vi.mock("../../../contexts/useAuth", () => ({
   useAuth: () => ({
@@ -32,9 +33,11 @@ describe("Layout user menu", () => {
   it("shows Settings & Privacy with icon and Sign Out at the bottom of the user menu", async () => {
     const user = userEvent.setup();
     render(
-      <MemoryRouter initialEntries={["/discover"]}>
-        <Layout />
-      </MemoryRouter>,
+			<ThemeProvider>
+				<MemoryRouter initialEntries={["/discover"]}>
+					<Layout />
+				</MemoryRouter>
+			</ThemeProvider>,
     );
 
     await user.click(screen.getByRole("button", { name: /user menu/i }));

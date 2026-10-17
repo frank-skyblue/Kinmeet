@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { profileAPI } from '../../services/api';
 import { useAuth } from '../../contexts/useAuth';
 import { getErrorMessage } from '../../utils/error';
+import { secondaryActionClass, surfaceCardClass, textFieldClass } from '../../constants/ui';
 
 interface DeleteAccountModalProps {
   isOpen: boolean;
@@ -43,13 +44,13 @@ const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({ isOpen, onClose
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-kin-xl shadow-kin-strong max-w-md w-full p-6">
-        <h2 className="text-xl font-bold font-montserrat text-kin-navy mb-2">Delete Account</h2>
-        <p className="text-kin-navy font-inter mb-4">
+    <div className="fixed inset-0 bg-overlay flex items-center justify-center z-50 p-4">
+      <div className={`${surfaceCardClass} rounded-kin-xl max-w-md w-full p-6`}>
+        <h2 className="text-xl font-bold font-montserrat text-foreground mb-2">Delete Account</h2>
+        <p className="text-foreground font-inter mb-4">
           This action cannot be undone. All your data, kins, and messages will be permanently deleted.
         </p>
-        <p className="text-kin-navy font-inter mb-2">
+        <p className="text-foreground font-inter mb-2">
           Type <strong>delete</strong> to confirm:
         </p>
         <input
@@ -57,7 +58,7 @@ const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({ isOpen, onClose
           value={deleteConfirmText}
           onChange={(e) => setDeleteConfirmText(e.target.value)}
           placeholder="delete"
-          className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm font-inter mb-4 focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none"
+          className={`${textFieldClass} w-full px-4 py-3 rounded-kin-sm mb-4`}
           aria-label="Type delete to confirm"
         />
         {error && (
@@ -70,7 +71,7 @@ const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({ isOpen, onClose
             type="button"
             onClick={handleClose}
             disabled={isDeleting}
-            className="flex-1 bg-kin-stone-200 text-kin-navy py-3 rounded-kin-sm font-semibold font-montserrat hover:bg-kin-stone-300 transition disabled:opacity-50"
+            className={`${secondaryActionClass} flex-1 py-3 rounded-kin-sm font-semibold font-montserrat transition disabled:opacity-50`}
           >
             Cancel
           </button>

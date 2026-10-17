@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import type { SearchableSelectOption } from "../../types";
+import CountryFlag from "./CountryFlag"
+import { surfaceCardClass, textFieldClass } from '../../constants/ui';
 
 type SearchableSelectProps = {
   id: string;
@@ -136,7 +138,7 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
       {!hideLabel && (
         <label
           htmlFor={id}
-          className="block text-sm font-medium font-inter text-kin-navy mb-2"
+          className="block text-sm font-medium font-inter text-foreground mb-2"
         >
           {label}
           {required && <span className="text-kin-coral ml-1">*</span>}
@@ -154,13 +156,13 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
         onClick={handleToggle}
         className={`w-full px-4 py-3 border rounded-kin-sm font-inter outline-none transition flex items-center justify-between min-h-[48px] ${
           disabled
-            ? "bg-kin-stone-100 cursor-not-allowed border-kin-stone-300 text-kin-stone-500"
-            : "border-kin-stone-300 focus:ring-2 focus:ring-kin-coral focus:border-transparent cursor-pointer hover:border-kin-coral-300"
+            ? "bg-surface-muted cursor-not-allowed border-border text-kin-stone-500"
+            : "border-border focus:ring-2 focus:ring-ring focus:border-transparent cursor-pointer hover:border-kin-coral-300"
         }`}
         aria-label={hideLabel ? (label || placeholder) : label}
       >
         <span
-          className={`flex items-center gap-2 min-w-0 ${value ? "text-kin-navy" : "text-kin-stone-500"}`}
+          className={`flex items-center gap-2 min-w-0 ${value ? "text-foreground" : "text-kin-stone-500"}`}
         >
           {showLeadingContent ? leadingContent : null}
           <span className="truncate">{displayValue || placeholder}</span>
@@ -185,17 +187,17 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
         <div
           id={`${id}-listbox`}
           role="listbox"
-          className="absolute z-50 w-full mt-1 bg-white border border-kin-stone-300 rounded-kin-sm shadow-kin-strong max-h-60 overflow-hidden"
+          className={`${surfaceCardClass} absolute z-50 w-full mt-1 border border-border rounded-kin-sm max-h-60 overflow-hidden`}
         >
           {isSearchInput && (
-            <div className="p-2 border-b border-kin-stone-200">
+            <div className="p-2 border-b border-border">
               <input
                 type="text"
                 autoFocus
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => e.stopPropagation()}
-                className="w-full px-3 py-2 border border-kin-stone-300 rounded-kin-sm font-inter focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none"
+                className={`${textFieldClass} w-full px-3 py-2 rounded-kin-sm`}
                 placeholder="Type to search..."
                 aria-label={`Search ${label}`}
               />
@@ -224,10 +226,10 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
                   className={`px-4 py-3 font-inter cursor-pointer transition ${
                     value === option.value
                       ? "bg-kin-coral-100 text-kin-coral-700"
-                      : "hover:bg-kin-beige text-kin-navy"
+                      : "hover:bg-surface-muted text-foreground"
                   }`}
                 >
-                  {option.label}
+                  <CountryFlag country={option.label}/> {option.label}
                 </div>
               ))
             )}
@@ -236,7 +238,7 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
       )}
 
       {helperText && (
-        <p className="text-xs text-kin-teal font-inter mt-1">{helperText}</p>
+        <p className="text-xs text-muted font-inter mt-1">{helperText}</p>
       )}
     </div>
   );

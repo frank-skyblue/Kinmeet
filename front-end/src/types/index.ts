@@ -3,6 +3,8 @@ export type SearchableSelectOption = {
     label: string;
 };
 
+export type AccountStatus = 'active' | 'deactivated';
+
 export interface User {
     id: string;
     email: string;
@@ -11,6 +13,8 @@ export interface User {
     lastName: string;
     photo?: string;
     profileComplete: boolean;
+    /** Missing on sessions stored before account status existed; treat as active. */
+    accountStatus?: AccountStatus;
 }
 
 export interface UserProfile {
@@ -60,8 +64,10 @@ export interface ChatConversationUser {
     firstName: string;
     lastName: string;
     photo?: string;
-    currentProvince: string;
-    currentCountry: string;
+    currentProvince?: string;
+    currentCountry?: string;
+    /** Set when the other account is deactivated; its name is replaced with "Unavailable". */
+    unavailable?: boolean;
 }
 
 export interface ChatConversationSummary {
@@ -74,6 +80,66 @@ export interface GetConversationsResponse {
     success: boolean;
     conversations: ChatConversationSummary[];
     unreadConversationCount: number;
+}
+
+export interface Match {
+    _id: string;
+    firstName: string;
+    about?: string;
+    jobTitle?: string;
+    company?: string;
+    industry?: string;
+    educationLevel?: string;
+    graduationYear?: number;
+    homeCountry: string;
+    currentProvince: string;
+    currentCountry: string;
+    languages: string[];
+    interests: string[];
+    lookingFor: string[];
+    photo?: string;
+}
+
+export interface GetMatchesResponse {
+    success: boolean;
+    matches: Match[];
+}
+
+export interface Connection {
+    _id: string;
+    firstName: string;
+    lastName: string;
+    homeCountry: string;
+    currentProvince: string;
+    currentCountry: string;
+    languages: string[];
+    interests: string[];
+    lookingFor: string[];
+    photo?: string;
+    connectedAt?: string;
+}
+
+export interface GetConnectionsResponse {
+    success: boolean;
+    connections: Connection[];
+}
+
+export interface BlockedAccountUser {
+    _id: string;
+    firstName: string;
+    currentProvince?: string;
+    currentCountry?: string;
+}
+
+export interface BlockedAccount {
+    _id: string;
+    blocked: BlockedAccountUser | null;
+    createdAt?: string;
+}
+
+export interface GetBlockedUsersResponse {
+    success: boolean;
+    blockedUsers: BlockedAccount[];
 }
 
 export interface ConnectionRequestSender {
@@ -264,3 +330,30 @@ export type {
     ChatTypingPayload,
     ChatUserTypingPayload,
 } from './chatSocket';
+
+export type AdminReportStatus = 'new' | 'reviewing' | 'resolved';
+
+export interface AdminReportItem {
+    id: string;
+    reporterEmail: string;
+    reportedEmail: string;
+    reportedName: string;
+    reason: string;
+    details?: string;
+    status: AdminReportStatus;
+    createdAt: string;
+}
+
+/** Same shape as feedback pagination; aliased so the reports code reads on its own terms. */
+export type AdminReportPagination = AdminFeedbackPagination;
+
+export interface AdminReportUpdateResponse {
+    success: boolean;
+    report: AdminReportItem;
+}
+
+export interface AdminReportListResponse {
+    success: boolean;
+    reports: AdminReportItem[];
+    pagination: AdminReportPagination;
+}

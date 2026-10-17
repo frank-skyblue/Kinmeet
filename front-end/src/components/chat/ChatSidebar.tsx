@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { getPhotoUrl } from "../../services/api";
 import { useChatInbox } from "../../contexts/chatInboxContext";
 import type { ChatMessage } from "../../types";
+import useTheme from "../../contexts/useTheme";
 
 const CHAT_BUBBLE_ICON =
   "M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z";
@@ -37,21 +38,22 @@ const formatSidebarTime = (dateString: string | undefined) => {
 const ChatSidebar: React.FC<ChatSidebarProps> = ({ activeUserId }) => {
   const { conversations, isLoadingInbox, inboxError } = useChatInbox();
   const navigate = useNavigate();
+	const {isDark} = useTheme();
 
   const handleSelectConversation = (peerId: string) => {
     navigate(`/chat/${peerId}`);
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-white md:border-0 md:bg-kin-beige">
-      <div className="shrink-0 border-b border-kin-stone-200 bg-white px-4 py-3 shadow-kin-soft md:rounded-none">
-        <h1 className="font-montserrat text-lg font-bold text-kin-navy">
+    <div className="flex h-full min-h-0 flex-col bg-surface md:border-0 md:bg-canvas">
+      <div className="shrink-0 border-b border-border bg-surface px-4 py-3 shadow-kin-soft md:rounded-none">
+        <h1 className="font-montserrat text-lg font-bold text-foreground">
           Messages
         </h1>
-        <p className="font-inter text-xs text-kin-teal">Your kins</p>
+        <p className="font-inter text-xs text-muted">Your kins</p>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto bg-white md:bg-transparent">
+      <div className="min-h-0 flex-1 overflow-y-auto bg-surface md:bg-transparent">
         {inboxError && (
           <div className="m-3 rounded-kin border border-kin-coral-200 bg-kin-coral-50 px-3 py-2 font-inter text-sm text-kin-coral-700">
             {inboxError}
@@ -61,14 +63,14 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ activeUserId }) => {
         {isLoadingInbox && conversations.length === 0 && !inboxError && (
           <div className="flex flex-col items-center justify-center py-16">
             <div className="mb-3 h-12 w-12 animate-spin rounded-full border-b-2 border-kin-coral" />
-            <p className="font-inter text-sm text-kin-navy">Loading inbox…</p>
+            <p className="font-inter text-sm text-foreground">Loading inbox…</p>
           </div>
         )}
 
         {!isLoadingInbox && conversations.length === 0 && !inboxError && (
           <div className="flex flex-col items-center px-6 py-16 text-center">
             <svg
-              className="mb-3 h-12 w-12 text-kin-teal"
+              className="mb-3 h-12 w-12 text-muted"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -81,14 +83,14 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ activeUserId }) => {
                 d={CHAT_BUBBLE_ICON}
               />
             </svg>
-            <p className="font-inter text-kin-navy">No conversations yet</p>
-            <p className="mt-1 text-sm text-kin-teal font-inter">
+            <p className="font-inter text-foreground">No conversations yet</p>
+            <p className="mt-1 text-sm text-muted font-inter">
               Connect with people from Discover to chat.
             </p>
           </div>
         )}
 
-        <ul className="divide-y divide-kin-stone-100" role="list">
+        <ul className="divide-y divide-border" role="list">
           {conversations.map((row) => {
             if (!row.user) return null;
             const peerId = row.user._id;
@@ -100,8 +102,8 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ activeUserId }) => {
                 <button
                   type="button"
                   onClick={() => handleSelectConversation(peerId)}
-                  className={`flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-kin-beige focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral ${
-                    isActive ? "bg-kin-coral-50" : ""
+                  className={`flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-surface-hover cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
+                    isActive ? (isDark() ? 'bg-kin-coral-900' : 'bg-kin-coral-50') : ""
                   }`}
                   aria-current={isActive ? "true" : undefined}
                   aria-label={`Open chat with ${row.user.firstName} ${row.user.lastName}${
@@ -122,18 +124,18 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ activeUserId }) => {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-baseline justify-between gap-2">
                       <span
-                        className={`truncate font-inter text-kin-navy ${unread ? "font-bold" : "font-medium"}`}
+                        className={`truncate font-inter text-foreground ${unread ? "font-bold" : "font-medium"}`}
                       >
                         {row.user.firstName} {row.user.lastName}
                       </span>
                       {row.lastMessage?.createdAt && (
-                        <span className="shrink-0 text-xs text-kin-teal font-inter">
+                        <span className="shrink-0 text-xs text-muted font-inter">
                           {formatSidebarTime(row.lastMessage.createdAt)}
                         </span>
                       )}
                     </div>
                     <p
-                      className={`mt-0.5 truncate text-sm font-inter text-kin-teal ${unread ? "font-semibold text-kin-navy" : ""}`}
+                      className={`mt-0.5 truncate text-sm font-inter text-muted ${unread ? "font-semibold text-foreground" : ""}`}
                     >
                       {formatPreview(row.lastMessage)}
                     </p>

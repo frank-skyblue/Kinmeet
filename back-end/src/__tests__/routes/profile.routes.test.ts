@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import request from 'supertest';
 import { createTestApp, createTestUser, getAuthToken } from '../helpers';
+import { Block } from '../../models/Block';
 import { Connection } from '../../models/Connection';
 
 vi.mock('../../services/cloudinaryService', () => ({
@@ -59,6 +60,62 @@ describe('Profile Routes', () => {
       expect(res.status).toBe(200);
       expect(res.body.isConnected).toBe(true);
       expect(res.body.user.lastName).toBe('Shown');
+    });
+
+    it('returns 404 when the viewer has blocked the target', async () => {
+      const viewer = await createTestUser({ email: 'blocker@test.com' });
+      const target = await createTestUser({ email: 'blocked@test.com' });
+      await Block.create({ blocker: viewer._id, blocked: target._id });
+
+      const res = await request(app)
+        .get(`/api/profile/${target._id}`)
+        .set('Authorization', `Bearer ${getAuthToken(viewer)}`);
+
+      expect(res.status).toBe(404);
+      expect(res.body.success).toBe(false);
+    });
+
+    it('returns 404 when the target has blocked the viewer', async () => {
+      const viewer = await createTestUser({ email: 'viewer@test.com' });
+      const target = await createTestUser({ email: 'blocker2@test.com' });
+      // reverse direction: the target is the blocker
+      await Block.create({ blocker: target._id, blocked: viewer._id });
+
+      const res = await request(app)
+        .get(`/api/profile/${target._id}`)
+        .set('Authorization', `Bearer ${getAuthToken(viewer)}`);
+
+      expect(res.status).toBe(404);
+      expect(res.body.success).toBe(false);
+    });
+
+    it('does not leak that a block exists (same shape as a missing user)', async () => {
+      const viewer = await createTestUser({ email: 'viewer2@test.com' });
+      const target = await createTestUser({ email: 'blocked2@test.com' });
+      await Block.create({ blocker: target._id, blocked: viewer._id });
+      const token = getAuthToken(viewer);
+
+      const blockedRes = await request(app)
+        .get(`/api/profile/${target._id}`)
+        .set('Authorization', `Bearer ${token}`);
+      const missingRes = await request(app)
+        .get('/api/profile/000000000000000000000000')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(blockedRes.status).toBe(missingRes.status);
+      expect(blockedRes.body.message).toBe(missingRes.body.message);
+    });
+
+    it('still returns the profile when no block exists', async () => {
+      const viewer = await createTestUser({ email: 'viewer3@test.com' });
+      const target = await createTestUser({ email: 'target3@test.com', firstName: 'Visible' });
+
+      const res = await request(app)
+        .get(`/api/profile/${target._id}`)
+        .set('Authorization', `Bearer ${getAuthToken(viewer)}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.user.firstName).toBe('Visible');
     });
 
     it('returns 400 for invalid userId format', async () => {

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import request from 'supertest';
 import { createTestApp, createTestUser, getAuthToken } from '../helpers';
+import { Block } from '../../models/Block';
 import { Connection } from '../../models/Connection';
 
 const app = createTestApp();
@@ -40,6 +41,38 @@ describe('Chat Routes', () => {
         .send({ receiverId: 'invalid', content: '' });
 
       expect(res.status).toBe(400);
+    });
+
+    it('rejects a message when a block exists, even if a connection survives', async () => {
+      // Blocking is not atomic: a Block can outlive its connection teardown. The
+      // explicit guard must reject regardless of the connection still being there.
+      const userA = await createTestUser({ email: 'blk-a@test.com', firstName: 'Ann' });
+      const userB = await createTestUser({ email: 'blk-b@test.com', firstName: 'Ben' });
+      await Connection.create({ user1: userA._id, user2: userB._id });
+      await Block.create({ blocker: userA._id, blocked: userB._id });
+
+      const res = await request(app)
+        .post('/api/chat/messages')
+        .set('Authorization', `Bearer ${getAuthToken(userA)}`)
+        .send({ receiverId: userB._id.toString(), content: 'hi' });
+
+      expect(res.status).toBe(403);
+    });
+
+    it('rejects a message from the blocked side too', async () => {
+      const userA = await createTestUser({ email: 'blk-c@test.com', firstName: 'Cara' });
+      const userB = await createTestUser({ email: 'blk-d@test.com', firstName: 'Dan' });
+      await Connection.create({ user1: userA._id, user2: userB._id });
+      // A blocked B; B is the one attempting to send
+      await Block.create({ blocker: userA._id, blocked: userB._id });
+
+      const res = await request(app)
+        .post('/api/chat/messages')
+        .set('Authorization', `Bearer ${getAuthToken(userB)}`)
+        .send({ receiverId: userA._id.toString(), content: 'hi' });
+
+      expect(res.status).toBe(403);
+      expect(res.body.message).toBe('Can only message connected users');
     });
   });
 
