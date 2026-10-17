@@ -95,21 +95,24 @@ vi.mock('../../../contexts/useSocket', () => ({
 }));
 
 import { chatAPI, profileAPI } from '../../../services/api';
+import { ThemeProvider } from '../../../contexts/ThemeProvider';
 
 const renderChat = () =>
   render(
-    <MemoryRouter initialEntries={['/chat/other-1']}>
-      <Routes>
-        <Route
-          path="/chat/:userId"
-          element={
-            <ChatInboxProvider>
-              <Chat />
-            </ChatInboxProvider>
-          }
-        />
-      </Routes>
-    </MemoryRouter>,
+		<ThemeProvider>
+			<MemoryRouter initialEntries={['/chat/other-1']}>
+				<Routes>
+					<Route
+						path="/chat/:userId"
+						element={
+							<ChatInboxProvider>
+								<Chat />
+							</ChatInboxProvider>
+						}
+					/>
+				</Routes>
+			</MemoryRouter>
+		</ThemeProvider>,
   );
 
 describe('Chat', () => {
