@@ -320,6 +320,8 @@ Kinmeet/
 - Password hashing with bcryptjs
 - JWT-based authentication
 - Protected API routes
+- Per-user token bucket on protected routes (60 tokens, 1 per second, shared, in-process)
+- Push-device unregister does not consume that quota
 - CORS configuration
 - Privacy-first design (no city-level location sharing)
 
