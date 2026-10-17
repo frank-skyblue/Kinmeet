@@ -92,7 +92,7 @@ test.describe('Auth Flow', () => {
 
     await page.goto('/login');
     await page.getByLabel('Email').fill(email);
-    await page.getByLabel('Password').fill('WrongPass1');
+    await page.getByLabel(/^password$/i).fill('WrongPass1');
     await page.getByRole('button', { name: /sign in/i }).click();
 
     await expect(page.getByText(/invalid|failed/i)).toBeVisible({ timeout: 5000 });
