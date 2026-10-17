@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import type { ICity } from "country-state-city";
+import { surfaceCardClass, textFieldClass } from '../../constants/ui';
 import {
   formatCityOptionLabel,
   resolveCityLocation,
@@ -90,7 +91,7 @@ const CitySearchInput: React.FC<CitySearchInputProps> = ({
     <div ref={containerRef} className="relative">
       <label
         htmlFor={id}
-        className="block text-sm font-medium font-inter text-kin-navy mb-2"
+        className="block text-sm font-medium font-inter text-foreground mb-2"
       >
         {label}
       </label>
@@ -104,7 +105,7 @@ const CitySearchInput: React.FC<CitySearchInputProps> = ({
         aria-autocomplete="list"
         aria-controls={listboxId}
         aria-expanded={open}
-        className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
+        className={`${textFieldClass} w-full px-4 py-3 rounded-kin-sm transition`}
         placeholder="Type at least 2 letters, then pick a city"
         aria-label={label}
       />
@@ -112,7 +113,7 @@ const CitySearchInput: React.FC<CitySearchInputProps> = ({
         <ul
           id={listboxId}
           role="listbox"
-          className="absolute z-50 w-full mt-1 bg-white border border-kin-stone-300 rounded-kin-sm shadow-kin-strong max-h-60 overflow-y-auto py-1"
+          className={`${surfaceCardClass} absolute z-50 w-full mt-1 border border-border rounded-kin-sm max-h-60 overflow-y-auto py-1`}
         >
           {results.map((city) => {
             const labelText = formatCityOptionLabel(city);
@@ -130,7 +131,7 @@ const CitySearchInput: React.FC<CitySearchInputProps> = ({
                     handlePickCity(city);
                   }
                 }}
-                className="px-4 py-3 font-inter cursor-pointer hover:bg-kin-beige text-kin-navy"
+                className="px-4 py-3 font-inter cursor-pointer hover:bg-surface-muted text-foreground"
               >
                 {labelText}
               </li>
@@ -139,7 +140,7 @@ const CitySearchInput: React.FC<CitySearchInputProps> = ({
         </ul>
       )}
       {helperText && (
-        <p className="text-xs text-kin-teal font-inter mt-1">{helperText}</p>
+        <p className="text-xs text-muted font-inter mt-1">{helperText}</p>
       )}
     </div>
   );

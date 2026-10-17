@@ -1,11 +1,15 @@
 import axios from 'axios';
 import { normalizeEmail } from '../utils/email';
 import type {
+  AccountStatus,
   ChangeEmailPayload,
   ChangePasswordPayload,
   ChangeUsernamePayload,
   GetConnectionRequestsResponse,
+  GetConnectionsResponse,
   GetConversationsResponse,
+  GetMatchesResponse,
+  GetBlockedUsersResponse,
   RegisterPayload,
   SubmitFeedbackPayload,
   SubmitFeedbackResponse,
@@ -15,6 +19,9 @@ import type {
   RegisterNotificationDevicePayload,
   AdminAuthResponse,
   AdminFeedbackListResponse,
+  AdminReportListResponse,
+  AdminReportStatus,
+  AdminReportUpdateResponse,
   AdminSessionResponse,
 } from '../types';
 
@@ -79,6 +86,33 @@ api.interceptors.request.use((config) => {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
+});
+
+// 401 codes the API sends when this device's session is over. Other 401s, like a wrong
+// current password, carry neither and must not sign the user out.
+const SESSION_ENDED_CODES: Record<string, SessionEndReason> = {
+  // Expired or revoked token.
+  INVALID_TOKEN: 'invalid',
+  // Revoked because the account was deactivated, possibly on another device.
+  ACCOUNT_DEACTIVATED: 'deactivated',
+};
+
+export type SessionEndReason = 'invalid' | 'deactivated';
+
+let handleSessionEnded: ((reason: SessionEndReason) => void) | null = null;
+
+/** Registers what to do when the API rejects this device's session. */
+export const setSessionEndedHandler = (handler: ((reason: SessionEndReason) => void) | null) => {
+  handleSessionEnded = handler;
+};
+
+api.interceptors.response.use(undefined, (error: unknown) => {
+  if (axios.isAxiosError(error) && error.response?.status === 401) {
+    const code = (error.response.data as { code?: string } | undefined)?.code;
+    const reason = code ? SESSION_ENDED_CODES[code] : undefined;
+    if (reason) handleSessionEnded?.(reason);
+  }
+  return Promise.reject(error);
 });
 
 export const authAPI = {
@@ -150,8 +184,8 @@ export const profileAPI = {
 };
 
 export const matchingAPI = {
-  getMatches: async () => {
-    const response = await api.get('/matching');
+  getMatches: async (): Promise<GetMatchesResponse> => {
+    const response = await api.get<GetMatchesResponse>('/matching');
     return response.data;
   },
 
@@ -167,8 +201,8 @@ export const matchingAPI = {
 };
 
 export const connectionsAPI = {
-  getConnections: async () => {
-    const response = await api.get('/connections');
+  getConnections: async (): Promise<GetConnectionsResponse> => {
+    const response = await api.get<GetConnectionsResponse>('/connections');
     return response.data;
   },
 
@@ -233,13 +267,13 @@ export const blockAPI = {
     return response.data;
   },
 
-  getBlockedUsers: async () => {
-    const response = await api.get('/block/blocked');
+  getBlockedUsers: async (): Promise<GetBlockedUsersResponse> => {
+    const response = await api.get<GetBlockedUsersResponse>('/block/blocked');
     return response.data;
   },
 
-  reportUser: async (userId: string, reason: string) => {
-    const response = await api.post('/block/report', { userId, reason });
+  reportUser: async (userId: string, reason: string, details?: string) => {
+    const response = await api.post('/block/report', { userId, reason, details });
     return response.data;
   },
 };
@@ -258,6 +292,16 @@ export const settingsAPI = {
   changePassword: async (payload: ChangePasswordPayload) => {
     const response = await api.patch('/settings/password', payload);
     return response.data as { success: boolean; message: string };
+  },
+
+  deactivateAccount: async (currentPassword: string) => {
+    const response = await api.post('/settings/account/deactivate', { currentPassword });
+    return response.data as { success: boolean; message: string };
+  },
+
+  reactivateAccount: async () => {
+    const response = await api.post('/settings/account/reactivate');
+    return response.data as { success: boolean; message: string; accountStatus: AccountStatus };
   },
 };
 
@@ -341,6 +385,25 @@ export const adminAPI = {
     const response = await adminClient.get<AdminFeedbackListResponse>('/admin/feedback', {
       params: { page },
     });
+    return response.data;
+  },
+
+  listReports: async (page = 1): Promise<AdminReportListResponse> => {
+    const response = await adminClient.get<AdminReportListResponse>('/admin/reports', {
+      params: { page },
+    });
+    return response.data;
+  },
+
+  updateReportStatus: async (
+    reportId: string,
+    status: AdminReportStatus,
+  ): Promise<AdminReportUpdateResponse> => {
+    const response = await adminClient.patch<AdminReportUpdateResponse>(
+      `/admin/reports/${reportId}/status`,
+      { status },
+      { headers: adminMutationHeaders },
+    );
     return response.data;
   },
 };

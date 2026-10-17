@@ -29,7 +29,7 @@ const DynamicListField: React.FC<DynamicListFieldProps> = ({
 }) => {
     return (
         <div>
-            <label className="block text-sm font-medium font-inter text-kin-navy mb-2">
+            <label className="block text-sm font-medium font-inter text-foreground mb-2">
                 {label}{required && ' *'}
             </label>
             {items.map((item, index) => (
@@ -55,7 +55,7 @@ const DynamicListField: React.FC<DynamicListFieldProps> = ({
                         <button
                             type="button"
                             onClick={() => onRemove(index)}
-                            className="px-4 py-3 bg-kin-coral-100 text-kin-coral-700 rounded-kin-sm font-inter font-medium hover:bg-kin-coral-200 transition shrink-0"
+                            className="px-4 py-3 bg-kin-coral-100 text-kin-coral-700 rounded-kin-sm font-inter font-medium hover:bg-kin-coral-200 cursor-pointer transition shrink-0"
                             aria-label={`Remove ${idPrefix}`}
                         >
                             Remove
@@ -66,7 +66,7 @@ const DynamicListField: React.FC<DynamicListFieldProps> = ({
             <button
                 type="button"
                 onClick={onAdd}
-                className="text-kin-teal font-semibold font-inter hover:text-kin-teal-600 transition"
+                className="text-muted font-semibold font-inter hover:text-kin-teal-600 transition"
             >
                 {addLabel}
             </button>

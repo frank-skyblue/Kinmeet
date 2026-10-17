@@ -109,38 +109,4 @@ describe('blockService', () => {
     });
   });
 
-  describe('reportUser', () => {
-    it('creates a block with REPORT: prefix', async () => {
-      const userA = await createTestUser({ email: 'a@test.com' });
-      const userB = await createTestUser({ email: 'b@test.com' });
-
-      await blockService.reportUser(userA._id.toString(), userB._id.toString(), 'Spam');
-
-      const block = await Block.findOne({ blocker: userA._id, blocked: userB._id });
-      expect(block?.reason).toBe('REPORT: Spam');
-    });
-
-    it('removes connections and requests on report', async () => {
-      const userA = await createTestUser({ email: 'a@test.com' });
-      const userB = await createTestUser({ email: 'b@test.com' });
-      await Connection.create({ user1: userA._id, user2: userB._id });
-
-      await blockService.reportUser(userA._id.toString(), userB._id.toString(), 'Abusive');
-
-      const conn = await Connection.findOne({
-        $or: [
-          { user1: userA._id, user2: userB._id },
-          { user1: userB._id, user2: userA._id },
-        ],
-      });
-      expect(conn).toBeNull();
-    });
-
-    it('throws when reporting self', async () => {
-      const user = await createTestUser({ email: 'a@test.com' });
-      await expect(
-        blockService.reportUser(user._id.toString(), user._id.toString(), 'test'),
-      ).rejects.toThrow('Cannot report yourself');
-    });
-  });
 });

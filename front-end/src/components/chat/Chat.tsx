@@ -13,9 +13,9 @@ const Chat: React.FC = () => {
   }, [userId, refetchInbox]);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col bg-kin-beige md:flex-row">
+    <div className="flex min-h-0 flex-1 flex-col bg-canvas md:flex-row">
       <aside
-        className={`flex min-h-0 shrink-0 flex-col border-kin-stone-200 md:w-80 md:max-w-[40%] md:border-r ${
+        className={`flex min-h-0 shrink-0 flex-col border-border md:w-80 md:max-w-[40%] md:border-r ${
           userId ? "hidden md:flex" : "flex flex-1 md:flex-none"
         }`}
       >
@@ -30,12 +30,12 @@ const Chat: React.FC = () => {
         {userId ? (
           <ChatThread userId={userId} />
         ) : (
-          <div className="flex flex-1 flex-col items-center justify-center bg-kin-beige p-8 text-center">
+          <div className="flex flex-1 flex-col items-center justify-center bg-canvas p-8 text-center">
             <div className="max-w-sm">
-              <p className="font-montserrat text-lg font-semibold text-kin-navy">
+              <p className="font-montserrat text-lg font-semibold text-foreground">
                 Select a conversation
               </p>
-              <p className="mt-2 font-inter text-sm text-kin-teal">
+              <p className="mt-2 font-inter text-sm text-muted">
                 Choose someone from the list to read and send messages.
               </p>
             </div>
