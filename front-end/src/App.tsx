@@ -7,6 +7,7 @@ import Login from './components/auth/Login';
 import Signup from './components/auth/Signup';
 import ForgotPassword from './components/auth/ForgotPassword';
 import ResetPassword from './components/auth/ResetPassword';
+import ReactivateAccount from './components/auth/ReactivateAccount';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import Layout from './components/dashboard/Layout';
 import Discover from './components/matching/Discover';
@@ -46,6 +47,7 @@ const App = () => {
           <Route path="/signup" element={<Signup />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/reactivate" element={<ReactivateAccount />} />
 
           <Route element={<ProtectedRoute />}>
             <Route element={<Layout />}>

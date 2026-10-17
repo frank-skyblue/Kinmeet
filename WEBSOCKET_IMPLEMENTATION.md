@@ -119,7 +119,8 @@ Typing dots disappear
 
 ## 🔐 Security
 
-- **JWT Authentication**: All WebSocket connections require valid JWT token
+- **JWT Authentication**: All WebSocket connections require a valid JWT, checked once at connect by `socketMiddleware.ts` with the same `verifyAuthToken` as the REST API: the signature, the token's `tv` against the user's current `tokenVersion`, and that the account isn't deactivated
+- **Session Revocation**: Deactivating an account increments its `tokenVersion` and calls `disconnectUserSockets(userId)` (`socketServer.ts`), closing that user's open sockets. Clients disconnected by the server don't reconnect on their own, and a reconnect with the revoked token is rejected
 - **Connection Validation**: Messages can only be sent to connected users
 - **User Rooms**: Each user joins their own room (`user:{userId}`) for private messaging
 - **Authorization**: Backend validates sender/receiver relationship before saving messages
@@ -238,12 +239,19 @@ Check browser console for:
    - Ensure user is logged in
    - Token should be in localStorage
 
-2. **Messages not appearing**
+2. **"Authentication error: Invalid token"**
+   - The token is expired, or was revoked (the account was deactivated on another device)
+   - Sign in again; the app normally redirects to `/login` by itself
+
+3. **"Authentication error: Account deactivated"**
+   - Expected while the account is deactivated; reactivate it from the prompt shown after signing in
+
+4. **Messages not appearing**
    - Check connection status badge
    - Verify both users are connected
    - Check browser console for errors
 
-3. **Typing indicator stuck**
+5. **Typing indicator stuck**
    - Refresh the page
    - Check network connectivity
 

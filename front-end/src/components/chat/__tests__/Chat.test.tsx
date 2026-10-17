@@ -241,4 +241,28 @@ describe('Chat', () => {
     await user.click(screen.getByText('Hello Marie!'));
     expect(screen.getByTestId('chat-message-timestamp')).toHaveTextContent(/\d/);
   });
+
+  it('shows a deactivated peer as Unavailable, without a profile link or composer', async () => {
+    vi.mocked(chatAPI.getConversations).mockResolvedValue({
+      ...mockInboxResponse,
+      conversations: [
+        {
+          user: { _id: 'other-1', firstName: 'Unavailable', lastName: '', unavailable: true },
+          lastMessage: mockMessages[1],
+          unreadCount: 0,
+        },
+      ],
+    });
+    vi.mocked(profileAPI.getUserProfile).mockRejectedValue(new Error('User not found'));
+
+    renderChat();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { level: 2, name: 'Unavailable' })).toBeInTheDocument();
+    });
+    expect(screen.getByText('Hello Marie!')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /profile/i })).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Type a message')).toBeDisabled();
+    expect(screen.getByPlaceholderText('This account is unavailable')).toBeInTheDocument();
+  });
 });

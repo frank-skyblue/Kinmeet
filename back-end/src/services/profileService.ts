@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { User } from '../models/User';
+import { ACTIVE_ACCOUNT_FILTER, User } from '../models/User';
 import { areUsersBlocked } from '../models/Block';
 import { Connection } from '../models/Connection';
 import { ConnectionRequest } from '../models/ConnectionRequest';
@@ -34,7 +34,8 @@ export const getUserProfile = async (requesterId: string, targetUserId: string) 
         ? '-password -blockedUsers'
         : '-password -lastName -blockedUsers';
 
-    const user = await User.findById(targetUserId).select(selectFields);
+    // Deactivated accounts are reported as 404 too, so viewers aren't told why.
+    const user = await User.findOne({ _id: targetUserId, ...ACTIVE_ACCOUNT_FILTER }).select(selectFields);
     if (!user) throw new AppError(404, 'User not found');
 
     return { user, isConnected: !!connection };

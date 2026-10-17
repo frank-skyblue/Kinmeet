@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { normalizeEmail } from '../utils/email';
 import type {
+  AccountStatus,
   ChangeEmailPayload,
   ChangePasswordPayload,
   ChangeUsernamePayload,
@@ -85,6 +86,33 @@ api.interceptors.request.use((config) => {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
+});
+
+// 401 codes the API sends when this device's session is over. Other 401s, like a wrong
+// current password, carry neither and must not sign the user out.
+const SESSION_ENDED_CODES: Record<string, SessionEndReason> = {
+  // Expired or revoked token.
+  INVALID_TOKEN: 'invalid',
+  // Revoked because the account was deactivated, possibly on another device.
+  ACCOUNT_DEACTIVATED: 'deactivated',
+};
+
+export type SessionEndReason = 'invalid' | 'deactivated';
+
+let handleSessionEnded: ((reason: SessionEndReason) => void) | null = null;
+
+/** Registers what to do when the API rejects this device's session. */
+export const setSessionEndedHandler = (handler: ((reason: SessionEndReason) => void) | null) => {
+  handleSessionEnded = handler;
+};
+
+api.interceptors.response.use(undefined, (error: unknown) => {
+  if (axios.isAxiosError(error) && error.response?.status === 401) {
+    const code = (error.response.data as { code?: string } | undefined)?.code;
+    const reason = code ? SESSION_ENDED_CODES[code] : undefined;
+    if (reason) handleSessionEnded?.(reason);
+  }
+  return Promise.reject(error);
 });
 
 export const authAPI = {
@@ -264,6 +292,16 @@ export const settingsAPI = {
   changePassword: async (payload: ChangePasswordPayload) => {
     const response = await api.patch('/settings/password', payload);
     return response.data as { success: boolean; message: string };
+  },
+
+  deactivateAccount: async (currentPassword: string) => {
+    const response = await api.post('/settings/account/deactivate', { currentPassword });
+    return response.data as { success: boolean; message: string };
+  },
+
+  reactivateAccount: async () => {
+    const response = await api.post('/settings/account/reactivate');
+    return response.data as { success: boolean; message: string; accountStatus: AccountStatus };
   },
 };
 
