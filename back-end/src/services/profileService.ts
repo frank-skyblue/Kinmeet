@@ -7,6 +7,7 @@ import { Message } from '../models/Message';
 import { AppError } from '../middleware/errorHandler';
 import { dateOfBirthString } from '../middleware/schemas';
 import { uploadImage, destroyImage } from './cloudinaryService';
+import { attachmentService } from './attachmentService';
 
 const AVATARS_SUBFOLDER = 'avatars';
 
@@ -71,6 +72,8 @@ export const deleteProfile = async (userId: string) => {
     if (userToDelete?.photo) {
         await destroyImage(userToDelete.photo, AVATARS_SUBFOLDER);
     }
+    // Before the messages go: chat media lives in Cloudinary, not in the message rows.
+    await attachmentService.deleteMediaForUser(userId);
 
     await Promise.all([
         Connection.deleteMany({

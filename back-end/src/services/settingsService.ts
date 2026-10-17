@@ -1,8 +1,9 @@
 import { User } from '../models/User';
 import { AppError } from '../middleware/errorHandler';
-import { findUserByEmail, normalizeEmail } from '../utils/email';
+import { findUserByEmail, findUserByUsername, normalizeEmail } from '../utils/email';
+import { usernameField } from '../middleware/schemas';
+import { USERNAME_TAKEN_MESSAGE, duplicateKeyField } from './authenticationService';
 
-const USERNAME_REGEX = /^[a-z0-9_]{3,30}$/;
 
 export const settingsService = {
     changeEmail: async (
@@ -39,26 +40,26 @@ export const settingsService = {
         const user = await User.findById(userId);
         if (!user) throw new AppError(404, 'User not found');
 
-        const normalized = newUsername.trim().toLowerCase();
+        // Same rules and messages as the route's validation, for direct callers.
+        const parsed = usernameField.safeParse(newUsername);
+        if (!parsed.success) throw new AppError(400, parsed.error.issues[0].message);
+        const normalized = parsed.data;
 
-        if (!USERNAME_REGEX.test(normalized)) {
-            throw new AppError(
-                400,
-                'Username must be 3-30 characters using lowercase letters, numbers, or underscores',
-            );
-        }
+        // The user's own username isn't "taken": keeping it is a no-op.
+        if (normalized === user.username) return { username: normalized };
 
-        if (normalized === user.username) {
-            throw new AppError(400, 'New username must be different from your current username');
-        }
-
-        const existing = await User.findOne({ username: normalized });
-        if (existing) throw new AppError(409, 'Username is already taken');
+        if (await findUserByUsername(normalized)) throw new AppError(409, USERNAME_TAKEN_MESSAGE);
 
         user.username = normalized;
-        await user.save();
+        try {
+            await user.save();
+        } catch (error) {
+            // Someone claimed it between the check and the save; the unique index stopped this one.
+            if (duplicateKeyField(error) === 'username') throw new AppError(409, USERNAME_TAKEN_MESSAGE);
+            throw error;
+        }
 
-        return { username: user.username! };
+        return { username: normalized };
     },
 
     changePassword: async (

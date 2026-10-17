@@ -204,7 +204,12 @@ graph TD
 - [ ] **Password too short** (`Pass1`) → client blocks (< 8 chars).
 - [ ] **Password mismatch** (confirm differs) → client blocks.
 - [ ] **Weak-but-8-char password** on client (e.g. `password` all lowercase): client **only checks length** so it may pass Step 1 — but the **server** enforces upper+lower+digit and should reject on final submit. Verify the error surfaces. *(Known client/server mismatch — see §12.)*
-- [ ] **Username format:** enter `AB` → too short (min 3); enter `Bad-Name!` → invalid (only `a-z 0-9 _`); enter `Valid_Name` → accepted, lowercased.
+- [ ] **Username, typed:** letters appear in **lowercase** as you type (`Valid_Name` → `valid_name`); on a phone, the keyboard doesn't capitalise the first letter.
+- [ ] **Username format, explained:** `ab` → "Username must be at least 3 characters."; `bad-name!` → "Username can only contain letters, numbers, and underscores." No availability request is sent for these (check the Network tab).
+- [ ] **Username availability:** a moment after you stop typing → "Checking availability..." then "Username available" or "This username is already taken." (try a seed username, in any case: `LUCIA` finds `lucia`). Typing quickly sends **one** request, not one per letter.
+- [ ] **Username check fails:** stop the back-end and type a username → "Unable to check availability. Please try again." — never "available". **Next** stays blocked until a check succeeds or the field is cleared.
+- [ ] **Username empty:** leave it blank → no message, **Next** works, and a username is generated on registration.
+- [ ] **Taken after checking (race):** pick an available username, and before finishing sign-up claim the same name from another account (Settings) → **Create Account** returns you to **step 1** with "This username is already taken."
 - [ ] **DOB boundaries:** date input min = today−120y, max = today. Future date and >120y should be blocked.
 - [ ] **No minimum age:** a DOB making the user < 18 is **accepted** (no 18+ gate). *(Known gap — see §12.)*
 - [ ] **Required-field guards:** try to advance each step with a required field empty (first name, last name, home country, city/province, DOB, gender, ≥1 language, ≥1 looking-for) → advance is blocked with inline messaging.
@@ -372,6 +377,31 @@ graph TD
 - [ ] While in a thread, stop the back-end (or kill network) → header shows **"Reconnecting…"** and the input/send are **disabled**.
 - [ ] Restart back-end → indicator returns to **"Connected"** and sending re-enables.
 
+### 8.7 Photos
+**Precondition:** two connected users in two browsers (as in §8.4). Cloudinary keys configured.
+- [ ] Photo button → pick a JPEG/PNG → the photo appears at once with a progress bar, then B receives it within a few seconds. The inbox shows **"📷 Photo"**.
+- [ ] Click the photo → full-size viewer; Escape or the backdrop closes it.
+- [ ] iPhone (Safari): a HEIC photo sends and displays as a normal image.
+- [ ] **Privacy:** right-click → copy image address. The URL contains `/authenticated/s--…--/` (signed). Remove the `s--…--` part and open it → Cloudinary refuses it.
+- [ ] **GPS stripped:** send a phone photo with location data, download the delivered image, and check with `exiftool` (or an online EXIF viewer) → no GPS fields.
+- [ ] **Edge:** a file over 5 MB → "Photos must be under 5 MB", nothing uploaded. A PDF → "Please choose an image file".
+- [ ] **Edge:** turn off the network during the upload → the bubble shows **Retry / Remove**; Retry after reconnecting sends it once (no duplicate for B).
+- [ ] Refresh the page → the photo still shows (links are signed again on every load).
+
+### 8.8 Voice messages
+- [ ] Microphone button → allow the microphone → "Recording 0:03 / 2:00" → **Send** → B receives a voice bubble with waveform and length; **Play** works. The inbox shows **"🎤 Voice message · 0:03"**.
+- [ ] Record in **Chrome** and play in **Safari** (and the reverse) → plays in both (delivered as MP3).
+- [ ] **Cancel** during recording → nothing sent. A tap shorter than 1 second → "Voice message is too short".
+- [ ] Recording stops and sends by itself at **2:00**.
+- [ ] **Edge:** deny microphone permission → "Microphone access was denied…".
+- [ ] **Offline push:** with B closed, A sends a photo / voice message → B's push says "sent you a photo" / "sent you a voice message" (requires web push config).
+
+### 8.9 Media cleanup and limits (API / server)
+- [ ] `POST /api/chat/attachments/sign` for a **non-connected** user → 403. More than 30 requests in a minute → 429.
+- [ ] Sending a message with a made-up `attachment.signature` → 400 "Invalid upload receipt"; with an attachment older than 15 minutes → 410.
+- [ ] **With `CLOUDINARY_NOTIFICATION_URL` set** (public URL or tunnel): after sending, the message's `bytes`/`width`/`height` (or `durationMs`) match Cloudinary's values. A file over the limits is removed and shows "Photo unavailable" / "Voice message unavailable".
+- [ ] Delete an account that sent and received media → its chat files are gone from Cloudinary (`kinmeet-dev/chat/…` in the Media Library).
+
 ---
 
 ## 9. Blocking & reporting
@@ -408,8 +438,10 @@ Get a token by logging in via `POST /api/auth/login`, then set `Authorization: B
 - [ ] **Edge:** wrong current password → error. Email already in use → **409** conflict error. New email equal to current → rejected.
 
 ### 10.3 Change username
-- [ ] Edit → new username matching `^[a-z0-9_]{3,30}$` → save → success.
-- [ ] **Edge:** taken username → 409; invalid format → error; same as current → rejected.
+- [ ] **Edit** → the field shows your current username with "This is your current username", and **Save is disabled**.
+- [ ] Type a new name → lowercase as you type → "Checking availability..." → "Username available" → **Save** → "Username updated successfully."
+- [ ] **Edge:** a taken name (any case) → "This username is already taken.", Save disabled. A badly formatted name → the specific rule message, Save disabled. Back-end stopped → "Unable to check availability. Please try again.", Save disabled.
+- [ ] **Edge (race, API):** two accounts send `PATCH /api/settings/username` with the same new name at the same time → one 200, one **409** "This username is already taken." — never two owners.
 
 ### 10.4 Change password
 - [ ] Edit → current password + new + confirm → save → success.
@@ -486,6 +518,7 @@ Copy this into your run sheet and mark **Pass / Fail / N/A**.
 [ ] Forgot → reset via link → login with new password
 [ ] Reset edge (no token / used token / expired)
 [ ] Logout + protected-route redirect + refresh persistence
+[ ] Chat photo + voice message: send, receive live, play/view, survive refresh; retry after a failed upload
 [ ] Own profile shows age + gender + full name + Edit button
 [ ] Other profile: last name hidden until connected; shown after accept
 [ ] Profile edit save + validations; photo add/replace/remove

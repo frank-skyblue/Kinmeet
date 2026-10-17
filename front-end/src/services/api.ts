@@ -1,6 +1,8 @@
 import axios from 'axios';
 import { normalizeEmail } from '../utils/email';
 import type {
+  ChatMediaKind,
+  ChatUploadPass,
   ChangeEmailPayload,
   ChangePasswordPayload,
   ChangeUsernamePayload,
@@ -100,6 +102,11 @@ export const authAPI = {
 
   checkEmail: async (email: string) => {
     const response = await api.post('/auth/check-email', { email });
+    return response.data as { success: boolean; available?: boolean; message?: string };
+  },
+
+  checkUsername: async (username: string) => {
+    const response = await api.post('/auth/check-username', { username });
     return response.data as { success: boolean; available?: boolean; message?: string };
   },
 
@@ -213,6 +220,11 @@ export const chatAPI = {
   markAsRead: async (senderId: string) => {
     const response = await api.post('/chat/messages/read', { senderId });
     return response.data;
+  },
+
+  requestUploadPass: async (receiverId: string, kind: ChatMediaKind) => {
+    const response = await api.post('/chat/attachments/sign', { receiverId, kind });
+    return response.data as { success: boolean; pass: ChatUploadPass };
   },
 };
 

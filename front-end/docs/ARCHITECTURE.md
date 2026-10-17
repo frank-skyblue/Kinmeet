@@ -46,7 +46,8 @@ Inside `App`:
 |------|----------------|
 | **`styles/`** | Tailwind theme layers: brand palette, semantic roles, per-theme assignments, and global base styles. |
 | **`constants/`** | Static options, validation helpers, and shared UI class strings (`ui.ts`). Must not import from `components/`. |
-| **`utils/`** | Pure helpers (e.g. `getErrorMessage` in `error.ts`). |
+| **`utils/`** | Pure helpers (e.g. `getErrorMessage` in `error.ts`; username rules and messages in `username.ts`). |
+| **`hooks/`** | Reusable hooks not tied to a context, e.g. `useUsernameAvailability` (rules check, debounced availability request, recognises the user's own username), shared by sign-up and Settings. |
 | **`services/api.ts`** | Axios instance with auth header interceptor; grouped exports: `authAPI` (login, register, checkEmail, logout, forgotPassword, resetPassword), `profileAPI`, `matchingAPI`, `connectionsAPI`, `chatAPI`, `blockAPI`, `feedbackAPI`, `supportAPI`; `getPhotoUrl()` for relative vs absolute image URLs; default `api` export. |
 | **`services/socketService.ts`** | Singleton-style Socket.io client: `connect` / `disconnect` / `getSocket`. |
 | **`contexts/`** | React context + providers. Some features split **context definition** (`.ts`) from **provider component** (`.tsx`) to satisfy Fast Refresh when the file exports both hooks and non-component values. |
@@ -74,6 +75,7 @@ Local and page-level state stay in components unless multiple distant trees need
 
 - **HTTP:** Single `axios` base URL from `VITE_API_URL` (see README). Bearer token attached per request from `localStorage`.
 - **Photos:** `getPhotoUrl(path)` resolves backend-relative paths against the API origin.
+- **Chat media:** `services/chatMedia.ts` (`uploadChatMedia`) asks the API for a one-file upload pass, then uploads **directly to Cloudinary** with the plain `axios` instance (never the app's `api` instance, which would send the Bearer token and rewrite the body), and returns the signed receipt that `ChatThread` sends over the socket. `utils/chatMedia.ts` compresses images (re-encoding drops EXIF/GPS), builds thumbnails and waveforms, and picks a `MediaRecorder` format; `components/chat/useVoiceRecorder.ts` records voice messages. Viewing links come from the server, signed, on every load.
 - **WebSocket:** URL derived from API URL (strip `/api`); auth payload includes JWT.
 
 New REST surfaces should get typed payloads in `types/index.ts`, functions in `services/api.ts`, and callers in services/components — not ad hoc `fetch` scattered in UI.

@@ -1,37 +1,105 @@
-import { Message } from '../models/Message';
-import { areUsersBlocked } from '../models/Block';
+import { Types } from 'mongoose';
+import { Message, type IMessage, type IMessageAttachment, type MessageType } from '../models/Message';
 import { Connection } from '../models/Connection';
 import { User } from '../models/User';
 import { AppError } from '../middleware/errorHandler';
+import { assertCanMessage } from './chatAccess';
+import { attachmentService, type AttachmentReceipt } from './attachmentService';
+import { buildChatMediaUrls, type ChatMediaUrls } from './cloudinaryService';
+
+export interface SendMessageOptions {
+    attachment?: AttachmentReceipt;
+    clientMessageId?: string;
+}
+
+const isDuplicateKeyError = (error: unknown): boolean =>
+    typeof error === 'object' && error !== null && (error as { code?: number }).code === 11000;
+
+export type ChatAttachmentView = Omit<IMessageAttachment, 'publicId' | 'resourceType' | 'version'> & {
+    /** Absent when the media was removed. */
+    urls?: ChatMediaUrls;
+};
+
+/** A message as clients see it, with participants populated. */
+export interface ChatMessageView {
+    _id: Types.ObjectId;
+    sender: unknown;
+    receiver: unknown;
+    type: MessageType;
+    content?: string;
+    attachment?: ChatAttachmentView;
+    clientMessageId?: string;
+    read: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+/** Attachments carry freshly signed viewing URLs instead of the stored Cloudinary identifiers. */
+const toChatMessage = (message: IMessage): ChatMessageView => {
+    const { attachment, ...rest } = message.toObject() as Omit<ChatMessageView, 'attachment'> & {
+        attachment?: IMessageAttachment;
+    };
+    if (!attachment) return rest;
+
+    const { publicId, resourceType, version, ...details } = attachment;
+    const urls = attachment.removed ? undefined : buildChatMediaUrls({ publicId, resourceType, version });
+    return { ...rest, attachment: { ...details, urls } };
+};
+
+const populateParticipants = (message: IMessage) =>
+    message.populate('sender receiver', 'firstName lastName');
 
 export const chatService = {
-    sendMessage: async (senderId: string, receiverId: string, content: string) => {
-        if (!receiverId || !content?.trim()) {
+    sendMessage: async (
+        senderId: string,
+        receiverId: string,
+        content: string | undefined,
+        { attachment, clientMessageId }: SendMessageOptions = {},
+    ) => {
+        const text = content?.trim() ?? '';
+        if (!receiverId || (!text && !attachment)) {
             throw new AppError(400, 'Receiver ID and content are required');
         }
 
-        if (await areUsersBlocked(senderId, receiverId)) {
-            throw new AppError(403, 'Can only message connected users');
+        await assertCanMessage(senderId, receiverId);
+
+        // A retried send (e.g. after a lost acknowledgement) returns the original message.
+        if (clientMessageId) {
+            const existing = await Message.findOne({ sender: senderId, clientMessageId });
+            if (existing) return toChatMessage(await populateParticipants(existing));
         }
 
-        const connection = await Connection.findOne({
-            $or: [
-                { user1: senderId, user2: receiverId },
-                { user1: receiverId, user2: senderId },
-            ],
-        });
-        if (!connection) throw new AppError(403, 'Can only message connected users');
+        const messageId = new Types.ObjectId();
+        let fields: Pick<IMessage, 'type' | 'content' | 'attachment'> = { type: 'text', content: text };
+        if (attachment) {
+            const claimed = await attachmentService.claimForMessage(senderId, receiverId, attachment, messageId);
+            if (claimed.type === 'voice' && text) {
+                await attachmentService.releaseClaim(attachment.id, messageId);
+                throw new AppError(400, 'Voice messages cannot have a caption');
+            }
+            fields = { type: claimed.type, content: text || undefined, attachment: claimed.attachment };
+        }
 
         const message = new Message({
+            _id: messageId,
             sender: senderId,
             receiver: receiverId,
-            content: content.trim(),
+            ...fields,
+            clientMessageId,
             read: false,
         });
-        await message.save();
-        await message.populate('sender receiver', 'firstName lastName');
+        try {
+            await message.save();
+        } catch (error) {
+            if (attachment) await attachmentService.releaseClaim(attachment.id, messageId);
+            if (clientMessageId && isDuplicateKeyError(error)) {
+                const existing = await Message.findOne({ sender: senderId, clientMessageId });
+                if (existing) return toChatMessage(await populateParticipants(existing));
+            }
+            throw error;
+        }
 
-        return message;
+        return toChatMessage(await populateParticipants(message));
     },
 
     getConversation: async (userId: string, otherUserId: string) => {
@@ -60,7 +128,7 @@ export const chatService = {
             { read: true },
         );
 
-        return messages;
+        return messages.map(toChatMessage);
     },
 
     getConversations: async (userId: string) => {
@@ -98,7 +166,7 @@ export const chatService = {
                     ),
                 ]);
 
-                return { user, lastMessage, unreadCount };
+                return { user, lastMessage: lastMessage && toChatMessage(lastMessage), unreadCount };
             }),
         );
 
