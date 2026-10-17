@@ -133,7 +133,7 @@ const ChatThread: React.FC<ChatThreadProps> = ({ userId }) => {
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!newMessage.trim() || !userId || !user || !socket) return;
+    if (!newMessage.trim() || !userId || !user || !socket || isPeerUnavailable) return;
 
     const messageContent = newMessage.trim();
     const tempId = `temp-${Date.now()}`;
@@ -405,9 +405,9 @@ const ChatThread: React.FC<ChatThreadProps> = ({ userId }) => {
               type="text"
               value={newMessage}
               onChange={handleInputChange}
-              placeholder="Type a message..."
+              placeholder={isPeerUnavailable ? 'This account is unavailable' : 'Type a message...'}
               className={`${textFieldClass} flex-1 rounded-kin-sm px-4 py-3 transition`}
-              disabled={isSending || !isConnected}
+              disabled={isSending || !isConnected || isPeerUnavailable}
               aria-label="Type a message"
             />
             <button
