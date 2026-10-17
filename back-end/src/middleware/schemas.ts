@@ -179,8 +179,25 @@ const emailField = z
             .email('Invalid email address'),
     );
 
+// Usernames are case-insensitive and stored lowercase. Each rule has its own message, checked in
+// this order; the frontend (front-end/src/utils/username.ts) uses the same wording.
+export const usernameField = z
+    .string()
+    .transform((value) => normalizeEmail(value))
+    .pipe(
+        z
+            .string()
+            .min(3, 'Username must be at least 3 characters.')
+            .max(30, 'Username must be at most 30 characters.')
+            .regex(/^[a-z0-9_]+$/, 'Username can only contain letters, numbers, and underscores.'),
+    );
+
 export const checkEmailSchema = z.object({
     email: emailField,
+});
+
+export const checkUsernameSchema = z.object({
+    username: usernameField,
 });
 
 export const loginSchema = z.object({
@@ -190,7 +207,11 @@ export const loginSchema = z.object({
 
 export const registerSchema = z.object({
     email: checkEmailSchema.shape.email,
-    username: z.string().trim().toLowerCase().min(3, 'Username must be 3-30 characters using lowercase letters, numbers, or underscores').max(30, 'Username must be 3-30 characters using lowercase letters, numbers, or underscores').regex(/^[a-z0-9_]+$/, 'Username must be 3-30 characters using lowercase letters, numbers, or underscores').optional(),
+    // Optional: an empty value means "generate one for me", not a validation error.
+    username: z.preprocess(
+        (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+        usernameField.optional(),
+    ),
     password: passwordField,
     firstName: requiredString('First name', 50),
     lastName: requiredString('Last name', 50),
@@ -272,16 +293,7 @@ export const changeEmailSchema = z.object({
 });
 
 export const changeUsernameSchema = z.object({
-    newUsername: z
-        .string()
-        .trim()
-        .toLowerCase()
-        .min(3, 'Username must be 3-30 characters using lowercase letters, numbers, or underscores')
-        .max(30, 'Username must be 3-30 characters using lowercase letters, numbers, or underscores')
-        .regex(
-            /^[a-z0-9_]+$/,
-            'Username must be 3-30 characters using lowercase letters, numbers, or underscores',
-        ),
+    newUsername: usernameField,
 });
 
 export const changePasswordSchema = z.object({

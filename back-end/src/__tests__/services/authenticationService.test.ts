@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { vi, describe, it, expect } from 'vitest';
 import { authenticationService } from '../../services/authenticationService';
 import { User } from '../../models/User';
 import { createTestUser } from '../helpers';
@@ -240,9 +240,52 @@ describe('authenticationService', () => {
           username: 'taken_name',
         }),
       ).rejects.toMatchObject({
-        statusCode: 400,
-        message: 'Username is already taken',
+        statusCode: 409,
+        message: 'This username is already taken.',
       });
+    });
+
+    it('treats usernames as case-insensitive', async () => {
+      await authenticationService.register({ ...validData, username: 'albert' });
+
+      await expect(
+        authenticationService.register({ ...validData, email: 'second@example.com', username: 'Albert' }),
+      ).rejects.toMatchObject({ statusCode: 409, message: 'This username is already taken.' });
+    });
+
+    it('generates a username when the field is empty', async () => {
+      const result = await authenticationService.register({ ...validData, username: '' });
+
+      expect(result.user?.username).toMatch(/^[a-z0-9_]{3,30}$/);
+    });
+
+    it('lets only one of two simultaneous sign-ups claim the same username', async () => {
+      await User.init(); // make sure the unique index exists in the in-memory database
+
+      const results = await Promise.allSettled([
+        authenticationService.register({ ...validData, email: 'one@example.com', username: 'race_name' }),
+        authenticationService.register({ ...validData, email: 'two@example.com', username: 'race_name' }),
+      ]);
+
+      expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
+      const rejected = results.find((r): r is PromiseRejectedResult => r.status === 'rejected');
+      expect(rejected?.reason).toMatchObject({ statusCode: 409, message: 'This username is already taken.' });
+      expect(await User.countDocuments({ username: 'race_name' })).toBe(1);
+    });
+
+    it('picks another generated username when two sign-ups generate the same one at once', async () => {
+      await User.init();
+      vi.spyOn(Math, 'random').mockReturnValue(0.5); // both sign-ups generate the same candidate
+
+      const results = await Promise.allSettled([
+        authenticationService.register({ ...validData, email: 'gen1@example.com', username: undefined }),
+        authenticationService.register({ ...validData, email: 'gen2@example.com', username: undefined }),
+      ]);
+
+      expect(results.every((r) => r.status === 'fulfilled')).toBe(true);
+      const usernames = (await User.find({ email: /^gen/ })).map((u) => u.username);
+      expect(new Set(usernames).size).toBe(2);
+      vi.restoreAllMocks();
     });
   });
 

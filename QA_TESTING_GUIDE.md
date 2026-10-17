@@ -204,7 +204,12 @@ graph TD
 - [ ] **Password too short** (`Pass1`) → client blocks (< 8 chars).
 - [ ] **Password mismatch** (confirm differs) → client blocks.
 - [ ] **Weak-but-8-char password** on client (e.g. `password` all lowercase): client **only checks length** so it may pass Step 1 — but the **server** enforces upper+lower+digit and should reject on final submit. Verify the error surfaces. *(Known client/server mismatch — see §12.)*
-- [ ] **Username format:** enter `AB` → too short (min 3); enter `Bad-Name!` → invalid (only `a-z 0-9 _`); enter `Valid_Name` → accepted, lowercased.
+- [ ] **Username, typed:** letters appear in **lowercase** as you type (`Valid_Name` → `valid_name`); on a phone, the keyboard doesn't capitalise the first letter.
+- [ ] **Username format, explained:** `ab` → "Username must be at least 3 characters."; `bad-name!` → "Username can only contain letters, numbers, and underscores." No availability request is sent for these (check the Network tab).
+- [ ] **Username availability:** a moment after you stop typing → "Checking availability..." then "Username available" or "This username is already taken." (try a seed username, in any case: `LUCIA` finds `lucia`). Typing quickly sends **one** request, not one per letter.
+- [ ] **Username check fails:** stop the back-end and type a username → "Unable to check availability. Please try again." — never "available". **Next** stays blocked until a check succeeds or the field is cleared.
+- [ ] **Username empty:** leave it blank → no message, **Next** works, and a username is generated on registration.
+- [ ] **Taken after checking (race):** pick an available username, and before finishing sign-up claim the same name from another account (Settings) → **Create Account** returns you to **step 1** with "This username is already taken."
 - [ ] **DOB boundaries:** date input min = today−120y, max = today. Future date and >120y should be blocked.
 - [ ] **No minimum age:** a DOB making the user < 18 is **accepted** (no 18+ gate). *(Known gap — see §12.)*
 - [ ] **Required-field guards:** try to advance each step with a required field empty (first name, last name, home country, city/province, DOB, gender, ≥1 language, ≥1 looking-for) → advance is blocked with inline messaging.
@@ -433,8 +438,10 @@ Get a token by logging in via `POST /api/auth/login`, then set `Authorization: B
 - [ ] **Edge:** wrong current password → error. Email already in use → **409** conflict error. New email equal to current → rejected.
 
 ### 10.3 Change username
-- [ ] Edit → new username matching `^[a-z0-9_]{3,30}$` → save → success.
-- [ ] **Edge:** taken username → 409; invalid format → error; same as current → rejected.
+- [ ] **Edit** → the field shows your current username with "This is your current username", and **Save is disabled**.
+- [ ] Type a new name → lowercase as you type → "Checking availability..." → "Username available" → **Save** → "Username updated successfully."
+- [ ] **Edge:** a taken name (any case) → "This username is already taken.", Save disabled. A badly formatted name → the specific rule message, Save disabled. Back-end stopped → "Unable to check availability. Please try again.", Save disabled.
+- [ ] **Edge (race, API):** two accounts send `PATCH /api/settings/username` with the same new name at the same time → one 200, one **409** "This username is already taken." — never two owners.
 
 ### 10.4 Change password
 - [ ] Edit → current password + new + confirm → save → success.

@@ -17,6 +17,11 @@ export const checkEmail = asyncHandler(async (req: Request, res: Response) => {
     return res.status(200).json(result);
 });
 
+export const checkUsername = asyncHandler(async (req: Request, res: Response) => {
+    const result = await authenticationService.checkUsernameAvailability(req.body.username);
+    return res.status(200).json(result);
+});
+
 export const logout = asyncHandler(async (req: Request, res: Response) => {
     const token = req.headers.authorization?.replace('Bearer ', '');
     if (!token) throw new AppError(400, 'Token is required');

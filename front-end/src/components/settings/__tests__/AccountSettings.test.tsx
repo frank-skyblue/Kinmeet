@@ -27,8 +27,12 @@ vi.mock('../../profile/DeleteAccountModal', () => ({
 const mockChangeEmail = vi.fn();
 const mockChangeUsername = vi.fn();
 const mockChangePassword = vi.fn();
+const mockCheckUsername = vi.fn();
 
 vi.mock('../../../services/api', () => ({
+  authAPI: {
+    checkUsername: (...args: unknown[]) => mockCheckUsername(...args),
+  },
   settingsAPI: {
     changeEmail: (...args: unknown[]) => mockChangeEmail(...args),
     changeUsername: (...args: unknown[]) => mockChangeUsername(...args),
@@ -134,15 +138,23 @@ describe('AccountSettings', () => {
       expect(screen.getByLabelText(/new username/i)).toBeInTheDocument();
     });
 
+    const startEditing = async (user: ReturnType<typeof userEvent.setup>, value: string) => {
+      await user.click(screen.getByRole('button', { name: /edit username/i }));
+      const input = screen.getByLabelText(/new username/i);
+      await user.clear(input);
+      if (value) await user.type(input, value);
+      return input;
+    };
+    const status = () => screen.queryByTestId('username-status')?.textContent;
+
     it('submits and shows success', async () => {
+      mockCheckUsername.mockResolvedValue({ success: true, available: true });
       mockChangeUsername.mockResolvedValueOnce({ success: true, username: 'new_handle' });
       const user = userEvent.setup();
       renderComponent();
 
-      await user.click(screen.getByRole('button', { name: /edit username/i }));
-      const input = screen.getByLabelText(/new username/i);
-      await user.clear(input);
-      await user.type(input, 'new_handle');
+      await startEditing(user, 'new_handle');
+      await waitFor(() => expect(status()).toBe('Username available'));
       await user.click(screen.getByRole('button', { name: /^save$/i }));
 
       await waitFor(() => {
@@ -151,6 +163,75 @@ describe('AccountSettings', () => {
       await waitFor(() => {
         expect(screen.getByRole('status')).toHaveTextContent(/username updated/i);
       });
+    });
+
+    it("recognises the user's current username as their own, without asking the server", async () => {
+      const user = userEvent.setup();
+      renderComponent();
+
+      await user.click(screen.getByRole('button', { name: /edit username/i }));
+
+      expect(screen.getByLabelText(/new username/i)).toHaveValue('alice_99');
+      expect(status()).toBe('This is your current username');
+      expect(screen.getByRole('button', { name: /^save$/i })).toBeDisabled();
+      expect(mockCheckUsername).not.toHaveBeenCalled();
+    });
+
+    it('turns typed uppercase letters into lowercase and checks case-insensitively', async () => {
+      mockCheckUsername.mockResolvedValue({ success: true, available: true });
+      const user = userEvent.setup();
+      renderComponent();
+
+      const input = await startEditing(user, 'Alice_100');
+
+      expect(input).toHaveValue('alice_100');
+      await waitFor(() => expect(mockCheckUsername).toHaveBeenCalledWith('alice_100'));
+    });
+
+    it('shows a taken username and keeps Save disabled', async () => {
+      mockCheckUsername.mockResolvedValue({ success: true, available: false });
+      const user = userEvent.setup();
+      renderComponent();
+
+      await startEditing(user, 'bob');
+
+      await waitFor(() => expect(status()).toBe('This username is already taken.'));
+      expect(screen.getByRole('button', { name: /^save$/i })).toBeDisabled();
+    });
+
+    it('explains a formatting problem without asking the server', async () => {
+      const user = userEvent.setup();
+      renderComponent();
+
+      await startEditing(user, 'ab');
+
+      expect(status()).toBe('Username must be at least 3 characters.');
+      expect(screen.getByRole('button', { name: /^save$/i })).toBeDisabled();
+      expect(mockCheckUsername).not.toHaveBeenCalled();
+    });
+
+    it('never treats a failed check as available', async () => {
+      mockCheckUsername.mockRejectedValue(new Error('Network Error'));
+      const user = userEvent.setup();
+      renderComponent();
+
+      await startEditing(user, 'new_handle');
+
+      await waitFor(() => expect(status()).toBe('Unable to check availability. Please try again.'));
+      expect(screen.getByRole('button', { name: /^save$/i })).toBeDisabled();
+    });
+
+    it('shows the error when someone else claims the username first', async () => {
+      mockCheckUsername.mockResolvedValue({ success: true, available: true });
+      mockChangeUsername.mockRejectedValueOnce(new Error('This username is already taken.'));
+      const user = userEvent.setup();
+      renderComponent();
+
+      await startEditing(user, 'new_handle');
+      await waitFor(() => expect(status()).toBe('Username available'));
+      await user.click(screen.getByRole('button', { name: /^save$/i }));
+
+      expect(await screen.findByRole('alert')).toHaveTextContent('This username is already taken.');
     });
   });
 

@@ -46,7 +46,8 @@ Inside `App`:
 |------|----------------|
 | **`styles/`** | Tailwind theme layers: brand palette, semantic roles, per-theme assignments, and global base styles. |
 | **`constants/`** | Static options, validation helpers, and shared UI class strings (`ui.ts`). Must not import from `components/`. |
-| **`utils/`** | Pure helpers (e.g. `getErrorMessage` in `error.ts`). |
+| **`utils/`** | Pure helpers (e.g. `getErrorMessage` in `error.ts`; username rules and messages in `username.ts`). |
+| **`hooks/`** | Reusable hooks not tied to a context, e.g. `useUsernameAvailability` (rules check, debounced availability request, recognises the user's own username), shared by sign-up and Settings. |
 | **`services/api.ts`** | Axios instance with auth header interceptor; grouped exports: `authAPI` (login, register, checkEmail, logout, forgotPassword, resetPassword), `profileAPI`, `matchingAPI`, `connectionsAPI`, `chatAPI`, `blockAPI`, `feedbackAPI`, `supportAPI`; `getPhotoUrl()` for relative vs absolute image URLs; default `api` export. |
 | **`services/socketService.ts`** | Singleton-style Socket.io client: `connect` / `disconnect` / `getSocket`. |
 | **`contexts/`** | React context + providers. Some features split **context definition** (`.ts`) from **provider component** (`.tsx`) to satisfy Fast Refresh when the file exports both hooks and non-component values. |

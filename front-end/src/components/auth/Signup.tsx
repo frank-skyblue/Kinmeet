@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { USERNAME_MESSAGES } from "../../utils/username";
 import { Link, useNavigate } from "react-router-dom";
 import {
   getCountryCode,
@@ -197,6 +198,12 @@ const Signup: React.FC = () => {
       navigate("/discover");
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      // Someone claimed the username after step 1 checked it: send the user back to that field.
+      if (errorMessage === USERNAME_MESSAGES.taken) {
+        setStep(1);
+        setError(USERNAME_MESSAGES.taken);
+        return;
+      }
       setError(
         isDuplicateEmailMessage(errorMessage)
           ? DUPLICATE_EMAIL_MESSAGE

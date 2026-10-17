@@ -105,6 +105,11 @@ export const authAPI = {
     return response.data as { success: boolean; available?: boolean; message?: string };
   },
 
+  checkUsername: async (username: string) => {
+    const response = await api.post('/auth/check-username', { username });
+    return response.data as { success: boolean; available?: boolean; message?: string };
+  },
+
   logout: async () => {
     const response = await api.post('/auth/logout');
     return response.data;

@@ -282,7 +282,9 @@ Kinmeet/
 ## 🔌 API Endpoints
 
 ### Authentication
-- `POST /api/auth/register` - Register a new user
+- `POST /api/auth/register` - Register a new user (`username` optional; one is generated when blank)
+- `POST /api/auth/check-email` - Check whether an email is already registered
+- `POST /api/auth/check-username` - Check whether a username is available (case-insensitive; rate-limited per IP). Returns `{ available, username }` with the lowercase form
 - `POST /api/auth/login` - Login user
 - `POST /api/auth/logout` - Logout user
 
