@@ -1,9 +1,12 @@
-import type { ChatMessage } from './index';
+import type { ChatAttachmentReceipt, ChatMessage } from './index';
 
-/** Client → server: send a chat message */
+/** Client → server: send a chat message (text, an image with optional caption, or a voice message) */
 export interface ChatSendMessagePayload {
   receiverId: string;
-  content: string;
+  content?: string;
+  attachment?: ChatAttachmentReceipt;
+  /** Lets the server recognise a retried send and return the original message. */
+  clientMessageId?: string;
 }
 
 /** Client → server: typing indicators */

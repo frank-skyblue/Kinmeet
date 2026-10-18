@@ -2,19 +2,29 @@ import { User, type IUser } from '../models/User';
 import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../config/env';
 import { AppError } from '../middleware/errorHandler';
-import { findUserByEmail, normalizeEmail } from '../utils/email';
+import { findUserByEmail, normalizeEmail, findUserByUsername } from '../utils/email';
 
 const DUPLICATE_EMAIL_MESSAGE = 'This email is already registered. Please log in instead.';
+export const USERNAME_TAKEN_MESSAGE = 'This username is already taken.';
 
-const isDuplicateEmailError = (error: unknown): boolean => {
-    if (!error || typeof error !== 'object') return false;
+/** Generated usernames that collide (someone took it a moment earlier) are regenerated this often. */
+const GENERATED_USERNAME_ATTEMPTS = 5;
+
+/**
+ * Which unique field a MongoDB duplicate-key error (11000) is about. The unique index is what
+ * settles two simultaneous claims: only one insert succeeds, the other gets this error.
+ */
+export const duplicateKeyField = (error: unknown): 'email' | 'username' | null => {
+    if (!error || typeof error !== 'object') return null;
     const mongoError = error as {
         code?: number;
         keyPattern?: Record<string, unknown>;
         keyValue?: Record<string, unknown>;
     };
-    if (mongoError.code !== 11000) return false;
-    return Boolean(mongoError.keyPattern?.email ?? mongoError.keyValue?.email);
+    if (mongoError.code !== 11000) return null;
+    if (mongoError.keyPattern?.email ?? mongoError.keyValue?.email) return 'email';
+    if (mongoError.keyPattern?.username ?? mongoError.keyValue?.username) return 'username';
+    return null;
 };
 
 const slugForUsername = (value: string) =>
@@ -149,59 +159,63 @@ export const authenticationService = {
         const existingUser = await findUserByEmail(email);
         if (existingUser) throw new AppError(400, DUPLICATE_EMAIL_MESSAGE);
 
-        let resolvedUsername: string;
-        if (typeof username === 'string' && username.trim() !== '') {
-            const normalizedUsername = username.trim().toLowerCase();
-            const existingUsername = await User.findOne({ username: normalizedUsername });
-            if (existingUsername) throw new AppError(400, 'Username is already taken');
-            resolvedUsername = normalizedUsername;
-        } else {
-            resolvedUsername = await generateUniqueUsername(firstName);
+        const chosenUsername = typeof username === 'string' && username.trim() !== ''
+            ? normalizeEmail(username)
+            : null;
+        if (chosenUsername && await findUserByUsername(chosenUsername)) {
+            throw new AppError(409, USERNAME_TAKEN_MESSAGE);
         }
 
         const [year, month, day] = dateOfBirth.split('-').map(Number);
         const parsedDateOfBirth = new Date(Date.UTC(year, month - 1, day, 12, 0, 0, 0));
 
-        try {
-            const newUser = new User({
-                email: normalizeEmail(email),
-                username: resolvedUsername,
-                password,
-                firstName,
-                lastName,
-                dateOfBirth: parsedDateOfBirth,
-                gender,
-                about: about || undefined,
-                jobTitle: jobTitle || undefined,
-                company: company || undefined,
-                industry: industry || undefined,
-                educationLevel: educationLevel || undefined,
-                institution: institution || undefined,
-                graduationYear: graduationYear || undefined,
-                homeCountry,
-                currentProvince: province,
-                currentCountry: country,
-                ...(optionalCity ? { currentCity: optionalCity } : {}),
-                languages,
-                interests: interests || [],
-                lookingFor,
-                photo,
-                profileComplete: true,
-            });
+        for (let attempt = 1; ; attempt += 1) {
+            const resolvedUsername = chosenUsername ?? await generateUniqueUsername(firstName);
+            try {
+                const newUser = new User({
+                    email: normalizeEmail(email),
+                    username: resolvedUsername,
+                    password,
+                    firstName,
+                    lastName,
+                    dateOfBirth: parsedDateOfBirth,
+                    gender,
+                    about: about || undefined,
+                    jobTitle: jobTitle || undefined,
+                    company: company || undefined,
+                    industry: industry || undefined,
+                    educationLevel: educationLevel || undefined,
+                    institution: institution || undefined,
+                    graduationYear: graduationYear || undefined,
+                    homeCountry,
+                    currentProvince: province,
+                    currentCountry: country,
+                    ...(optionalCity ? { currentCity: optionalCity } : {}),
+                    languages,
+                    interests: interests || [],
+                    lookingFor,
+                    photo,
+                    profileComplete: true,
+                });
 
-            await newUser.save();
+                await newUser.save();
 
-            return {
-                success: true,
-                message: 'Registration successful',
-                token: signAuthToken(newUser),
-                user: authUserPayload(newUser),
-            };
-        } catch (error) {
-            if (isDuplicateEmailError(error)) {
-                throw new AppError(400, DUPLICATE_EMAIL_MESSAGE);
+                return {
+                    success: true,
+                    message: 'Registration successful',
+                    token: signAuthToken(newUser),
+                    user: authUserPayload(newUser),
+                };
+            } catch (error) {
+                const duplicate = duplicateKeyField(error);
+                if (duplicate === 'email') throw new AppError(400, DUPLICATE_EMAIL_MESSAGE);
+                if (duplicate === 'username') {
+                    // A generated name was taken between checking and saving: pick another.
+                    if (!chosenUsername && attempt < GENERATED_USERNAME_ATTEMPTS) continue;
+                    throw new AppError(409, USERNAME_TAKEN_MESSAGE);
+                }
+                throw error;
             }
-            throw error;
         }
     },
 
@@ -210,6 +224,14 @@ export const authenticationService = {
     ): Promise<{ success: true; available: boolean }> => {
         const existingUser = await findUserByEmail(email);
         return { success: true, available: !existingUser };
+    },
+
+    /** `username` arrives already validated and normalized (lowercase) by checkUsernameSchema. */
+    checkUsernameAvailability: async (
+        username: string,
+    ): Promise<{ success: true; available: boolean; username: string }> => {
+        const existingUser = await findUserByUsername(username);
+        return { success: true, available: !existingUser, username };
     },
 
     logout: async (): Promise<{ success: boolean; message: string }> => ({

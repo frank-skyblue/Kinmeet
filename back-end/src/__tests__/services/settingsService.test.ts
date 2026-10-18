@@ -83,15 +83,49 @@ describe('settingsService', () => {
             ).rejects.toMatchObject({ statusCode: 400 });
         });
 
-        it('throws 400 when new username equals current username', async () => {
+        it("accepts the user's own username, in any case, without changing anything", async () => {
             const user = await createTestUser({
                 email: 'u4@example.com',
                 username: 'sameuser',
             } as any);
 
-            await expect(
-                settingsService.changeUsername(user._id.toString(), 'sameuser'),
-            ).rejects.toMatchObject({ statusCode: 400 });
+            await expect(settingsService.changeUsername(user._id.toString(), 'sameuser'))
+                .resolves.toEqual({ username: 'sameuser' });
+            await expect(settingsService.changeUsername(user._id.toString(), 'SameUser'))
+                .resolves.toEqual({ username: 'sameuser' });
+        });
+
+        it('treats usernames as case-insensitive when checking whether one is taken', async () => {
+            await createTestUser({ email: 'owner@example.com', username: 'albert' } as any);
+            const user = await createTestUser({ email: 'other@example.com' });
+
+            await expect(settingsService.changeUsername(user._id.toString(), 'Albert'))
+                .rejects.toMatchObject({ statusCode: 409, message: 'This username is already taken.' });
+        });
+
+        it('explains which username rule was broken', async () => {
+            const user = await createTestUser({ email: 'rules@example.com' });
+
+            await expect(settingsService.changeUsername(user._id.toString(), 'ab'))
+                .rejects.toMatchObject({ statusCode: 400, message: 'Username must be at least 3 characters.' });
+            await expect(settingsService.changeUsername(user._id.toString(), 'al-bert'))
+                .rejects.toMatchObject({ statusCode: 400, message: 'Username can only contain letters, numbers, and underscores.' });
+        });
+
+        it('lets only one of two users claim the same username at the same time', async () => {
+            await User.init();
+            const first = await createTestUser({ email: 'first@example.com' });
+            const second = await createTestUser({ email: 'second@example.com' });
+
+            const results = await Promise.allSettled([
+                settingsService.changeUsername(first._id.toString(), 'contested'),
+                settingsService.changeUsername(second._id.toString(), 'contested'),
+            ]);
+
+            expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
+            const rejected = results.find((r): r is PromiseRejectedResult => r.status === 'rejected');
+            expect(rejected?.reason).toMatchObject({ statusCode: 409, message: 'This username is already taken.' });
+            expect(await User.countDocuments({ username: 'contested' })).toBe(1);
         });
 
         it('throws 404 for nonexistent user', async () => {

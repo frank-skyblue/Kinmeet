@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
@@ -77,8 +77,13 @@ const mockSocket = {
   on: vi.fn(),
   off: vi.fn(),
   emit: vi.fn(),
+  timeout: vi.fn(),
   connected: true,
 };
+
+vi.mock('../../../services/chatMedia', () => ({
+  uploadChatMedia: vi.fn(),
+}));
 
 vi.mock('../../../contexts/useAuth', () => ({
   useAuth: () => ({
@@ -95,6 +100,7 @@ vi.mock('../../../contexts/useSocket', () => ({
 }));
 
 import { chatAPI, profileAPI } from '../../../services/api';
+import { uploadChatMedia } from '../../../services/chatMedia';
 import { ThemeProvider } from '../../../contexts/ThemeProvider';
 
 const renderChat = () =>
@@ -245,6 +251,231 @@ describe('Chat', () => {
     expect(screen.getByTestId('chat-message-timestamp')).toHaveTextContent(/\d/);
   });
 
+  describe('images and voice messages', () => {
+    const photoMessage: ChatMessage = {
+      _id: 'msg-photo',
+      sender: { _id: 'other-1', firstName: 'Marie', lastName: 'Dupont' },
+      receiver: { _id: 'user-1', firstName: 'Test', lastName: 'User' },
+      type: 'image',
+      content: 'Sunset in Lyon',
+      attachment: {
+        width: 1600,
+        height: 1200,
+        urls: { display: 'https://cdn.test/display.jpg', full: 'https://cdn.test/full.jpg' },
+      },
+      read: true,
+      createdAt: today.toISOString(),
+    };
+
+    beforeEach(() => {
+      vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:local-preview'), revokeObjectURL: vi.fn() }));
+      vi.mocked(uploadChatMedia).mockReset();
+      // The shared setup restores all mocks after each test, which clears this implementation.
+      mockSocket.timeout.mockImplementation(() => mockSocket);
+    });
+
+    afterEach(() => {
+      mockSocket.emit.mockReset();
+    });
+
+    const renderWithMessages = async (messages: ChatMessage[]) => {
+      vi.mocked(chatAPI.getConversation).mockResolvedValue({ success: true, messages });
+      renderChat();
+      await waitFor(() => expect(screen.queryByText('Loading conversation...')).not.toBeInTheDocument());
+    };
+
+    it('shows a photo with its caption, and opens it full size', async () => {
+      const user = userEvent.setup();
+      await renderWithMessages([photoMessage]);
+
+      expect(screen.getByRole('img', { name: 'Photo' })).toHaveAttribute('src', 'https://cdn.test/display.jpg');
+      expect(screen.getByText('Sunset in Lyon')).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: 'Open photo' }));
+
+      expect(screen.getByRole('dialog', { name: 'Photo' })).toBeInTheDocument();
+      expect(screen.getByRole('img', { name: 'Shared in chat' })).toHaveAttribute('src', 'https://cdn.test/full.jpg');
+    });
+
+    it('shows a voice message with a play button and its length', async () => {
+      await renderWithMessages([{
+        ...photoMessage,
+        _id: 'msg-voice',
+        type: 'voice',
+        content: undefined,
+        attachment: { durationMs: 12_400, waveform: [10, 200, 90], urls: { audio: 'https://cdn.test/voice.mp3' } },
+      }]);
+
+      expect(screen.getByRole('button', { name: 'Play voice message' })).toBeInTheDocument();
+      expect(screen.getByText('0:12')).toBeInTheDocument();
+    });
+
+    it('shows removed media as unavailable', async () => {
+      await renderWithMessages([{ ...photoMessage, attachment: { removed: true } }]);
+
+      expect(screen.getByText('Photo unavailable')).toBeInTheDocument();
+      expect(screen.queryByRole('img', { name: 'Photo' })).not.toBeInTheDocument();
+    });
+
+    const choosePhoto = (user: ReturnType<typeof userEvent.setup>) =>
+      user.upload(screen.getByTestId('chat-image-input'), new File(['png'], 'beach.png', { type: 'image/png' }));
+
+    it('stages a chosen photo without sending it until Send is pressed', async () => {
+      const user = userEvent.setup();
+      await renderWithMessages([]);
+
+      await choosePhoto(user);
+
+      expect(screen.getByRole('img', { name: 'Selected photo: beach.png' })).toBeInTheDocument();
+      expect(screen.getByLabelText('Add a caption')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Send message' })).toBeEnabled();
+      expect(uploadChatMedia).not.toHaveBeenCalled();
+      expect(mockSocket.emit).not.toHaveBeenCalledWith(CHAT_SOCKET_EVENTS.SEND_MESSAGE, expect.anything(), expect.anything());
+    });
+
+    it('removes a staged photo without sending anything', async () => {
+      const user = userEvent.setup();
+      await renderWithMessages([]);
+
+      await choosePhoto(user);
+      await user.click(screen.getByRole('button', { name: 'Remove selected photo' }));
+
+      expect(screen.queryByTestId('chat-staged-photo')).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Send message' })).toBeDisabled();
+      expect(uploadChatMedia).not.toHaveBeenCalled();
+    });
+
+    it('sends the staged photo with the typed text as its caption', async () => {
+      vi.mocked(uploadChatMedia).mockResolvedValue({ id: 'att-3', version: 9, signature: 'sig3' });
+      mockSocket.emit.mockImplementation((event: string, _payload: unknown, ack?: (err: Error | null, res: unknown) => void) => {
+        if (event === CHAT_SOCKET_EVENTS.SEND_MESSAGE) ack?.(null, { success: true, message: { ...photoMessage, _id: 'msg-captioned', content: 'Beach day' } });
+      });
+      const user = userEvent.setup();
+      await renderWithMessages([]);
+
+      await choosePhoto(user);
+      await user.type(screen.getByLabelText('Add a caption'), 'Beach day');
+      await user.click(screen.getByRole('button', { name: 'Send message' }));
+
+      await waitFor(() => {
+        expect(mockSocket.emit).toHaveBeenCalledWith(
+          CHAT_SOCKET_EVENTS.SEND_MESSAGE,
+          expect.objectContaining({ content: 'Beach day', attachment: expect.objectContaining({ id: 'att-3' }) }),
+          expect.any(Function),
+        );
+      });
+      expect(screen.queryByTestId('chat-staged-photo')).not.toBeInTheDocument();
+      expect(await screen.findByText('Beach day')).toBeInTheDocument();
+    });
+
+    it('uploads a photo straight to storage, then sends it with the upload receipt', async () => {
+      const sent: ChatMessage = { ...photoMessage, _id: 'msg-sent', sender: photoMessage.receiver, receiver: photoMessage.sender, content: undefined };
+      vi.mocked(uploadChatMedia).mockResolvedValue({ id: 'att-1', version: 7, signature: 'sig' });
+      mockSocket.emit.mockImplementation((event: string, _payload: unknown, ack?: (err: Error | null, res: unknown) => void) => {
+        if (event === CHAT_SOCKET_EVENTS.SEND_MESSAGE) ack?.(null, { success: true, message: sent });
+      });
+      const user = userEvent.setup();
+      await renderWithMessages([]);
+
+      await choosePhoto(user);
+      await user.click(screen.getByRole('button', { name: 'Send message' }));
+
+      await waitFor(() => {
+        expect(mockSocket.emit).toHaveBeenCalledWith(
+          CHAT_SOCKET_EVENTS.SEND_MESSAGE,
+          expect.objectContaining({
+            receiverId: 'other-1',
+            clientMessageId: expect.stringMatching(/^temp-/),
+            attachment: expect.objectContaining({ id: 'att-1', version: 7, signature: 'sig' }),
+          }),
+          expect.any(Function),
+        );
+      });
+      expect(uploadChatMedia).toHaveBeenCalledWith('other-1', 'image', expect.any(File), 'beach.png', expect.any(Function));
+      expect(mockSocket.emit).toHaveBeenCalledWith(
+        CHAT_SOCKET_EVENTS.SEND_MESSAGE,
+        expect.not.objectContaining({ content: expect.anything() }),
+        expect.any(Function),
+      );
+      await waitFor(() => {
+        expect(screen.getByRole('img', { name: 'Photo' })).toHaveAttribute('src', 'https://cdn.test/display.jpg');
+      });
+    });
+
+    it('rejects photos over 5 MB with an error, without staging or uploading them', async () => {
+      const user = userEvent.setup();
+      await renderWithMessages([]);
+      const tooBig = new File([new Uint8Array(5 * 1024 * 1024 + 1)], 'huge.jpg', { type: 'image/jpeg' });
+
+      await user.upload(screen.getByTestId('chat-image-input'), tooBig);
+
+      expect(await screen.findByText('Photos must be under 5 MB')).toBeInTheDocument();
+      expect(screen.queryByTestId('chat-staged-photo')).not.toBeInTheDocument();
+      expect(uploadChatMedia).not.toHaveBeenCalled();
+    });
+
+    it('shows errors right above the message box, where they stay visible, and lets you dismiss them', async () => {
+      const user = userEvent.setup();
+      await renderWithMessages(mockMessages);
+      const tooBig = new File([new Uint8Array(5 * 1024 * 1024 + 1)], 'huge.jpg', { type: 'image/jpeg' });
+
+      await user.upload(screen.getByTestId('chat-image-input'), tooBig);
+
+      const alert = await screen.findByRole('alert');
+      expect(alert).toHaveTextContent('Photos must be under 5 MB');
+      // Directly before the composer form, outside the scrolling message list.
+      expect(alert.nextElementSibling?.tagName).toBe('FORM');
+      expect(alert.closest('.overflow-y-auto')).toBeNull();
+
+      await user.click(screen.getByRole('button', { name: 'Dismiss error' }));
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    });
+
+    it('accepts a photo right at the 5 MB limit', async () => {
+      const user = userEvent.setup();
+      await renderWithMessages([]);
+      const atLimit = new File([new Uint8Array(5 * 1024 * 1024)], 'big.jpg', { type: 'image/jpeg' });
+
+      await user.upload(screen.getByTestId('chat-image-input'), atLimit);
+
+      expect(screen.getByTestId('chat-staged-photo')).toBeInTheDocument();
+      expect(screen.queryByText(/Photos must be under/)).not.toBeInTheDocument();
+    });
+
+    it('rejects files that are not images before uploading', async () => {
+      const user = userEvent.setup({ applyAccept: false });
+      await renderWithMessages([]);
+
+      await user.upload(screen.getByTestId('chat-image-input'), new File(['pdf'], 'doc.pdf', { type: 'application/pdf' }));
+
+      expect(await screen.findByText('Please choose an image file')).toBeInTheDocument();
+      expect(uploadChatMedia).not.toHaveBeenCalled();
+    });
+
+    it('offers a retry when the upload fails, and sends on retry', async () => {
+      vi.mocked(uploadChatMedia)
+        .mockRejectedValueOnce(new Error('Network Error'))
+        .mockResolvedValueOnce({ id: 'att-2', version: 8, signature: 'sig2' });
+      mockSocket.emit.mockImplementation((event: string, _payload: unknown, ack?: (err: Error | null, res: unknown) => void) => {
+        if (event === CHAT_SOCKET_EVENTS.SEND_MESSAGE) ack?.(null, { success: true, message: { ...photoMessage, _id: 'msg-retried' } });
+      });
+      const user = userEvent.setup();
+      await renderWithMessages([]);
+
+      await choosePhoto(user);
+      await user.click(screen.getByRole('button', { name: 'Send message' }));
+      await user.click(await screen.findByRole('button', { name: 'Retry' }));
+
+      await waitFor(() => expect(uploadChatMedia).toHaveBeenCalledTimes(2));
+      await waitFor(() => expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument());
+      expect(mockSocket.emit).toHaveBeenCalledWith(
+        CHAT_SOCKET_EVENTS.SEND_MESSAGE,
+        expect.objectContaining({ attachment: expect.objectContaining({ id: 'att-2' }) }),
+        expect.any(Function),
+      );
+    });
+  });
+
   it('shows a deactivated peer as Unavailable, without a profile link or composer', async () => {
     vi.mocked(chatAPI.getConversations).mockResolvedValue({
       ...mockInboxResponse,
@@ -267,5 +498,9 @@ describe('Chat', () => {
     expect(screen.queryByRole('link', { name: /profile/i })).not.toBeInTheDocument();
     expect(screen.getByLabelText('Type a message')).toBeDisabled();
     expect(screen.getByPlaceholderText('This account is unavailable')).toBeInTheDocument();
+    // No photos or voice messages either.
+    expect(screen.getByRole('button', { name: 'Choose a photo' })).toBeDisabled();
+    const recordButton = screen.queryByRole('button', { name: 'Record a voice message' });
+    if (recordButton) expect(recordButton).toBeDisabled();
   });
 });

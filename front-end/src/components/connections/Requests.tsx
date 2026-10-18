@@ -7,6 +7,7 @@ import ActionMenu from "../common/ActionMenu";
 import ReportUserModal from "../common/ReportUserModal";
 import type { ConnectionRequestItem } from "../../types";
 import ConnectionsPaginationNav from "./ConnectionsPaginationNav";
+import { primaryActionClass, secondaryActionClass } from "../../constants/ui"
 
 export type RequestsProps = {
   /** When true, used inside ConnectionsHub: no page chrome, no outer padding/bg. */
@@ -221,7 +222,7 @@ const Requests: React.FC<RequestsProps> = ({ embedded = false }) => {
                 <article
                   key={request._id}
                   onClick={() => handleViewProfile(request.sender._id)}
-                  className="flex min-h-0 min-w-0 flex-col gap-3 rounded-kin-lg bg-white p-3 shadow-kin-soft transition hover:shadow-kin-medium sm:p-3.5 cursor-pointer [&:hover:not(:has(.inner:hover))]:bg-gray-100"
+                  className="flex min-h-0 min-w-0 flex-col gap-3 rounded-kin-lg bg-surface p-3 shadow-kin-soft transition hover:shadow-kin-medium sm:p-3.5 cursor-pointer [&:hover:not(:has(.inner:hover))]:bg-surface-hover"
                 >
                   <div className="flex min-w-0 shrink-0 gap-3 border-b border-border pb-3">
                     {request.sender.photo ? (
@@ -360,7 +361,7 @@ const Requests: React.FC<RequestsProps> = ({ embedded = false }) => {
                         handleAccept(request._id);
                         }
                       }
-                      className="inner flex min-h-10 min-w-0 flex-1 items-center justify-center gap-0 rounded-kin-sm bg-kin-coral px-2 py-2 text-center text-xs font-semibold leading-none font-montserrat text-white shadow-kin-soft transition hover:bg-kin-coral-600 hover:shadow-kin-medium cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral sm:gap-1.5 sm:px-3"
+                      className={`${primaryActionClass} inner flex min-h-10 min-w-0 flex-1 items-center justify-center gap-0 rounded-kin-sm bg-kin-coral px-2 py-2 text-center text-xs font-semibold leading-none font-montserrat text-white shadow-kin-soft transition hover:bg-kin-coral-600 hover:shadow-kin-medium cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral sm:gap-1.5 sm:px-3`}
                       aria-label="Accept kin request"
                     >
                       <svg
@@ -386,7 +387,7 @@ const Requests: React.FC<RequestsProps> = ({ embedded = false }) => {
                         handleIgnore(request._id);
                         }
                       }
-                      className="inner flex min-h-10 min-w-0 flex-1 items-center justify-center gap-0 rounded-kin-sm bg-kin-stone-200 px-2 py-2 text-center text-xs font-semibold leading-none font-montserrat text-kin-navy shadow-kin-soft transition hover:bg-kin-stone-300 hover:shadow-kin-medium cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral sm:gap-1.5 sm:px-3"
+                      className={`${secondaryActionClass} inner flex min-h-10 min-w-0 flex-1 items-center justify-center gap-0 rounded-kin-sm bg-kin-stone-200 px-2 py-2 text-center text-xs font-semibold leading-none font-montserrat text-kin-navy shadow-kin-soft transition hover:bg-kin-stone-300 hover:shadow-kin-medium cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral sm:gap-1.5 sm:px-3`}
                       aria-label="Ignore kin request"
                     >
                       <svg

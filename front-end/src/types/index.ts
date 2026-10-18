@@ -42,6 +42,39 @@ export interface UserProfile {
     dateOfBirth?: string;
 }
 
+export type ChatMessageType = 'text' | 'image' | 'voice';
+
+export type ChatMediaKind = 'image' | 'voice';
+
+/** Signed viewing links, built by the server each time messages are loaded. */
+export interface ChatMediaUrls {
+    display?: string;
+    full?: string;
+    audio?: string;
+}
+
+export interface ChatAttachment {
+    /** Absent when the media was removed. */
+    urls?: ChatMediaUrls;
+    format?: string;
+    bytes?: number;
+    width?: number;
+    height?: number;
+    /** Tiny data-URL preview shown while the image loads. */
+    thumbnail?: string;
+    durationMs?: number;
+    /** Bar heights, 0–255. */
+    waveform?: number[];
+    removed?: boolean;
+}
+
+/** Client-only: progress of a media message that hasn't been confirmed by the server yet. */
+export interface ChatUploadState {
+    status: 'uploading' | 'failed';
+    progress: number;
+    error?: string;
+}
+
 export interface ChatMessage {
     _id: string;
     sender: {
@@ -54,9 +87,36 @@ export interface ChatMessage {
         firstName: string;
         lastName: string;
     };
-    content: string;
+    /** Absent on messages created before media existed; treat as text. */
+    type?: ChatMessageType;
+    /** The text, or an image's optional caption. */
+    content?: string;
+    attachment?: ChatAttachment;
+    clientMessageId?: string;
     read: boolean;
     createdAt: string;
+    upload?: ChatUploadState;
+}
+
+/** A one-file upload pass: the browser sends `fields` and the file straight to `uploadUrl`. */
+export interface ChatUploadPass {
+    attachmentId: string;
+    kind: ChatMediaKind;
+    uploadUrl: string;
+    fields: Record<string, string>;
+    expiresAt: string;
+}
+
+/** What the server needs to accept an upload: Cloudinary's signed receipt plus display details. */
+export interface ChatAttachmentReceipt {
+    id: string;
+    version: number;
+    signature: string;
+    width?: number;
+    height?: number;
+    thumbnail?: string;
+    durationMs?: number;
+    waveform?: number[];
 }
 
 export interface ChatConversationUser {

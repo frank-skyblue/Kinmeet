@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import { User, IUser } from '../models/User';
 import { errorHandler } from '../middleware/errorHandler';
 import { corsConfig } from '../config/cors';
+import { jsonBody } from '../middleware/jsonBody';
 import cors from 'cors';
 import authRoutes from '../routes/authRoutes';
 import profileRoutes from '../routes/profileRoutes';
@@ -21,7 +22,7 @@ import { createAdminRouter } from '../routes/adminRoutes';
 export const createTestApp = () => {
   const app = express();
   app.use(cors(corsConfig));
-  app.use(express.json());
+  app.use(jsonBody);
   app.use(cookieParser());
 
   app.use('/api/auth', authRoutes);
