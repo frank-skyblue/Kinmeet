@@ -1,6 +1,7 @@
 import { areUsersBlocked } from '../models/Block';
 import { Connection } from '../models/Connection';
 import { AppError } from '../middleware/errorHandler';
+import { isAccountDeactivated } from '../models/User';
 
 /** Messages, and the uploads attached to them, are only allowed between connected, unblocked users. */
 export const assertCanMessage = async (senderId: string, receiverId: string): Promise<void> => {
@@ -15,4 +16,10 @@ export const assertCanMessage = async (senderId: string, receiverId: string): Pr
         ],
     });
     if (!connection) throw new AppError(403, 'Can only message connected users');
+
+    // After the connection check, so only a kin learns the account is unavailable (not why).
+    // Covers sending any message and issuing upload passes for photos and voice messages.
+    if (await isAccountDeactivated(receiverId)) {
+        throw new AppError(403, 'This account is unavailable');
+    }
 };

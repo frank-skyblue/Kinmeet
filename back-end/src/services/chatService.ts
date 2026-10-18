@@ -1,7 +1,7 @@
 import { Types } from 'mongoose';
 import { Message, type IMessage, type IMessageAttachment, type MessageType } from '../models/Message';
 import { Connection } from '../models/Connection';
-import { User } from '../models/User';
+import { User, isAccountDeactivated } from '../models/User';
 import { AppError } from '../middleware/errorHandler';
 import { assertCanMessage } from './chatAccess';
 import { attachmentService, type AttachmentReceipt } from './attachmentService';
@@ -34,11 +34,31 @@ export interface ChatMessageView {
     updatedAt: Date;
 }
 
-/** Attachments carry freshly signed viewing URLs instead of the stored Cloudinary identifiers. */
-const toChatMessage = (message: IMessage): ChatMessageView => {
+// Shown in place of a deactivated account's name. Conversation history (including photos and
+// voice messages) stays visible, but the other participant isn't told who the account was or why
+// it's unavailable.
+const UNAVAILABLE_USER_NAME = { firstName: 'Unavailable', lastName: '' };
+
+type ChatParticipant = { _id: { toString(): string }; firstName?: string; lastName?: string };
+
+/**
+ * The message as clients see it: attachments carry freshly signed viewing URLs instead of the
+ * stored Cloudinary identifiers, and a deactivated participant's name is replaced.
+ */
+const toChatMessage = (message: IMessage, unavailableUserId?: string): ChatMessageView => {
     const { attachment, ...rest } = message.toObject() as Omit<ChatMessageView, 'attachment'> & {
         attachment?: IMessageAttachment;
     };
+
+    if (unavailableUserId) {
+        for (const key of ['sender', 'receiver'] as const) {
+            const participant = rest[key] as ChatParticipant | undefined;
+            if (participant?._id.toString() === unavailableUserId) {
+                rest[key] = { _id: participant._id, ...UNAVAILABLE_USER_NAME };
+            }
+        }
+    }
+
     if (!attachment) return rest;
 
     const { publicId, resourceType, version, ...details } = attachment;
@@ -128,7 +148,8 @@ export const chatService = {
             { read: true },
         );
 
-        return messages.map(toChatMessage);
+        const unavailableUserId = (await isAccountDeactivated(otherUserId)) ? otherUserId : undefined;
+        return messages.map((message) => toChatMessage(message, unavailableUserId));
     },
 
     getConversations: async (userId: string) => {
@@ -162,9 +183,18 @@ export const chatService = {
                     }),
 
                     User.findById(connectedUserId).select(
-                        'firstName lastName photo currentProvince currentCountry',
+                        'firstName lastName photo currentProvince currentCountry accountStatus',
                     ),
                 ]);
+
+                if (user?.accountStatus === 'deactivated') {
+                    const unavailableUserId = user._id.toString();
+                    return {
+                        user: { _id: user._id, ...UNAVAILABLE_USER_NAME, unavailable: true },
+                        lastMessage: lastMessage && toChatMessage(lastMessage, unavailableUserId),
+                        unreadCount,
+                    };
+                }
 
                 return { user, lastMessage: lastMessage && toChatMessage(lastMessage), unreadCount };
             }),

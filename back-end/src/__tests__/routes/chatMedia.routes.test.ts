@@ -9,6 +9,7 @@ import { Block } from '../../models/Block';
 import { Connection } from '../../models/Connection';
 import { Message } from '../../models/Message';
 import { attachmentService } from '../../services/attachmentService';
+import { settingsService } from '../../services/settingsService';
 import { CLOUDINARY_NOTIFICATION_PATH } from '../../middleware/jsonBody';
 
 const app = createTestApp();
@@ -300,6 +301,57 @@ describe('Chat media', () => {
 
             expect(res.status).toBe(200);
             expect(res.body.messages[0].attachment.urls.display).toMatch(/\/authenticated\/s--/);
+        });
+    });
+
+    describe('deactivated accounts', () => {
+        const deactivate = (userId: string) => settingsService.deactivateAccount(userId, 'TestPass123');
+
+        it('refuses an upload pass for a deactivated receiver', async () => {
+            const { aliceToken, bobId } = await createPair();
+            await deactivate(bobId);
+
+            const res = await requestPass(aliceToken, bobId);
+
+            expect(res.status).toBe(403);
+            expect(res.body.message).toBe('This account is unavailable');
+            expect(await Attachment.countDocuments()).toBe(0);
+        });
+
+        it('refuses to send media to someone deactivated after the upload, leaving the upload unclaimed', async () => {
+            const { aliceToken, bobId } = await createPair();
+            const pass = await issuePass(aliceToken, bobId, 'voice');
+            await deactivate(bobId);
+
+            const res = await sendMedia(aliceToken, {
+                receiverId: bobId,
+                attachment: { id: pass.attachmentId, ...receiptFor(pass.fields.public_id), durationMs: 3000 },
+            });
+
+            expect(res.status).toBe(403);
+            expect(res.body.message).toBe('This account is unavailable');
+            expect(await Message.countDocuments()).toBe(0);
+            // Not claimed, so the cleanup job can still remove it.
+            expect((await Attachment.findById(pass.attachmentId))!.status).toBe('pending');
+        });
+
+        it("keeps a deactivated user's past photos viewable, under the name Unavailable", async () => {
+            const { aliceToken, bobToken, bobId, alice } = await createPair();
+            const pass = await issuePass(bobToken, alice._id.toString());
+            await sendMedia(bobToken, {
+                receiverId: alice._id.toString(),
+                attachment: { id: pass.attachmentId, ...receiptFor(pass.fields.public_id) },
+            });
+            await deactivate(bobId);
+
+            const res = await request(app)
+                .get(`/api/chat/conversations/${bobId}`)
+                .set('Authorization', `Bearer ${aliceToken}`);
+
+            expect(res.status).toBe(200);
+            const [photo] = res.body.messages;
+            expect(photo.sender).toEqual({ _id: bobId, firstName: 'Unavailable', lastName: '' });
+            expect(photo.attachment.urls.display).toMatch(/\/authenticated\//);
         });
     });
 

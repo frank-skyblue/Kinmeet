@@ -21,6 +21,8 @@ interface ChatComposerProps {
   onError: (message: string) => void;
   isSending: boolean;
   isConnected: boolean;
+  /** The other person's account is deactivated: nothing can be sent, text or media. */
+  isPeerUnavailable?: boolean;
 }
 
 const iconButtonClass =
@@ -37,6 +39,7 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
   onError,
   isSending,
   isConnected,
+  isPeerUnavailable = false,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   // The browser may not be able to preview some formats (e.g. HEIC outside Safari).
@@ -145,7 +148,7 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
-          disabled={!isConnected}
+          disabled={!isConnected || isPeerUnavailable}
           className={iconButtonClass}
           aria-label={stagedImage ? 'Choose a different photo' : 'Choose a photo'}
         >
@@ -157,7 +160,7 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
           <button
             type="button"
             onClick={() => void handleStartRecording()}
-            disabled={!isConnected || !!stagedImage}
+            disabled={!isConnected || !!stagedImage || isPeerUnavailable}
             className={iconButtonClass}
             aria-label="Record a voice message"
           >
@@ -170,15 +173,19 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
           type="text"
           value={value}
           onChange={onChange}
-          placeholder={stagedImage ? 'Add a caption (optional)...' : 'Type a message...'}
+          placeholder={
+            isPeerUnavailable
+              ? 'This account is unavailable'
+              : stagedImage ? 'Add a caption (optional)...' : 'Type a message...'
+          }
           className={`${textFieldClass} min-w-0 flex-1 rounded-kin-sm px-4 py-3 transition`}
-          disabled={isSending || !isConnected}
+          disabled={isSending || !isConnected || isPeerUnavailable}
           aria-label={stagedImage ? 'Add a caption' : 'Type a message'}
           ref={chatInputRef}
         />
         <button
           type="submit"
-          disabled={isSending || (!value.trim() && !stagedImage) || !isConnected}
+          disabled={isSending || (!value.trim() && !stagedImage) || !isConnected || isPeerUnavailable}
           className={`${primaryActionClass} flex items-center rounded-kin-sm px-6 py-3 font-montserrat font-semibold shadow-kin-soft transition hover:shadow-kin-medium cursor-pointer disabled:cursor-not-allowed disabled:opacity-50`}
           aria-label="Send message"
         >

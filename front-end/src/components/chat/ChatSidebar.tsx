@@ -4,6 +4,7 @@ import { getPhotoUrl } from "../../services/api";
 import { useChatInbox } from "../../contexts/chatInboxContext";
 import type { ChatMessage } from "../../types";
 import { describeMessagePreview } from "../../utils/chatMedia";
+import useTheme from "../../contexts/useTheme";
 
 const CHAT_BUBBLE_ICON =
   "M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z";
@@ -35,6 +36,7 @@ const formatSidebarTime = (dateString: string | undefined) => {
 const ChatSidebar: React.FC<ChatSidebarProps> = ({ activeUserId }) => {
   const { conversations, isLoadingInbox, inboxError } = useChatInbox();
   const navigate = useNavigate();
+	const {isDark} = useTheme();
 
   const handleSelectConversation = (peerId: string) => {
     navigate(`/chat/${peerId}`);
@@ -99,7 +101,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ activeUserId }) => {
                   type="button"
                   onClick={() => handleSelectConversation(peerId)}
                   className={`flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-surface-hover cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
-                    isActive ? "bg-kin-coral-50" : ""
+                    isActive ? (isDark() ? 'bg-kin-coral-900' : 'bg-kin-coral-50') : ""
                   }`}
                   aria-current={isActive ? "true" : undefined}
                   aria-label={`Open chat with ${row.user.firstName} ${row.user.lastName}${

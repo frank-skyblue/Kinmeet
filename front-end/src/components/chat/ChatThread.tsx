@@ -54,7 +54,7 @@ interface ChatThreadProps {
 const ChatThread: React.FC<ChatThreadProps> = ({ userId }) => {
   const { user } = useAuth();
   const { socket, isConnected } = useSocket();
-  const { refetchInbox } = useChatInbox();
+  const { conversations, refetchInbox } = useChatInbox();
   const navigate = useNavigate();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -81,6 +81,10 @@ const ChatThread: React.FC<ChatThreadProps> = ({ userId }) => {
   // A photo chosen in one conversation must not be sent in the next.
   useEffect(() => () => setStaged(null), [userId, setStaged]);
   const messageDateGroups = groupMessagesByDate(messages);
+  // History stays readable, but a deactivated peer has no profile and can't receive messages.
+  const isPeerUnavailable = Boolean(
+    conversations.find((conversation) => conversation.user?._id === userId)?.user?.unavailable,
+  );
 
   // Free the local preview copies of any unsent media when leaving the conversation.
   useEffect(() => {
@@ -176,6 +180,9 @@ const ChatThread: React.FC<ChatThreadProps> = ({ userId }) => {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // A deactivated peer can't receive anything; the composer is disabled too.
+    if (isPeerUnavailable) return;
 
     if (stagedImage && userId && socket) {
       const caption = newMessage.trim();
@@ -440,7 +447,21 @@ const ChatThread: React.FC<ChatThreadProps> = ({ userId }) => {
               </svg>
             </button>
 
-            {otherUser && (
+            {isPeerUnavailable ? (
+              <div className="flex min-w-0 items-center gap-3 md:gap-4">
+                <div
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-kin-stone-300 shadow-kin-soft md:h-12 md:w-12"
+                  aria-hidden
+                >
+                  <svg className="h-6 w-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-4.42 0-8 2.24-8 5v1h16v-1c0-2.76-3.58-5-8-5z" />
+                  </svg>
+                </div>
+                <h2 className="truncate font-montserrat text-base font-bold text-kin-stone-500 md:text-lg">
+                  Unavailable
+                </h2>
+              </div>
+            ) : otherUser && (
               <Link
                 to={`/profile/${userId}`}
                 className="flex min-w-0 items-center gap-3 rounded-kin-sm outline-none transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:gap-4"
@@ -627,6 +648,7 @@ const ChatThread: React.FC<ChatThreadProps> = ({ userId }) => {
           onError={setError}
           isSending={isSending}
           isConnected={isConnected}
+          isPeerUnavailable={isPeerUnavailable}
         />
       </div>
     </div>

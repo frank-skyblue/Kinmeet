@@ -6,8 +6,13 @@ const settingsSections = [
   {
     path: '/settings/account',
     title: 'Account',
-    description: 'Manage your account and delete your profile',
+    description: 'Manage, deactivate, or delete your account',
   },
+	{
+		path: '/settings/appearance',
+		title: 'Appearance',
+		description: 'Choose how KinMeet looks on your device'
+	},
   {
     path: '/settings/community-safety',
     title: 'Community & Safety',

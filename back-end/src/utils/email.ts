@@ -12,14 +12,17 @@ export const normalizeEmail = (email: string): string =>
 export const escapeRegExp = (value: string): string =>
     value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-export const findUserByEmail = async (email: string): Promise<IUser | null> => {
+export const findUserByEmail = async (email: string, select?: string): Promise<IUser | null> => {
     const normalized = normalizeEmail(email);
     if (!normalized) return null;
 
-    const exact = await User.findOne({ email: normalized });
+    const findOne = (filter: Record<string, unknown>) =>
+        select ? User.findOne(filter).select(select) : User.findOne(filter);
+
+    const exact = await findOne({ email: normalized });
     if (exact) return exact;
 
-    return User.findOne({
+    return findOne({
         email: { $regex: new RegExp(`^${escapeRegExp(normalized)}$`, 'i') },
     });
 };

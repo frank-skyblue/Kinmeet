@@ -101,21 +101,24 @@ vi.mock('../../../contexts/useSocket', () => ({
 
 import { chatAPI, profileAPI } from '../../../services/api';
 import { uploadChatMedia } from '../../../services/chatMedia';
+import { ThemeProvider } from '../../../contexts/ThemeProvider';
 
 const renderChat = () =>
   render(
-    <MemoryRouter initialEntries={['/chat/other-1']}>
-      <Routes>
-        <Route
-          path="/chat/:userId"
-          element={
-            <ChatInboxProvider>
-              <Chat />
-            </ChatInboxProvider>
-          }
-        />
-      </Routes>
-    </MemoryRouter>,
+		<ThemeProvider>
+			<MemoryRouter initialEntries={['/chat/other-1']}>
+				<Routes>
+					<Route
+						path="/chat/:userId"
+						element={
+							<ChatInboxProvider>
+								<Chat />
+							</ChatInboxProvider>
+						}
+					/>
+				</Routes>
+			</MemoryRouter>
+		</ThemeProvider>,
   );
 
 describe('Chat', () => {
@@ -471,5 +474,33 @@ describe('Chat', () => {
         expect.any(Function),
       );
     });
+  });
+
+  it('shows a deactivated peer as Unavailable, without a profile link or composer', async () => {
+    vi.mocked(chatAPI.getConversations).mockResolvedValue({
+      ...mockInboxResponse,
+      conversations: [
+        {
+          user: { _id: 'other-1', firstName: 'Unavailable', lastName: '', unavailable: true },
+          lastMessage: mockMessages[1],
+          unreadCount: 0,
+        },
+      ],
+    });
+    vi.mocked(profileAPI.getUserProfile).mockRejectedValue(new Error('User not found'));
+
+    renderChat();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { level: 2, name: 'Unavailable' })).toBeInTheDocument();
+    });
+    expect(screen.getByText('Hello Marie!')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /profile/i })).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Type a message')).toBeDisabled();
+    expect(screen.getByPlaceholderText('This account is unavailable')).toBeInTheDocument();
+    // No photos or voice messages either.
+    expect(screen.getByRole('button', { name: 'Choose a photo' })).toBeDisabled();
+    const recordButton = screen.queryByRole('button', { name: 'Record a voice message' });
+    if (recordButton) expect(recordButton).toBeDisabled();
   });
 });

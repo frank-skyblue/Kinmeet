@@ -1,18 +1,12 @@
-import { createContext, useContext } from "react";
-import type { ResolvedTheme, ThemePreference } from "../constants/themes";
+import { createContext } from 'react';
 
-export interface ThemeContextValue {
-  preference: ThemePreference;
-  resolved: ResolvedTheme;
-  setPreference: (preference: ThemePreference) => void;
+type ThemeOptions = 'dark' | 'light';
+
+interface ThemeContextType {
+	theme: ThemeOptions;
+	isDark: () => boolean;
+	isLight: () => boolean;
+	setTheme: (option: ThemeOptions) => void;
 }
 
-export const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
-
-export const useTheme = (): ThemeContextValue => {
-  const context = useContext(ThemeContext);
-  if (context === undefined) {
-    throw new Error("useTheme must be used within ThemeProvider");
-  }
-  return context;
-};
+export const ThemeContext = createContext<ThemeContextType | null>(null);
