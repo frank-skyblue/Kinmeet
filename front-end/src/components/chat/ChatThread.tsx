@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { chatAPI, profileAPI, getPhotoUrl } from '../../services/api';
 import { useAuth } from '../../contexts/useAuth';
@@ -6,7 +6,9 @@ import { useSocket } from '../../contexts/useSocket';
 import { useChatInbox } from '../../contexts/chatInboxContext';
 import { CHAT_SOCKET_EVENTS } from '../../constants/chatSocketEvents';
 import type {
+  ChatAttachmentReceipt,
   ChatMarkReadPayload,
+  ChatMediaKind,
   ChatMessage,
   ChatMessagesReadPayload,
   ChatSendMessageAck,
@@ -15,11 +17,35 @@ import type {
   ChatUserTypingPayload,
   UserProfile,
 } from '../../types';
-import { primaryActionClass, textFieldClass } from '../../constants/ui';
+import { primaryActionClass } from '../../constants/ui';
 import {
   formatMessageTime,
   groupMessagesByDate,
 } from '../../utils/chatMessageDates';
+import { CHAT_IMAGE_MAX_BYTES, computeWaveform, prepareImage } from '../../utils/chatMedia';
+import { uploadChatMedia } from '../../services/chatMedia';
+import { getErrorMessage } from '../../utils/error';
+import ChatComposer, { type StagedImage } from './ChatComposer';
+import { ImageAttachment, VoiceAttachment } from './ChatMessageMedia';
+import type { VoiceRecording } from './useVoiceRecorder';
+
+const SEND_ACK_TIMEOUT_MS = 15_000;
+
+/** A media message waiting to be uploaded and sent; kept so a failed send can be retried. */
+interface PendingMedia {
+  kind: ChatMediaKind;
+  blob: Blob;
+  fileName: string;
+  previewUrl: string;
+  caption?: string;
+  details: Omit<ChatAttachmentReceipt, 'id' | 'version' | 'signature'>;
+}
+
+const extensionForAudio = (mimeType: string) => {
+  if (mimeType.includes('mp4')) return 'm4a';
+  if (mimeType.includes('ogg')) return 'ogg';
+  return 'webm';
+};
 
 interface ChatThreadProps {
   userId: string;
@@ -42,11 +68,32 @@ const ChatThread: React.FC<ChatThreadProps> = ({ userId }) => {
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingMediaRef = useRef(new Map<string, PendingMedia>());
+  const [stagedImage, setStagedImage] = useState<(StagedImage & { file: File }) | null>(null);
+  const stagedImageRef = useRef<(StagedImage & { file: File }) | null>(null);
+
+  const setStaged = useCallback((next: (StagedImage & { file: File }) | null) => {
+    if (stagedImageRef.current) URL.revokeObjectURL(stagedImageRef.current.previewUrl);
+    stagedImageRef.current = next;
+    setStagedImage(next);
+  }, []);
+
+  // A photo chosen in one conversation must not be sent in the next.
+  useEffect(() => () => setStaged(null), [userId, setStaged]);
   const messageDateGroups = groupMessagesByDate(messages);
   // History stays readable, but a deactivated peer has no profile and can't receive messages.
   const isPeerUnavailable = Boolean(
     conversations.find((conversation) => conversation.user?._id === userId)?.user?.unavailable,
   );
+
+  // Free the local preview copies of any unsent media when leaving the conversation.
+  useEffect(() => {
+    const pendingMedia = pendingMediaRef.current;
+    return () => {
+      pendingMedia.forEach((pending) => URL.revokeObjectURL(pending.previewUrl));
+      pendingMedia.clear();
+    };
+  }, [userId]);
 
   useEffect(() => {
     loadConversation();
@@ -108,6 +155,7 @@ const ChatThread: React.FC<ChatThreadProps> = ({ userId }) => {
       }
       await refetchInbox();
       setIsLoading(false);
+      scrollToBottom();
     } catch (err: unknown) {
       setError('Failed to load conversation');
       console.error(err);
@@ -133,7 +181,21 @@ const ChatThread: React.FC<ChatThreadProps> = ({ userId }) => {
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!newMessage.trim() || !userId || !user || !socket || isPeerUnavailable) return;
+    // A deactivated peer can't receive anything; the composer is disabled too.
+    if (isPeerUnavailable) return;
+
+    if (stagedImage && userId && socket) {
+      const caption = newMessage.trim();
+      const { file } = stagedImage;
+      setStaged(null);
+      setNewMessage('');
+      const typingStop: ChatTypingPayload = { receiverId: userId };
+      socket.emit(CHAT_SOCKET_EVENTS.TYPING_STOP, typingStop);
+      await sendImage(file, caption);
+      return;
+    }
+
+    if (!newMessage.trim() || !userId || !user || !socket) return;
 
     const messageContent = newMessage.trim();
     const tempId = `temp-${Date.now()}`;
@@ -187,6 +249,138 @@ const ChatThread: React.FC<ChatThreadProps> = ({ userId }) => {
       setNewMessage(messageContent);
       setIsSending(false);
     }
+  };
+
+  const updateMessage = useCallback((messageId: string, update: (message: ChatMessage) => ChatMessage) => {
+    setMessages((prev) => prev.map((msg) => (msg._id === messageId ? update(msg) : msg)));
+  }, []);
+
+  const emitSendMessage = (payload: ChatSendMessagePayload) =>
+    new Promise<ChatSendMessageAck>((resolve) => {
+      if (!socket) {
+        resolve({ success: false, message: 'Not connected' });
+        return;
+      }
+      socket.timeout(SEND_ACK_TIMEOUT_MS).emit(
+        CHAT_SOCKET_EVENTS.SEND_MESSAGE,
+        payload,
+        (err: Error | null, ack: ChatSendMessageAck) => {
+          resolve(err ? { success: false, message: 'No response from the server' } : ack);
+        },
+      );
+    });
+
+  /** Uploads straight to Cloudinary, then sends the message with Cloudinary's receipt. */
+  const sendPendingMedia = async (tempId: string) => {
+    const pending = pendingMediaRef.current.get(tempId);
+    if (!pending) return;
+
+    updateMessage(tempId, (msg) => ({ ...msg, upload: { status: 'uploading', progress: 0 } }));
+    try {
+      const receipt = await uploadChatMedia(userId, pending.kind, pending.blob, pending.fileName, (progress) =>
+        updateMessage(tempId, (msg) => ({ ...msg, upload: { status: 'uploading', progress } })),
+      );
+      // The temp id doubles as clientMessageId, so a retry after a lost acknowledgement
+      // returns the original message instead of sending it twice.
+      const ack = await emitSendMessage({
+        receiverId: userId,
+        clientMessageId: tempId,
+        content: pending.caption || undefined,
+        attachment: { ...receipt, ...pending.details },
+      });
+      if (!ack.success) throw new Error(ack.message);
+
+      URL.revokeObjectURL(pending.previewUrl);
+      pendingMediaRef.current.delete(tempId);
+      setMessages((prev) => prev.map((msg) => (msg._id === tempId ? ack.message : msg)));
+      void refetchInbox();
+    } catch (err: unknown) {
+      updateMessage(tempId, (msg) => ({
+        ...msg,
+        upload: { status: 'failed', progress: 0, error: getErrorMessage(err, 'Failed to send') },
+      }));
+    }
+  };
+
+  const discardPendingMedia = (tempId: string) => {
+    const pending = pendingMediaRef.current.get(tempId);
+    if (pending) URL.revokeObjectURL(pending.previewUrl);
+    pendingMediaRef.current.delete(tempId);
+    setMessages((prev) => prev.filter((msg) => msg._id !== tempId));
+  };
+
+  const queueMedia = (pending: PendingMedia, attachment: ChatMessage['attachment']) => {
+    if (!user) return;
+    const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    pendingMediaRef.current.set(tempId, pending);
+    setMessages((prev) => [
+      ...prev,
+      {
+        _id: tempId,
+        sender: { _id: user.id, firstName: user.firstName, lastName: user.lastName },
+        receiver: { _id: userId, firstName: otherUser?.firstName || '', lastName: otherUser?.lastName || '' },
+        type: pending.kind,
+        content: pending.caption || undefined,
+        attachment,
+        read: false,
+        createdAt: new Date().toISOString(),
+        upload: { status: 'uploading', progress: 0 },
+      },
+    ]);
+    void sendPendingMedia(tempId);
+  };
+
+  /** Checks the chosen file and stages it; it's only sent when the user presses Send. */
+  const handlePickImage = (file: File) => {
+    setError('');
+    if (!file.type.startsWith('image/')) {
+      setError('Please choose an image file');
+      return;
+    }
+    if (file.size > CHAT_IMAGE_MAX_BYTES) {
+      setError('Photos must be under 5 MB');
+      return;
+    }
+    setStaged({ file, name: file.name, previewUrl: URL.createObjectURL(file) });
+  };
+
+  const sendImage = async (file: File, caption: string) => {
+    const image = await prepareImage(file);
+    const previewUrl = URL.createObjectURL(image.blob);
+    const isJpeg = image.blob.type === 'image/jpeg';
+    queueMedia(
+      {
+        kind: 'image',
+        blob: image.blob,
+        fileName: isJpeg ? 'photo.jpg' : file.name,
+        previewUrl,
+        caption,
+        details: { width: image.width, height: image.height, thumbnail: image.thumbnail },
+      },
+      {
+        urls: { display: previewUrl, full: previewUrl },
+        width: image.width,
+        height: image.height,
+        thumbnail: image.thumbnail,
+      },
+    );
+  };
+
+  const handleVoiceRecorded = async (recording: VoiceRecording) => {
+    setError('');
+    const waveform = await computeWaveform(recording.blob);
+    const previewUrl = URL.createObjectURL(recording.blob);
+    const durationMs = Math.round(recording.durationMs);
+    queueMedia(
+      {
+        kind: 'voice',
+        blob: recording.blob,
+        fileName: `voice.${extensionForAudio(recording.mimeType)}`,
+        previewUrl,
+        details: { durationMs, waveform },
+      },
+      { urls: { audio: previewUrl }, durationMs, waveform },
+    );
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -316,12 +510,6 @@ const ChatThread: React.FC<ChatThreadProps> = ({ userId }) => {
 
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 md:px-6 md:py-6">
         <div className="mx-auto max-w-3xl space-y-4">
-          {error && (
-            <div className="mb-4 rounded-kin border border-kin-coral-200 bg-kin-coral-50 px-4 py-3 font-inter text-kin-coral-700">
-              {error}
-            </div>
-          )}
-
           {messages.length === 0 ? (
             <div className="py-12 text-center md:py-16">
               <div className="mb-4 text-5xl md:text-6xl">💬</div>
@@ -345,6 +533,38 @@ const ChatThread: React.FC<ChatThreadProps> = ({ userId }) => {
                 {group.messages.map((message) => {
                   const isOwn = message.sender._id === user?.id;
                   const isSelected = selectedMessageId === message._id;
+
+                  if (message.type === 'image' || message.type === 'voice') {
+                    const Media = message.type === 'image' ? ImageAttachment : VoiceAttachment;
+                    return (
+                      <div
+                        key={message._id}
+                        className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'}`}
+                      >
+                        <div
+                          data-testid="chat-message-bubble"
+                          aria-label={`${message.type === 'image' ? 'Photo' : 'Voice message'} from ${message.sender.firstName}`}
+                          className={`max-w-xs overflow-hidden rounded-kin-lg font-inter shadow-kin-soft lg:max-w-md ${
+                            isOwn ? 'bg-primary text-primary-foreground' : 'bg-surface text-foreground'
+                          }`}
+                        >
+                          <Media
+                            attachment={message.attachment}
+                            upload={message.upload}
+                            isOwn={isOwn}
+                            onRetry={() => void sendPendingMedia(message._id)}
+                            onDiscard={() => discardPendingMedia(message._id)}
+                          />
+                          {message.content && (
+                            <p className="wrap-break-word whitespace-pre-wrap px-4 py-2">{message.content}</p>
+                          )}
+                        </div>
+                        <p className="mt-1 px-1 font-inter text-xs text-muted">
+                          {formatMessageTime(message.createdAt)}
+                        </p>
+                      </div>
+                    );
+                  }
 
                   return (
                     <div
@@ -399,38 +619,37 @@ const ChatThread: React.FC<ChatThreadProps> = ({ userId }) => {
       </div>
 
       <div className="shrink-0 border-t border-border bg-surface px-4 py-4 shadow-kin-soft md:px-6">
-        <form onSubmit={handleSendMessage} className="mx-auto max-w-3xl">
-          <div className="flex gap-3">
-            <input
-              type="text"
-              value={newMessage}
-              onChange={handleInputChange}
-              placeholder={isPeerUnavailable ? 'This account is unavailable' : 'Type a message...'}
-              className={`${textFieldClass} flex-1 rounded-kin-sm px-4 py-3 transition`}
-              disabled={isSending || !isConnected || isPeerUnavailable}
-              aria-label="Type a message"
-            />
+        {/* Next to the message box, not in the message list, so it's visible however far
+            the conversation is scrolled. */}
+        {error && (
+          <div
+            role="alert"
+            className="mx-auto mb-3 flex max-w-3xl items-start gap-3 rounded-kin border border-kin-coral-200 bg-kin-coral-50 px-4 py-3 font-inter text-sm text-kin-coral-700"
+          >
+            <p className="flex-1">{error}</p>
             <button
-              type="submit"
-              disabled={isSending || !newMessage.trim() || !isConnected || isPeerUnavailable}
-              className="flex items-center rounded-kin-sm bg-kin-coral px-6 py-3 font-montserrat font-semibold text-white shadow-kin-soft transition hover:bg-kin-coral-600 hover:shadow-kin-medium disabled:cursor-not-allowed disabled:opacity-50"
-              aria-label="Send message"
+              type="button"
+              onClick={() => setError('')}
+              className="shrink-0 cursor-pointer text-lg leading-none hover:opacity-70"
+              aria-label="Dismiss error"
             >
-              {isSending ? (
-                <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-primary-foreground" />
-              ) : (
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-                  />
-                </svg>
-              )}
+              &times;
             </button>
           </div>
-        </form>
+        )}
+        <ChatComposer
+          value={newMessage}
+          onChange={handleInputChange}
+          onSubmit={handleSendMessage}
+          onPickImage={handlePickImage}
+          stagedImage={stagedImage}
+          onRemoveStagedImage={() => setStaged(null)}
+          onVoiceRecorded={(recording) => void handleVoiceRecorded(recording)}
+          onError={setError}
+          isSending={isSending}
+          isConnected={isConnected}
+          isPeerUnavailable={isPeerUnavailable}
+        />
       </div>
     </div>
   );

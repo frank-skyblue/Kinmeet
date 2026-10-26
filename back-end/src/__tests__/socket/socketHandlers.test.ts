@@ -26,6 +26,8 @@ import { Message } from '../../models/Message';
 import { User } from '../../models/User';
 import { settingsService } from '../../services/settingsService';
 import { notificationService } from '../../services/notificationService';
+import { attachmentService } from '../../services/attachmentService';
+import { v2 as cloudinary } from 'cloudinary';
 
 let httpServer: HTTPServer;
 let port: number;
@@ -377,6 +379,65 @@ describe('Socket.IO Handlers', () => {
     } finally {
       clientA.disconnect();
       clientB.disconnect();
+    }
+  });
+
+  it('sends an image over the socket and names it in the push to an offline receiver', async () => {
+    const userA = await createTestUser({ email: 'media-a@test.com', firstName: 'Alice' });
+    const userB = await createTestUser({ email: 'media-b@test.com', firstName: 'Bob' });
+    await Connection.create({ user1: userA._id, user2: userB._id });
+    const pass = await attachmentService.createUploadPass(userA._id.toString(), userB._id.toString(), 'image');
+    const version = 1728600000;
+    const signV1 = cloudinary.utils.api_sign_request as unknown as (
+      params: Record<string, unknown>, secret: string, algorithm: null, signatureVersion: number,
+    ) => string;
+
+    const clientA = await connectClient(getAuthToken(userA));
+
+    try {
+      const ack = await new Promise<ChatSendMessageAck>((resolve) => {
+        clientA.emit(CHAT_SOCKET_EVENTS.SEND_MESSAGE, {
+          receiverId: userB._id.toString(),
+          attachment: {
+            id: pass.attachmentId,
+            version,
+            signature: signV1({ public_id: pass.fields.public_id, version }, process.env.CLOUDINARY_API_SECRET!, null, 1),
+          },
+        } satisfies ChatSendMessagePayload, resolve);
+      });
+
+      expect(ack.success).toBe(true);
+      if (ack.success) {
+        expect(ack.message.type).toBe('image');
+        expect(ack.message.attachment?.urls?.display).toMatch(/\/authenticated\//);
+      }
+      expect(notificationService.notifyChatMessage).toHaveBeenCalledWith(
+        expect.objectContaining({ receiverUserId: userB._id.toString(), messageType: 'image' }),
+      );
+    } finally {
+      clientA.disconnect();
+    }
+  });
+
+  it('reports a user-facing reason when a media send is refused', async () => {
+    const userA = await createTestUser({ email: 'media-c@test.com' });
+    const userB = await createTestUser({ email: 'media-d@test.com' });
+    await Connection.create({ user1: userA._id, user2: userB._id });
+    const pass = await attachmentService.createUploadPass(userA._id.toString(), userB._id.toString(), 'image');
+
+    const clientA = await connectClient(getAuthToken(userA));
+
+    try {
+      const ack = await new Promise<ChatSendMessageAck>((resolve) => {
+        clientA.emit(CHAT_SOCKET_EVENTS.SEND_MESSAGE, {
+          receiverId: userB._id.toString(),
+          attachment: { id: pass.attachmentId, version: 1, signature: 'b'.repeat(40) },
+        }, resolve);
+      });
+
+      expect(ack).toEqual({ success: false, message: 'Invalid upload receipt' });
+    } finally {
+      clientA.disconnect();
     }
   });
 });

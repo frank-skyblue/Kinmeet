@@ -458,4 +458,75 @@ describe('Auth Routes', () => {
       expect(reuse.status).toBe(400);
     });
   });
+
+  describe('POST /api/auth/check-username', () => {
+    const check = (body: Record<string, unknown>) =>
+      request(app).post('/api/auth/check-username').send(body);
+
+    it('reports an unused username as available', async () => {
+      const res = await check({ username: 'brand_new' });
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ success: true, available: true, username: 'brand_new' });
+    });
+
+    it('reports a taken username, ignoring case', async () => {
+      await createTestUser({ email: 'albert@example.com', username: 'albert' } as never);
+
+      const res = await check({ username: 'Albert' });
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ success: true, available: false, username: 'albert' });
+    });
+
+    it('explains which rule a badly formatted username breaks', async () => {
+      expect((await check({ username: 'ab' })).body.message).toBe('Username must be at least 3 characters.');
+      expect((await check({ username: 'a'.repeat(31) })).body.message).toBe('Username must be at most 30 characters.');
+      expect((await check({ username: 'al bert!' })).body.message).toBe(
+        'Username can only contain letters, numbers, and underscores.',
+      );
+    });
+
+    it('returns 400, not a server error, when the username is missing', async () => {
+      const res = await check({});
+
+      expect(res.status).toBe(400);
+    });
+
+    it('rate-limits checks', async () => {
+      let lastStatus = 0;
+      for (let i = 0; i < 61; i += 1) {
+        lastStatus = (await check({ username: `name_${i}` })).status;
+      }
+
+      expect(lastStatus).toBe(429);
+    });
+  });
+
+  describe('POST /api/auth/register username handling', () => {
+    it('treats an empty username as "generate one for me"', async () => {
+      const res = await request(app).post('/api/auth/register').send({ ...validRegister, username: '' });
+
+      expect(res.status).toBe(201);
+      expect(res.body.user.username).toMatch(/^[a-z0-9_]{3,30}$/);
+    });
+
+    it('stores a chosen username in lowercase', async () => {
+      const res = await request(app).post('/api/auth/register').send({ ...validRegister, username: 'Jane_Doe' });
+
+      expect(res.status).toBe(201);
+      expect(res.body.user.username).toBe('jane_doe');
+    });
+
+    it('returns 409 when the username is taken', async () => {
+      await request(app).post('/api/auth/register').send({ ...validRegister, username: 'jane_doe' });
+
+      const res = await request(app)
+        .post('/api/auth/register')
+        .send({ ...validRegister, email: 'other@example.com', username: 'JANE_DOE' });
+
+      expect(res.status).toBe(409);
+      expect(res.body.message).toBe('This username is already taken.');
+    });
+  });
 });

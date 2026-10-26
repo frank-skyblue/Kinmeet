@@ -96,7 +96,7 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
           swallow(e);
           setIsOpen((open) => !open);
         }}
-        className={`flex ${TRIGGER_SIZE[size]} items-center justify-center rounded-kin-sm text-foreground transition hover:bg-surface-muted cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring`}
+        className={`flex ${TRIGGER_SIZE[size]} items-center justify-center rounded-kin-sm text-foreground transition hover:bg-surface-hover cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring`}
       >
         <span className="sr-only">Open menu</span>
         <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden>

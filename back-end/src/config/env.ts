@@ -129,3 +129,12 @@ export const WEB_APP_URL = process.env.WEB_APP_URL!.trim().replace(/\/$/, '');
 export const RESEND_API_KEY = process.env.RESEND_API_KEY?.trim() || null;
 export const EMAIL_FROM = process.env.EMAIL_FROM?.trim() || 'KinMeet <noreply@kinmeet.ca>';
 export const ENABLE_DEVELOPMENT_EMAIL = process.env.ENABLE_DEVELOPMENT_EMAIL?.trim() === 'true';
+
+/**
+ * Optional public URL Cloudinary calls when a chat upload finishes, e.g.
+ * https://api.kinmeet.ca/api/chat/attachments/upload-notification. When set, Cloudinary's report
+ * of each file's real size and duration is checked against the chat media limits, and media over
+ * them is removed. Without it, uploads are still verified by their signed receipt, but only the
+ * format limits are enforced. Cloudinary must be able to reach it, so it is usually unset locally.
+ */
+export const CLOUDINARY_NOTIFICATION_URL = process.env.CLOUDINARY_NOTIFICATION_URL?.trim() || null;
