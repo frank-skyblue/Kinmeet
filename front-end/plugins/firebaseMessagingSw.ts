@@ -38,7 +38,7 @@ if (firebaseConfig.apiKey) {
       body,
       icon: '/KinmeetLogo.png',
       badge: '/KinmeetLogo.png',
-      tag: data.messageId ? String(data.messageId) : 'kinmeet-chat',
+      tag: data.tag ? String(data.tag) : data.messageId ? String(data.messageId) : 'kinmeet-chat',
       data: {
         clickPath: data.clickPath ? String(data.clickPath) : '/discover',
       },

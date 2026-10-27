@@ -93,30 +93,37 @@ export const getFirebaseAnalytics = async (): Promise<Analytics | null> => {
 };
 
 /**
- * Requests permission (if needed), obtains FCM token, registers with KinMeet API.
- * No-op if Firebase env is incomplete, messaging unsupported, or permission denied.
+ * - `registered`: this device can receive push and is registered with the KinMeet API.
+ * - `denied`: the user blocked (or dismissed) the browser's notification permission.
+ * - `unsupported`: push can't work here (browser support, Firebase config, or off in dev).
  */
-export const registerWebPushForCurrentUser = async (): Promise<void> => {
-    if (!isWebPushAllowedInCurrentMode()) return;
+export type WebPushRegistrationResult = 'registered' | 'denied' | 'unsupported';
+
+/**
+ * Requests permission (if needed), obtains FCM token, registers with KinMeet API.
+ * Does nothing past the first check that fails; the result says which.
+ */
+export const registerWebPushForCurrentUser = async (): Promise<WebPushRegistrationResult> => {
+    if (!isWebPushAllowedInCurrentMode()) return 'unsupported';
 
     const app = getOrInitApp();
-    if (!app) return;
+    if (!app) return 'unsupported';
 
-    if (!('Notification' in window)) return;
+    if (!('Notification' in window)) return 'unsupported';
 
     const supported = await isSupported();
-    if (!supported) return;
+    if (!supported) return 'unsupported';
 
-    if (Notification.permission === 'denied') return;
+    if (Notification.permission === 'denied') return 'denied';
 
     const permission =
         Notification.permission === 'granted' ? 'granted' : await Notification.requestPermission();
-    if (permission !== 'granted') return;
+    if (permission !== 'granted') return 'denied';
 
     const messaging = getMessaging(app);
     const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY as string;
     const fcmToken = await getToken(messaging, { vapidKey });
-    if (!fcmToken) return;
+    if (!fcmToken) return 'unsupported';
 
     const previous = localStorage.getItem(FCM_TOKEN_STORAGE_KEY);
     if (previous && previous !== fcmToken) {
@@ -134,6 +141,7 @@ export const registerWebPushForCurrentUser = async (): Promise<void> => {
     if (analytics) {
         logEvent(analytics, 'push_notification_opt_in', { channel: 'web_push' });
     }
+    return 'registered';
 };
 
 export const unregisterWebPushForCurrentUser = async (): Promise<void> => {

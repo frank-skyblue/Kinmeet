@@ -19,6 +19,8 @@ import type {
   SubmitSupportRequestResponse,
   UpdateProfilePayload,
   RegisterNotificationDevicePayload,
+  NotificationPreferencesResponse,
+  UpdateNotificationPreferencesPayload,
   AdminAuthResponse,
   AdminFeedbackListResponse,
   AdminReportListResponse,
@@ -201,8 +203,8 @@ export const matchingAPI = {
     return response.data;
   },
 
-  passUser: async () => {
-    const response = await api.post('/matching/pass');
+  passUser: async (userId: string) => {
+    const response = await api.post('/matching/pass', { userId });
     return response.data;
   },
 };
@@ -264,6 +266,19 @@ export const notificationsAPI = {
 
   unregisterDevice: async (payload: RegisterNotificationDevicePayload) => {
     const response = await api.delete('/notifications/devices', { data: payload });
+    return response.data;
+  },
+
+  getPreferences: async (): Promise<NotificationPreferencesResponse> => {
+    const response = await api.get<NotificationPreferencesResponse>('/notifications/preferences');
+    return response.data;
+  },
+
+  /** Saves only the channels given; the others keep their saved value. */
+  updatePreferences: async (
+    payload: UpdateNotificationPreferencesPayload,
+  ): Promise<NotificationPreferencesResponse> => {
+    const response = await api.patch<NotificationPreferencesResponse>('/notifications/preferences', payload);
     return response.data;
   },
 };
