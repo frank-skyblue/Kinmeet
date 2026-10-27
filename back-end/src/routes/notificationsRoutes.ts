@@ -4,8 +4,14 @@ import { validate } from '../middleware/validate';
 import {
     registerNotificationDeviceSchema,
     unregisterNotificationDeviceSchema,
+    updateNotificationPreferencesSchema,
 } from '../middleware/schemas';
-import { registerDevice, unregisterDevice } from '../controllers/notificationsController';
+import {
+    getPreferences,
+    registerDevice,
+    unregisterDevice,
+    updatePreferences,
+} from '../controllers/notificationsController';
 
 const router = express.Router();
 
@@ -22,4 +28,6 @@ router.use(authenticateJWT);
 
 router.post('/devices', validate(registerNotificationDeviceSchema), registerDevice);
 
+router.get('/preferences', getPreferences);
+router.patch('/preferences', validate(updateNotificationPreferencesSchema), updatePreferences);
 export default router;

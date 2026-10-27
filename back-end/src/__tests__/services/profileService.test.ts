@@ -6,6 +6,7 @@ import { Block } from '../../models/Block';
 import { Connection } from '../../models/Connection';
 import { ConnectionRequest } from '../../models/ConnectionRequest';
 import { Message } from '../../models/Message';
+import { newPeopleAlertService } from '../../services/newPeopleAlertService';
 
 vi.mock('../../services/cloudinaryService', () => ({
   uploadImage: vi.fn().mockResolvedValue('https://cloudinary.com/test-photo.jpg'),
@@ -88,6 +89,48 @@ describe('profileService', () => {
       await expect(
         profileService.getUserProfile(requester._id.toString(), target._id.toString()),
       ).rejects.toThrow('User not found');
+    });
+  });
+
+  describe('updateProfile joining a Discover group', () => {
+    const groupJoinedAt = async (userId: unknown) =>
+      (await User.findById(userId).select('groupJoinedAt').lean())!.groupJoinedAt;
+
+    it('moving to another country joins that group and alerts it', async () => {
+      const notify = vi.spyOn(newPeopleAlertService, 'notifyGroup').mockResolvedValue(0);
+      const user = await createTestUser({ email: 'me@test.com' });
+
+      await profileService.updateProfile(user._id.toString(), { currentCountry: 'USA' });
+
+      expect(await groupJoinedAt(user._id)).toBeInstanceOf(Date);
+      expect(notify).toHaveBeenCalledWith({ homeCountry: 'France', currentCountry: 'USA' });
+      notify.mockRestore();
+    });
+
+    it('completing a profile joins the group', async () => {
+      const notify = vi.spyOn(newPeopleAlertService, 'notifyGroup').mockResolvedValue(0);
+      const user = await createTestUser({ email: 'me@test.com', profileComplete: false });
+
+      await profileService.updateProfile(user._id.toString(), { about: 'Hi' });
+
+      expect(await groupJoinedAt(user._id)).toBeInstanceOf(Date);
+      expect(notify).toHaveBeenCalledTimes(1);
+      notify.mockRestore();
+    });
+
+    it('other edits, or saving the same countries, do not count as joining', async () => {
+      const notify = vi.spyOn(newPeopleAlertService, 'notifyGroup').mockResolvedValue(0);
+      const user = await createTestUser({ email: 'me@test.com' });
+
+      await profileService.updateProfile(user._id.toString(), {
+        about: 'New bio',
+        homeCountry: 'France',
+        currentCountry: 'Canada',
+      });
+
+      expect(await groupJoinedAt(user._id)).toBeUndefined();
+      expect(notify).not.toHaveBeenCalled();
+      notify.mockRestore();
     });
   });
 

@@ -95,4 +95,40 @@ describe('webPushChannel', () => {
         const remaining = await DeviceSubscription.countDocuments();
         expect(remaining).toBe(0);
     });
+
+    it('sends a general push with a replace-in-place tag and click path', async () => {
+        const userId = new mongoose.Types.ObjectId();
+        await DeviceSubscription.create({ userId, channel: WEB_PUSH_CHANNEL, token: 'fake-fcm-token' });
+
+        const reached = await webPushChannel.sendPush(userId.toString(), {
+            title: 'KinMeet',
+            body: '2 new people from France joined near you',
+            clickPath: '/discover',
+            tag: 'kinmeet-new-people',
+            data: { type: 'new_people_nearby' },
+        });
+
+        expect(reached).toBe(1);
+
+        const [message] = sendEachMock.mock.calls[0]![0] as Array<{
+            notification: { body: string };
+            data: Record<string, string>;
+            webpush: { notification: { tag: string }; fcmOptions: { link: string } };
+        }>;
+        expect(message!.notification.body).toBe('2 new people from France joined near you');
+        expect(message!.data).toEqual({ type: 'new_people_nearby', clickPath: '/discover', tag: 'kinmeet-new-people' });
+        expect(message!.webpush.notification.tag).toBe('kinmeet-new-people');
+        expect(message!.webpush.fcmOptions.link).toBe('https://app.example.com/discover');
+    });
+
+    it('reports 0 devices reached when the user has none', async () => {
+        const reached = await webPushChannel.sendPush(new mongoose.Types.ObjectId().toString(), {
+            title: 'KinMeet',
+            body: '1 new person from France joined near you',
+            clickPath: '/discover',
+        });
+
+        expect(reached).toBe(0);
+        expect(sendEachMock).not.toHaveBeenCalled();
+    });
 });

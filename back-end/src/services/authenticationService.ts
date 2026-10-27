@@ -2,6 +2,7 @@ import { User, type IUser } from '../models/User';
 import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../config/env';
 import { AppError } from '../middleware/errorHandler';
+import { notifyGroupInBackground } from './newPeopleAlertService';
 import { findUserByEmail, normalizeEmail, findUserByUsername } from '../utils/email';
 
 const DUPLICATE_EMAIL_MESSAGE = 'This email is already registered. Please log in instead.';
@@ -196,9 +197,11 @@ export const authenticationService = {
                     lookingFor,
                     photo,
                     profileComplete: true,
+                    groupJoinedAt: new Date(),
                 });
 
                 await newUser.save();
+                notifyGroupInBackground({ homeCountry: newUser.homeCountry, currentCountry: newUser.currentCountry });
 
                 return {
                     success: true,
