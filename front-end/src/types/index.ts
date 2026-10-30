@@ -136,6 +136,14 @@ export interface ChatConversationSummary {
     unreadCount: number;
 }
 
+/** One page of a conversation, oldest message first. */
+export interface GetConversationResponse {
+    success: boolean;
+    messages: ChatMessage[];
+    /** Pass back to get the page before this one; missing or null when this is the start of the conversation. */
+    nextCursor?: string | null;
+}
+
 export interface GetConversationsResponse {
     success: boolean;
     conversations: ChatConversationSummary[];

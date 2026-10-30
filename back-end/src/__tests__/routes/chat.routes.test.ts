@@ -125,6 +125,39 @@ describe('Chat Routes', () => {
       expect(res.status).toBe(200);
       expect(res.body.messages).toHaveLength(1);
       expect(res.body.messages[0].content).toBe('Test message');
+      expect(res.body.nextCursor).toBeNull();
+    });
+
+    it('returns the messages before the cursor', async () => {
+      const { userB, tokenA } = await connectAndGetTokens();
+      for (const content of ['First', 'Second']) {
+        await request(app)
+          .post('/api/chat/messages')
+          .set('Authorization', `Bearer ${tokenA}`)
+          .send({ receiverId: userB._id.toString(), content });
+      }
+      const all = await request(app)
+        .get(`/api/chat/conversations/${userB._id}`)
+        .set('Authorization', `Bearer ${tokenA}`);
+
+      const res = await request(app)
+        .get(`/api/chat/conversations/${userB._id}`)
+        .query({ cursor: all.body.messages[1]._id })
+        .set('Authorization', `Bearer ${tokenA}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.messages.map((m: { content: string }) => m.content)).toEqual(['First']);
+    });
+
+    it('returns 400, not a server error, for a cursor that is not a message id', async () => {
+      const { userB, tokenA } = await connectAndGetTokens();
+
+      const res = await request(app)
+        .get(`/api/chat/conversations/${userB._id}`)
+        .query({ cursor: 'not-a-cursor' })
+        .set('Authorization', `Bearer ${tokenA}`);
+
+      expect(res.status).toBe(400);
     });
 
     it('returns 400 for invalid userId', async () => {

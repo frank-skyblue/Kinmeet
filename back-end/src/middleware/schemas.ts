@@ -271,6 +271,11 @@ export const resetPasswordSchema = z.object({
 });
 
 export const userIdParams = objectIdParam('userId');
+
+/** `cursor`: the id of the oldest message already loaded, from the previous batch's `nextCursor`. */
+export const conversationQuerySchema = z.object({
+    cursor: objectId.optional(),
+});
 export const requestIdParams = objectIdParam('requestId');
 
 const notificationDeviceChannel = z.enum(['web_push']);
