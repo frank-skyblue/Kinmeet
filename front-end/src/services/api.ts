@@ -19,6 +19,9 @@ import type {
   SubmitSupportRequestResponse,
   UpdateProfilePayload,
   RegisterNotificationDevicePayload,
+  NotificationPreferencesResponse,
+  GetConversationResponse,
+  UpdateNotificationPreferencesPayload,
   AdminAuthResponse,
   AdminFeedbackListResponse,
   AdminReportListResponse,
@@ -201,8 +204,8 @@ export const matchingAPI = {
     return response.data;
   },
 
-  passUser: async () => {
-    const response = await api.post('/matching/pass');
+  passUser: async (userId: string) => {
+    const response = await api.post('/matching/pass', { userId });
     return response.data;
   },
 };
@@ -240,8 +243,11 @@ export const chatAPI = {
     return response.data;
   },
 
-  getConversation: async (userId: string) => {
-    const response = await api.get(`/chat/conversations/${userId}`);
+  /** With no cursor, the newest page; with the previous page's `nextCursor`, the page before it. */
+  getConversation: async (userId: string, cursor: string | null): Promise<GetConversationResponse> => {
+    const response = await api.get<GetConversationResponse>(`/chat/conversations/${userId}`, {
+      params: cursor ? { cursor } : {},
+    });
     return response.data;
   },
 
@@ -264,6 +270,19 @@ export const notificationsAPI = {
 
   unregisterDevice: async (payload: RegisterNotificationDevicePayload) => {
     const response = await api.delete('/notifications/devices', { data: payload });
+    return response.data;
+  },
+
+  getPreferences: async (): Promise<NotificationPreferencesResponse> => {
+    const response = await api.get<NotificationPreferencesResponse>('/notifications/preferences');
+    return response.data;
+  },
+
+  /** Saves only the channels given; the others keep their saved value. */
+  updatePreferences: async (
+    payload: UpdateNotificationPreferencesPayload,
+  ): Promise<NotificationPreferencesResponse> => {
+    const response = await api.patch<NotificationPreferencesResponse>('/notifications/preferences', payload);
     return response.data;
   },
 };

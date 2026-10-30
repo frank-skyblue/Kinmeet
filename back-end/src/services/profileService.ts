@@ -4,10 +4,12 @@ import { areUsersBlocked } from '../models/Block';
 import { Connection } from '../models/Connection';
 import { ConnectionRequest } from '../models/ConnectionRequest';
 import { Message } from '../models/Message';
+import { DiscoverPass } from '../models/DiscoverPass';
 import { AppError } from '../middleware/errorHandler';
 import { dateOfBirthString } from '../middleware/schemas';
 import { uploadImage, destroyImage } from './cloudinaryService';
 import { attachmentService } from './attachmentService';
+import { notifyGroupInBackground } from './newPeopleAlertService';
 
 const AVATARS_SUBFOLDER = 'avatars';
 
@@ -56,13 +58,25 @@ export const updateProfile = async (userId: string, updates: Record<string, unkn
         }
     }
 
+    const before = await User.findById(userId).select('homeCountry currentCountry profileComplete');
+    if (!before) throw new AppError(404, 'User not found');
+
+    // Completing a profile or moving to another home/current country joins a Discover group,
+    // which counts as a new arrival for that group's alerts.
+    const joinsGroup = !before.profileComplete
+        || (updates.homeCountry !== undefined && updates.homeCountry !== before.homeCountry)
+        || (updates.currentCountry !== undefined && updates.currentCountry !== before.currentCountry);
+
     const user = await User.findByIdAndUpdate(
         userId,
-        { ...updates, profileComplete: true },
+        { ...updates, profileComplete: true, ...(joinsGroup ? { groupJoinedAt: new Date() } : {}) },
         { new: true, runValidators: true }
     ).select('-password');
 
     if (!user) throw new AppError(404, 'User not found');
+    if (joinsGroup) {
+        notifyGroupInBackground({ homeCountry: user.homeCountry, currentCountry: user.currentCountry });
+    }
     return user;
 };
 
@@ -82,6 +96,9 @@ export const deleteProfile = async (userId: string) => {
         }),
         ConnectionRequest.deleteMany({
             $or: [{ sender: userObjectId }, { receiver: userObjectId }]
+        }),
+        DiscoverPass.deleteMany({
+            $or: [{ viewer: userObjectId }, { viewed: userObjectId }]
         }),
         Message.deleteMany({
             $or: [{ sender: userObjectId }, { receiver: userObjectId }]

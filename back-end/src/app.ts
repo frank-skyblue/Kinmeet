@@ -10,6 +10,7 @@ import { errorHandler } from './middleware/errorHandler';
 import { corsConfig } from './config/cors';
 import { jsonBody } from './middleware/jsonBody';
 import { attachmentService } from './services/attachmentService';
+import { NEW_PEOPLE_SWEEP_INTERVAL_MS, newPeopleAlertService } from './services/newPeopleAlertService';
 import authRoutes from './routes/authRoutes';
 import profileRoutes from './routes/profileRoutes';
 import matchingRoutes from './routes/matchingRoutes';
@@ -97,6 +98,13 @@ const start = async () => {
                 .then((count) => { if (count > 0) console.log(`🧹 Removed ${count} unsent chat uploads`); })
                 .catch((err) => console.error('Chat upload cleanup failed:', err));
         }, 60 * 60 * 1000).unref();
+
+        // Every few minutes: send "new people nearby" alerts held back by a cooldown.
+        setInterval(() => {
+            newPeopleAlertService.sweep()
+                .then((count) => { if (count > 0) console.log(`🔔 Sent ${count} new people nearby alerts`); })
+                .catch((err) => console.error('New people alert sweep failed:', err));
+        }, NEW_PEOPLE_SWEEP_INTERVAL_MS).unref();
 
         // Listen with HTTP server instead of Express app
         // Render requires binding to 0.0.0.0 (all interfaces), not localhost

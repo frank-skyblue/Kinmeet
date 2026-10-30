@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { render } from '@testing-library/react';
@@ -249,6 +249,125 @@ describe('Chat', () => {
 
     await user.click(screen.getByText('Hello Marie!'));
     expect(screen.getByTestId('chat-message-timestamp')).toHaveTextContent(/\d/);
+  });
+
+  describe('earlier messages', () => {
+    const olderMessage: ChatMessage = {
+      _id: 'msg-0',
+      sender: { _id: 'other-1', firstName: 'Marie', lastName: 'Dupont' },
+      receiver: { _id: 'user-1', firstName: 'Test', lastName: 'User' },
+      content: 'An older message',
+      read: true,
+      createdAt: new Date(yesterday.getTime() - 60_000).toISOString(),
+    };
+
+    beforeEach(() => {
+      vi.mocked(chatAPI.getConversation)
+        .mockResolvedValueOnce({ success: true, messages: mockMessages, nextCursor: 'cursor-1' })
+        .mockResolvedValueOnce({ success: true, messages: [olderMessage], nextCursor: null });
+    });
+
+    it('opens on the newest page', async () => {
+      renderChat();
+
+      await screen.findByText('Hello Marie!');
+      expect(chatAPI.getConversation).toHaveBeenCalledWith('other-1', null);
+    });
+
+    it('adds the page before the oldest message above it, and stops at the start', async () => {
+      const user = userEvent.setup();
+      renderChat();
+
+      await user.click(await screen.findByRole('button', { name: 'Load earlier messages' }));
+
+      const older = await screen.findByText('An older message');
+      expect(chatAPI.getConversation).toHaveBeenLastCalledWith('other-1', 'cursor-1');
+      expect(
+        older.compareDocumentPosition(screen.getByText('Hello Marie!')) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+      expect(screen.queryByRole('button', { name: /earlier messages/i })).not.toBeInTheDocument();
+    });
+
+    it('loads earlier messages when scrolled near the top, once', async () => {
+      renderChat();
+      await screen.findByRole('button', { name: 'Load earlier messages' });
+
+      const list = screen.getByTestId('chat-messages-scroll');
+      fireEvent.scroll(list, { target: { scrollTop: 0 } });
+      fireEvent.scroll(list, { target: { scrollTop: 0 } });
+
+      expect(await screen.findByText('An older message')).toBeInTheDocument();
+      expect(chatAPI.getConversation).toHaveBeenCalledTimes(2);
+    });
+
+    it('offers nothing earlier when the whole conversation is loaded', async () => {
+      vi.mocked(chatAPI.getConversation).mockReset();
+      vi.mocked(chatAPI.getConversation).mockResolvedValue({ success: true, messages: mockMessages });
+      renderChat();
+
+      await screen.findByText('Hello Marie!');
+      expect(screen.queryByRole('button', { name: /earlier messages/i })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('following new messages', () => {
+    const incoming = (content: string, senderId = 'other-1'): ChatMessage => ({
+      _id: `new-${content}`,
+      sender: { _id: senderId, firstName: senderId === 'other-1' ? 'Marie' : 'Test', lastName: 'X' },
+      receiver: { _id: senderId === 'other-1' ? 'user-1' : 'other-1', firstName: 'Y', lastName: 'Z' },
+      content,
+      read: false,
+      createdAt: new Date().toISOString(),
+    });
+
+    const receive = (message: ChatMessage) => {
+      const [, handler] = mockSocket.on.mock.calls.find(([event]) => event === CHAT_SOCKET_EVENTS.NEW_MESSAGE)!;
+      act(() => (handler as (m: ChatMessage) => void)(message));
+    };
+
+    /** Puts the reader `fromBottom` px above the bottom of a 2000px conversation. */
+    const scrollTo = (fromBottom: number) => {
+      const list = screen.getByTestId('chat-messages-scroll');
+      Object.defineProperty(list, 'scrollHeight', { value: 2000, configurable: true });
+      Object.defineProperty(list, 'clientHeight', { value: 500, configurable: true });
+      fireEvent.scroll(list, { target: { scrollTop: 2000 - 500 - fromBottom } });
+    };
+
+    it('keeps someone reading older messages in place when a message arrives', async () => {
+      renderChat();
+      await screen.findByText('Hello Marie!');
+      scrollTo(800);
+      vi.mocked(HTMLElement.prototype.scrollIntoView).mockClear();
+
+      receive(incoming('New while reading'));
+
+      expect(await screen.findByText('New while reading')).toBeInTheDocument();
+      expect(HTMLElement.prototype.scrollIntoView).not.toHaveBeenCalled();
+    });
+
+    it('follows a new message when the reader is already at the bottom', async () => {
+      renderChat();
+      await screen.findByText('Hello Marie!');
+      scrollTo(20);
+      vi.mocked(HTMLElement.prototype.scrollIntoView).mockClear();
+
+      receive(incoming('New at bottom'));
+
+      await screen.findByText('New at bottom');
+      expect(HTMLElement.prototype.scrollIntoView).toHaveBeenCalled();
+    });
+
+    it("always brings the reader down to their own message", async () => {
+      renderChat();
+      await screen.findByText('Hello Marie!');
+      scrollTo(800);
+      vi.mocked(HTMLElement.prototype.scrollIntoView).mockClear();
+
+      receive(incoming('Sent from my other tab', 'user-1'));
+
+      await screen.findByText('Sent from my other tab');
+      expect(HTMLElement.prototype.scrollIntoView).toHaveBeenCalled();
+    });
   });
 
   describe('images and voice messages', () => {

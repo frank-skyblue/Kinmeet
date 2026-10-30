@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState, useRef } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { chatAPI, profileAPI, getPhotoUrl } from '../../services/api';
 import { useAuth } from '../../contexts/useAuth';
@@ -30,6 +30,10 @@ import { ImageAttachment, VoiceAttachment } from './ChatMessageMedia';
 import type { VoiceRecording } from './useVoiceRecorder';
 
 const SEND_ACK_TIMEOUT_MS = 15_000;
+/** Load earlier messages once the reader scrolls this close to the top. */
+const LOAD_OLDER_THRESHOLD_PX = 120;
+/** Within this distance of the bottom, the reader is following the latest messages. */
+const NEAR_BOTTOM_PX = 150;
 
 /** A media message waiting to be uploaded and sent; kept so a failed send can be retried. */
 interface PendingMedia {
@@ -65,8 +69,17 @@ const ChatThread: React.FC<ChatThreadProps> = ({ userId }) => {
   const [isSending, setIsSending] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [error, setError] = useState('');
+  // Cursor for the page before the oldest loaded message; null once the start is loaded.
+  const [olderCursor, setOlderCursor] = useState<string | null>(null);
+  const [isLoadingOlder, setIsLoadingOlder] = useState(false);
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const conversationUserIdRef = useRef(userId);
+  const loadingOlderRef = useRef(false);
+  const scrollRestoreRef = useRef<{ height: number; top: number } | null>(null);
+  const lastMessageIdRef = useRef<string | undefined>(undefined);
+  const isNearBottomRef = useRef(true);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingMediaRef = useRef(new Map<string, PendingMedia>());
   const [stagedImage, setStagedImage] = useState<(StagedImage & { file: File }) | null>(null);
@@ -96,6 +109,10 @@ const ChatThread: React.FC<ChatThreadProps> = ({ userId }) => {
   }, [userId]);
 
   useEffect(() => {
+    conversationUserIdRef.current = userId;
+    lastMessageIdRef.current = undefined;
+    isNearBottomRef.current = true;
+    setOlderCursor(null);
     loadConversation();
     loadUserProfile();
   }, [userId]);
@@ -143,24 +160,78 @@ const ChatThread: React.FC<ChatThreadProps> = ({ userId }) => {
     };
   }, [socket, userId]);
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+  useLayoutEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const restore = scrollRestoreRef.current;
+    if (restore) {
+      scrollRestoreRef.current = null;
+      container.scrollTop = container.scrollHeight - restore.height + restore.top;
+      return;
+    }
+
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage?._id !== lastMessageIdRef.current) {
+      const isFirstLoad = lastMessageIdRef.current === undefined;
+      lastMessageIdRef.current = lastMessage?._id;
+      // Someone reading older messages stays where they are when a message arrives;
+      // their own message always brings them down to it.
+      if (isFirstLoad || isNearBottomRef.current || lastMessage?.sender._id === user?.id) {
+        scrollToBottom();
+      }
+    }
+  }, [messages, isLoading, user?.id]);
 
   const loadConversation = async () => {
+    const requestedUserId = userId;
     try {
-      const response = await chatAPI.getConversation(userId);
+      const response = await chatAPI.getConversation(userId, null);
+      if (conversationUserIdRef.current !== requestedUserId) return;
       if (response.success) {
         setMessages(response.messages);
+        setOlderCursor(response.nextCursor ?? null);
       }
       await refetchInbox();
       setIsLoading(false);
-      scrollToBottom();
     } catch (err: unknown) {
       setError('Failed to load conversation');
       console.error(err);
       setIsLoading(false);
     }
+  };
+
+  const loadOlderMessages = async () => {
+    if (!olderCursor || loadingOlderRef.current) return;
+    loadingOlderRef.current = true;
+    setIsLoadingOlder(true);
+    const requestedUserId = userId;
+    try {
+      const response = await chatAPI.getConversation(userId, olderCursor);
+      if (conversationUserIdRef.current !== requestedUserId || !response.success) return;
+
+      const container = scrollContainerRef.current;
+      if (container) {
+        scrollRestoreRef.current = { height: container.scrollHeight, top: container.scrollTop };
+      }
+      setMessages((prev) => {
+        const shown = new Set(prev.map((message) => message._id));
+        return [...response.messages.filter((message) => !shown.has(message._id)), ...prev];
+      });
+      setOlderCursor(response.nextCursor ?? null);
+    } catch (err: unknown) {
+      setError('Failed to load earlier messages');
+      console.error(err);
+    } finally {
+      loadingOlderRef.current = false;
+      setIsLoadingOlder(false);
+    }
+  };
+
+  const handleMessagesScroll = (event: React.UIEvent<HTMLDivElement>) => {
+    const list = event.currentTarget;
+    isNearBottomRef.current = list.scrollHeight - list.scrollTop - list.clientHeight < NEAR_BOTTOM_PX;
+    if (list.scrollTop < LOAD_OLDER_THRESHOLD_PX) void loadOlderMessages();
   };
 
   const loadUserProfile = async () => {
@@ -175,7 +246,7 @@ const ChatThread: React.FC<ChatThreadProps> = ({ userId }) => {
   };
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'instant' });
   };
 
   const handleSendMessage = async (e: React.FormEvent) => {
@@ -508,8 +579,27 @@ const ChatThread: React.FC<ChatThreadProps> = ({ userId }) => {
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 md:px-6 md:py-6">
+      <div
+        ref={scrollContainerRef}
+        onScroll={handleMessagesScroll}
+        data-testid="chat-messages-scroll"
+        className="min-h-0 flex-1 overflow-y-auto px-4 py-4 md:px-6 md:py-6"
+      >
         <div className="mx-auto max-w-3xl space-y-4">
+          {/* Scrolling up loads these too; the button is for keyboards, and for short pages that can't scroll. */}
+          {olderCursor && messages.length > 0 && (
+            <div className="flex justify-center">
+              <button
+                type="button"
+                onClick={() => void loadOlderMessages()}
+                disabled={isLoadingOlder}
+                className="cursor-pointer rounded-full bg-surface px-4 py-1.5 font-inter text-xs font-medium text-muted shadow-kin-soft transition hover:text-foreground disabled:cursor-default disabled:opacity-70"
+              >
+                {isLoadingOlder ? 'Loading earlier messages…' : 'Load earlier messages'}
+              </button>
+            </div>
+          )}
+
           {messages.length === 0 ? (
             <div className="py-12 text-center md:py-16">
               <div className="mb-4 text-5xl md:text-6xl">💬</div>

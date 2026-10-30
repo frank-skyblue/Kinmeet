@@ -136,6 +136,14 @@ export interface ChatConversationSummary {
     unreadCount: number;
 }
 
+/** One page of a conversation, oldest message first. */
+export interface GetConversationResponse {
+    success: boolean;
+    messages: ChatMessage[];
+    /** Pass back to get the page before this one; missing or null when this is the start of the conversation. */
+    nextCursor?: string | null;
+}
+
 export interface GetConversationsResponse {
     success: boolean;
     conversations: ChatConversationSummary[];
@@ -160,9 +168,17 @@ export interface Match {
     photo?: string;
 }
 
+/**
+ * Why Discover is empty: no one else shares both of the user's countries, or the user has
+ * already seen everyone who does.
+ */
+export type DiscoverEmptyState = 'community_growing' | 'all_caught_up';
+
 export interface GetMatchesResponse {
     success: boolean;
     matches: Match[];
+    /** Present only when `matches` is empty. */
+    emptyState?: DiscoverEmptyState;
 }
 
 export interface Connection {
@@ -380,6 +396,24 @@ export type NotificationDeviceChannel = 'web_push';
 export interface RegisterNotificationDevicePayload {
     channel: NotificationDeviceChannel;
     token: string;
+}
+
+export type AlertChannel = 'email' | 'push';
+
+export type ChannelPreferences = Record<AlertChannel, boolean>;
+
+/** Shared by Discover's Manage alerts panel and Settings → Notifications. */
+export interface NotificationPreferences {
+    newPeopleNearby: ChannelPreferences;
+}
+
+export interface NotificationPreferencesResponse {
+    success: boolean;
+    preferences: NotificationPreferences;
+}
+
+export interface UpdateNotificationPreferencesPayload {
+    newPeopleNearby: Partial<ChannelPreferences>;
 }
 
 export type {
