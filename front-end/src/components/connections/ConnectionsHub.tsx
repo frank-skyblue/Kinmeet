@@ -14,10 +14,10 @@ const parseTab = (value: string | null): ConnectionsHubTab => {
 };
 
 const tabTriggerBase =
-  "inline-flex w-full min-h-11 items-center justify-center gap-1.5 rounded-t-kin-sm border-b-2 px-4 py-3 text-center text-sm font-semibold font-inter transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral sm:w-auto";
+  "inline-flex w-full min-h-11 items-center justify-center gap-1.5 rounded-t-kin-sm border-b-2 px-4 py-3 text-center text-sm font-semibold font-inter transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring sm:w-auto";
 
 const tabTriggerInactive =
-  "border-transparent text-kin-navy hover:border-kin-coral/35 hover:text-kin-coral";
+  "border-transparent text-foreground hover:border-kin-coral/35 hover:text-kin-coral cursor-pointer";
 
 const tabTriggerActive = "border-kin-coral text-kin-coral";
 
@@ -44,10 +44,10 @@ const ConnectionsHub: React.FC = () => {
   );
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col bg-kin-beige">
+    <div className="flex min-h-0 flex-1 flex-col bg-canvas">
       <div className="mx-auto w-full max-w-4xl shrink-0 px-4 pt-6">
         {/* Flowbite-style underline tabs (https://flowbite.com/docs/components/tabs/) */}
-        <div className="mb-4 shrink-0 border-b border-kin-stone-200">
+        <div className="mb-4 shrink-0 border-b border-border">
           <ul
             className="-mb-px flex flex-wrap text-center text-sm font-medium font-inter"
             role="tablist"
@@ -93,8 +93,8 @@ const ConnectionsHub: React.FC = () => {
                     <span
                       className={`inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none ${
                         activeTab === "requests"
-                          ? "bg-kin-coral/15 text-kin-coral"
-                          : "bg-kin-coral text-white"
+                          ? "bg-primary/15 text-kin-coral"
+                          : "bg-primary text-primary-foreground"
                       }`}
                     >
                       {pendingRequestCount > 99 ? "99+" : pendingRequestCount}

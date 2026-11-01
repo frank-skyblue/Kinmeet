@@ -5,6 +5,7 @@ import { useChatInbox } from "../../contexts/chatInboxContext";
 import { useConnectionRequests } from "../../contexts/connectionRequestsContext";
 import { getPhotoUrl } from "../../services/api";
 import Logo from "../common/Logo";
+import useTheme from "../../contexts/useTheme";
 
 type NavItem = {
   path: string;
@@ -66,6 +67,7 @@ const Layout: React.FC = () => {
   const { unreadConversationCount } = useChatInbox();
   const { pendingRequestCount } = useConnectionRequests();
   const [showMenu, setShowMenu] = useState(false);
+	const {isDark} = useTheme();
 
   const handleLogout = async () => {
     await logout();
@@ -106,15 +108,15 @@ const Layout: React.FC = () => {
     location.pathname === "/chat" || location.pathname.startsWith("/chat/");
 
   return (
-    <div className="h-screen flex flex-col bg-kin-beige overflow-hidden">
+    <div className="h-screen flex flex-col bg-canvas overflow-hidden">
       {/* Top Navigation */}
-      <nav className="shrink-0 bg-white shadow-kin-soft border-b border-kin-stone-200">
+      <nav className="shrink-0 bg-surface shadow-kin-soft border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
               <Link to="/discover" className="flex items-center gap-2">
                 <Logo size="md" />
-                <span className="text-2xl font-bold font-montserrat text-kin-navy">
+                <span className="text-2xl font-bold font-montserrat text-foreground">
                   KinMeet
                 </span>
               </Link>
@@ -129,8 +131,8 @@ const Layout: React.FC = () => {
                       to={item.path}
                       className={`relative inline-flex items-center px-4 py-2 text-sm font-medium font-inter rounded-kin-sm transition ${
                         isNavActive(item)
-                          ? "text-kin-coral bg-kin-coral-50 shadow-kin-soft"
-                          : "text-kin-navy hover:text-kin-coral hover:bg-kin-beige"
+                          ? (isDark() ? 'bg-secondary text-foreground shadow-kin-soft' : "text-kin-coral bg-kin-coral-50 shadow-kin-soft")
+                          : "text-foreground hover:text-kin-coral hover:bg-surface-muted"
                       }`}
                       aria-label={
                         badge
@@ -153,7 +155,7 @@ const Layout: React.FC = () => {
                           />
                         </svg>
                         {badge && (
-                          <span className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-kin-coral px-1 text-[10px] font-bold text-white font-inter">
+                          <span className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold font-inter text-primary-foreground">
                             {badge.label}
                           </span>
                         )}
@@ -169,10 +171,10 @@ const Layout: React.FC = () => {
             <div className="flex items-center gap-1 sm:gap-2">
               <Link
                 to="/chat"
-                className={`inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-kin-sm transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral ${
+                className={`inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-kin-sm transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
                   isChatRoute
-                    ? "text-kin-coral bg-kin-coral-50 shadow-kin-soft"
-                    : "text-kin-navy hover:bg-kin-beige hover:text-kin-coral"
+                    ? (isDark() ? 'shadow-kin-soft text-primary bg-secondary' : "text-primary bg-kin-coral-50 shadow-kin-soft")
+                    : "text-foreground hover:bg-surface-muted hover:text-kin-coral"
                 }`}
                 aria-label={chatAriaLabel}
                 aria-current={isChatRoute ? "page" : undefined}
@@ -193,7 +195,7 @@ const Layout: React.FC = () => {
                     />
                   </svg>
                   {unreadConversationCount > 0 && (
-                    <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-kin-coral px-0.5 text-[9px] font-bold text-white font-inter sm:h-5 sm:min-w-5 sm:px-1 sm:text-[10px]">
+                    <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-0.5 text-[9px] font-bold font-inter sm:h-5 sm:min-w-5 sm:px-1 sm:text-[10px] text-primary-foreground">
                       {chatBadgeLabel}
                     </span>
                   )}
@@ -204,7 +206,7 @@ const Layout: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowMenu(!showMenu)}
-                  className="flex h-12 items-center gap-2 px-3 rounded-kin-sm hover:bg-kin-beige transition"
+                  className="flex h-12 items-center gap-2 px-3 rounded-kin-sm hover:bg-surface-muted transition cursor-pointer"
                   aria-label="User menu"
                   aria-expanded={showMenu}
                 >
@@ -219,11 +221,11 @@ const Layout: React.FC = () => {
                       {user?.firstName.charAt(0)}
                     </div>
                   )}
-                  <span className="hidden md:block text-sm font-medium font-inter text-kin-navy">
+                  <span className="hidden md:block text-sm font-medium font-inter text-foreground">
                     {user?.firstName}
                   </span>
                   <svg
-                    className="w-4 h-4 text-kin-navy"
+                    className="w-4 h-4 text-foreground"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -239,11 +241,11 @@ const Layout: React.FC = () => {
 
                 {/* Dropdown Menu */}
                 {showMenu && (
-                  <div className="absolute right-0 top-full z-50 mt-2 w-48 bg-white rounded-kin shadow-kin-medium py-1 border border-kin-stone-200">
+                  <div className="absolute right-0 top-full z-50 mt-2 w-48 bg-surface rounded-kin shadow-kin-medium py-1 border border-border">
                     <Link
                       to="/profile"
                       onClick={() => setShowMenu(false)}
-                      className="flex items-center gap-2 px-4 py-2 text-sm font-inter text-kin-navy hover:bg-kin-beige hover:text-kin-coral transition"
+                      className="flex items-center gap-2 px-4 py-2 text-sm font-inter text-foreground hover:bg-surface-muted hover:text-kin-coral transition"
                     >
                       <MenuIcon path={PROFILE_ICON_PATH} />
                       My Profile
@@ -251,7 +253,7 @@ const Layout: React.FC = () => {
                     <Link
                       to="/settings"
                       onClick={() => setShowMenu(false)}
-                      className="flex items-center gap-2 px-4 py-2 text-sm font-inter text-kin-navy hover:bg-kin-beige hover:text-kin-coral transition"
+                      className="flex items-center gap-2 px-4 py-2 text-sm font-inter text-foreground hover:bg-surface-muted hover:text-kin-coral transition"
                     >
                       <MenuIcon path={SETTINGS_ICON_PATH} />
                       Settings &amp; Privacy
@@ -259,7 +261,7 @@ const Layout: React.FC = () => {
                     <button
                       type="button"
                       onClick={handleLogout}
-                      className="flex w-full items-center gap-2 border-t border-kin-stone-200 px-4 py-2 text-left text-sm font-inter text-kin-coral hover:bg-kin-coral-50 transition"
+                      className="flex w-full items-center gap-2 border-t border-border px-4 py-2 text-left text-sm font-inter text-kin-coral hover:bg-kin-coral-50 transition cursor-pointer"
                     >
                       <MenuIcon path={SIGN_OUT_ICON_PATH} />
                       Sign Out
@@ -273,7 +275,7 @@ const Layout: React.FC = () => {
       </nav>
 
       {/* Mobile Bottom Navigation */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-kin-stone-200 shadow-kin-medium z-50">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-surface border-t border-border shadow-kin-medium z-50">
         <div className="flex justify-around">
           {navItems.map((item) => {
             const badge = navBadgeForItem(item, pendingRequestCount);
@@ -284,7 +286,7 @@ const Layout: React.FC = () => {
                 className={`relative flex flex-1 flex-col items-center px-4 py-3 transition ${
                   isNavActive(item)
                     ? "text-kin-coral"
-                    : "text-kin-navy hover:text-kin-coral"
+                    : "text-foreground hover:text-kin-coral"
                 }`}
                 aria-label={
                   badge ? `${item.label}, ${badge.ariaDetail}` : item.label
@@ -305,7 +307,7 @@ const Layout: React.FC = () => {
                     />
                   </svg>
                   {badge && (
-                    <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-kin-coral px-0.5 text-[9px] font-bold text-white font-inter">
+                    <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-0.5 text-[9px] font-bold font-inter text-primary-foreground">
                       {badge.label}
                     </span>
                   )}

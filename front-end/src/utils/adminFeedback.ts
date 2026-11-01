@@ -63,17 +63,22 @@ export const emailInitial = (email: string | null | undefined): string => {
   return match ? match[0].toUpperCase() : '?';
 };
 
-export const feedbackRangeLabel = ({
+export const rangeLabel = ({
   page,
   pageSize,
   total,
-}: Pick<AdminFeedbackPagination, 'page' | 'pageSize' | 'total'>): string | null => {
+  noun,
+}: Pick<AdminFeedbackPagination, 'page' | 'pageSize' | 'total'> & { noun: string }): string | null => {
   if (total <= 0 || pageSize <= 0 || page < 1) return null;
   const start = (page - 1) * pageSize + 1;
   if (start > total) return null;
   const end = Math.min(page * pageSize, total);
-  return `Showing ${start} to ${end} of ${total} feedback`;
+  return `Showing ${start} to ${end} of ${total} ${noun}`;
 };
+
+export const feedbackRangeLabel = (
+  pagination: Pick<AdminFeedbackPagination, 'page' | 'pageSize' | 'total'>,
+): string | null => rangeLabel({ ...pagination, noun: 'feedback' });
 
 export const categoryTagClassName = (category: string): string => {
   if (Object.prototype.hasOwnProperty.call(CATEGORY_TAG_CLASS, category)) {

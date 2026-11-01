@@ -101,6 +101,8 @@ ADMIN_PASS_KEY=replace_with_15+_admin_password
 CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
+# Optional: Cloudinary upload notifications for chat media (must be publicly reachable)
+# CLOUDINARY_NOTIFICATION_URL=https://api.example.com/api/chat/attachments/upload-notification
 ```
 
 > `ADMIN_PASS_KEY` is required at backend startup. It must be at least 15 characters and must not be blank or whitespace-only. The configured value is used as-is (not trimmed). Do not commit real values.
@@ -280,7 +282,9 @@ Kinmeet/
 ## 🔌 API Endpoints
 
 ### Authentication
-- `POST /api/auth/register` - Register a new user
+- `POST /api/auth/register` - Register a new user (`username` optional; one is generated when blank)
+- `POST /api/auth/check-email` - Check whether an email is already registered
+- `POST /api/auth/check-username` - Check whether a username is available (case-insensitive; rate-limited per IP). Returns `{ available, username }` with the lowercase form
 - `POST /api/auth/login` - Login user
 - `POST /api/auth/logout` - Logout user
 
@@ -305,9 +309,20 @@ Kinmeet/
 
 ### Chat
 - `GET /api/chat/conversations` - Get all conversations
-- `GET /api/chat/conversations/:userId` - Get conversation with a user
-- `POST /api/chat/messages` - Send a message
+- `GET /api/chat/conversations/:userId` - Get conversation with a user (media includes signed viewing URLs)
+- `POST /api/chat/messages` - Send a message: text, an image (optional caption), or a voice message
 - `POST /api/chat/messages/read` - Mark messages as read
+- `POST /api/chat/attachments/sign` - Get a one-file upload pass (`kind: image | voice`); the browser then uploads straight to Cloudinary and sends the message with Cloudinary's receipt
+- `POST /api/chat/attachments/upload-notification` - Called by Cloudinary (signed), not the app: confirms each upload's real size and duration
+
+**Chat media flow:** the server never handles the file. It signs a pass for one private (`authenticated`) file; the browser uploads to Cloudinary and forwards the signed receipt with the message; the server verifies the receipt and returns signed viewing links. Limits: images up to 5 MB (resized to 2048 px before upload), voice messages up to 2 minutes.
+
+### Settings
+- `PATCH /api/settings/email` - Change email (requires current password)
+- `PATCH /api/settings/username` - Change username
+- `PATCH /api/settings/password` - Change password (requires current password)
+- `POST /api/settings/account/deactivate` - Deactivate the account (requires current password); signs out every device
+- `POST /api/settings/account/reactivate` - Reactivate a deactivated account
 
 ### Block/Report
 - `POST /api/block/block` - Block a user
@@ -318,7 +333,7 @@ Kinmeet/
 ## 🔒 Security Features
 
 - Password hashing with bcryptjs
-- JWT-based authentication
+- JWT-based authentication with server-side revocation: each token carries the user's `tokenVersion`, and incrementing it (on account deactivation) signs out every device
 - Protected API routes
 - Per-user token bucket on protected routes (60 tokens, 1 per second, shared, in-process)
 - Push-device unregister does not consume that quota

@@ -2,6 +2,7 @@ import admin from 'firebase-admin';
 import { FIREBASE_SERVICE_ACCOUNT_JSON, WEB_APP_URL } from '../../config/env';
 import { DeviceSubscription, WEB_PUSH_CHANNEL } from '../../models/DeviceSubscription';
 import type { ChatNotificationEnvelope, NotificationChannel } from './types';
+import type { MessageType } from '../../models/Message';
 
 let firebaseApp: admin.app.App | undefined;
 
@@ -17,6 +18,12 @@ const getMessaging = (): admin.messaging.Messaging | null => {
         });
     }
     return admin.messaging(firebaseApp);
+};
+
+const NOTIFICATION_SUBJECT: Record<MessageType, string> = {
+    text: 'a message',
+    image: 'a photo',
+    voice: 'a voice message',
 };
 
 const isInvalidTokenError = (code: string | undefined): boolean =>
@@ -41,7 +48,7 @@ export const webPushChannel: NotificationChannel = {
         if (subs.length === 0) return;
 
         const title = 'KinMeet';
-        const body = `${envelope.senderDisplayName} sent you a message`;
+        const body = `${envelope.senderDisplayName} sent you ${NOTIFICATION_SUBJECT[envelope.messageType ?? 'text']}`;
         const clickPath = `/chat/${envelope.senderUserId}`;
 
         const absoluteLink =

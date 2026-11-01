@@ -1,0 +1,33 @@
+/*
+  Copy this file to add a theme. Change the colors below, then register the name:
+  1. Import the new file from src/index.css.
+  2. Add the name to THEME_PREFERENCES in src/constants/themes.ts.
+  3. Add the name to the allowed map in index.html.
+  Full steps: front-end/THEME_IMPLEMENTATION.md
+*/
+[data-theme='dark'] {
+	color-scheme: dark;
+	--canvas: #0f172a;
+	--surface: #1e293b;
+	--surface-muted: #172235;
+	--surface-hover: #334155;
+
+	--foreground: #f1f5f9;
+	--muted: #94a3b8;
+	--border: #334155;
+
+	--primary: #f47a5f;
+	--primary-hover: #f15a3a;
+	--primary-foreground: #ffffff;
+
+	--secondary: #334155;
+	--secondary-hover: #475569;
+	--secondary-foreground: #f1f5f9;
+
+	--ring: #f47a5f;
+	--overlay: rgb(0 0 0 / 0.7);
+
+	--shadow-soft: rgb(0 0 0 / 0.15);
+	--shadow-medium: rgb(0 0 0 / 0.25);
+	--shadow-strong: rgb(0 0 0 / 0.35);
+}

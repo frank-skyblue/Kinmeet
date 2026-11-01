@@ -1,9 +1,15 @@
 import express, { Request, Response, NextFunction } from 'express';
 import { rateLimit } from 'express-rate-limit';
 import { validate } from '../middleware/validate';
-import { adminLoginSchema, listAdminFeedbackQuerySchema } from '../middleware/schemas';
+import {
+    adminLoginSchema,
+    adminReportIdParams,
+    listAdminFeedbackQuerySchema,
+    listAdminReportsQuerySchema,
+    updateAdminReportStatusSchema,
+} from '../middleware/schemas';
 import { corsOrigins } from '../config/cors';
-import { adminLogin, adminLogout, adminSession, listAdminFeedback, ADMIN_COOKIE_NAME, verifyAdminToken } from '../controllers/adminController';
+import { adminLogin, adminLogout, adminSession, listAdminFeedback, listAdminReports, updateAdminReportStatus, ADMIN_COOKIE_NAME, verifyAdminToken } from '../controllers/adminController';
 
 const setAdminNoStore = (_req: Request, res: Response, next: NextFunction) => {
     res.setHeader('Cache-Control', 'no-store');
@@ -60,6 +66,14 @@ export const createAdminRouter = () => {
     router.get('/session', authenticateAdmin, adminSession);
     router.post('/logout', adminLogout);
     router.get('/feedback', authenticateAdmin, validate(listAdminFeedbackQuerySchema, 'query'), listAdminFeedback);
+    router.get('/reports', authenticateAdmin, validate(listAdminReportsQuerySchema, 'query'), listAdminReports);
+    router.patch(
+        '/reports/:reportId/status',
+        authenticateAdmin,
+        validate(adminReportIdParams, 'params'),
+        validate(updateAdminReportStatusSchema),
+        updateAdminReportStatus,
+    );
 
     return router;
 };

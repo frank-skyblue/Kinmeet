@@ -23,7 +23,11 @@ import { initializeSocket } from '../../socket/socketServer';
 import { createTestUser, getAuthToken } from '../helpers';
 import { Connection } from '../../models/Connection';
 import { Message } from '../../models/Message';
+import { User } from '../../models/User';
+import { settingsService } from '../../services/settingsService';
 import { notificationService } from '../../services/notificationService';
+import { attachmentService } from '../../services/attachmentService';
+import { v2 as cloudinary } from 'cloudinary';
 
 let httpServer: HTTPServer;
 let port: number;
@@ -98,6 +102,57 @@ describe('Socket.IO Handlers', () => {
     socket.disconnect();
   });
 
+  it('rejects connection for a deactivated account', async () => {
+    const user = await createTestUser({ email: 'socket-deactivated@test.com' });
+    await User.updateOne({ _id: user._id }, { accountStatus: 'deactivated' });
+
+    const socket = ioClient(`http://localhost:${port}`, {
+      auth: { token: getAuthToken(user) },
+      transports: ['websocket'],
+    });
+
+    const error = await new Promise<Error>((resolve) => {
+      socket.on('connect_error', resolve);
+    });
+
+    expect(error.message).toContain('Account deactivated');
+    socket.disconnect();
+  });
+
+  it('rejects connection with a revoked token', async () => {
+    const user = await createTestUser({ email: 'socket-revoked@test.com' });
+    const token = getAuthToken(user);
+    await User.updateOne({ _id: user._id }, { $inc: { tokenVersion: 1 } });
+
+    const socket = ioClient(`http://localhost:${port}`, {
+      auth: { token },
+      transports: ['websocket'],
+    });
+
+    const error = await new Promise<Error>((resolve) => {
+      socket.on('connect_error', resolve);
+    });
+
+    expect(error.message).toBe('Authentication error: Invalid token');
+    socket.disconnect();
+  });
+
+  it('closes open sockets on deactivation, and the old token cannot reconnect', async () => {
+    const user = await createTestUser({ email: 'socket-signout@test.com', password: 'TestPass123' });
+    const token = getAuthToken(user);
+    const client = await connectClient(token);
+
+    try {
+      const disconnected = new Promise<string>((resolve) => client.once('disconnect', resolve));
+      await settingsService.deactivateAccount(user._id.toString(), 'TestPass123');
+
+      expect(await disconnected).toBe('io server disconnect');
+      await expect(connectClient(token)).rejects.toThrow('Authentication error: Account deactivated');
+    } finally {
+      client.disconnect();
+    }
+  });
+
   it('delivers messages in real-time', async () => {
     const userA = await createTestUser({ email: 'socketa@test.com', firstName: 'Alice' });
     const userB = await createTestUser({ email: 'socketb@test.com', firstName: 'Bob' });
@@ -157,7 +212,7 @@ describe('Socket.IO Handlers', () => {
 
         expect(ack.success).toBe(false);
         if (!ack.success) {
-          expect(ack.message).toBe('Content is required');
+          expect(ack.message).toBe('Message cannot be empty');
         }
 
         const saved = await Message.countDocuments({ sender: userA._id, receiver: userB._id });
@@ -182,7 +237,7 @@ describe('Socket.IO Handlers', () => {
 
         expect(ack.success).toBe(false);
         if (!ack.success) {
-          expect(ack.message).toBe('Content is required');
+          expect(ack.message).toBe('Message cannot be empty');
         }
 
         const saved = await Message.countDocuments({ sender: userA._id, receiver: userB._id });
@@ -192,7 +247,7 @@ describe('Socket.IO Handlers', () => {
       }
     });
 
-    it('rejects content over 2000 characters', async () => {
+    it('rejects content over 5000 characters', async () => {
       const userA = await createTestUser({ email: 'longa@test.com' });
       const userB = await createTestUser({ email: 'longb@test.com' });
       await Connection.create({ user1: userA._id, user2: userB._id });
@@ -202,12 +257,12 @@ describe('Socket.IO Handlers', () => {
       try {
         const ack = await emitSendMessage(clientA, {
           receiverId: userB._id.toString(),
-          content: 'x'.repeat(2001),
+          content: 'x'.repeat(5001),
         });
 
         expect(ack.success).toBe(false);
         if (!ack.success) {
-          expect(ack.message).toBe('Message too long');
+          expect(ack.message).toBe('Message is too long');
         }
 
         const saved = await Message.countDocuments({ sender: userA._id, receiver: userB._id });
@@ -217,13 +272,13 @@ describe('Socket.IO Handlers', () => {
       }
     });
 
-    it('accepts content at the 2000 character limit', async () => {
+    it('accepts content at the 5000 character limit', async () => {
       const userA = await createTestUser({ email: 'limita@test.com' });
       const userB = await createTestUser({ email: 'limitb@test.com' });
       await Connection.create({ user1: userA._id, user2: userB._id });
 
       const clientA = await connectClient(getAuthToken(userA));
-      const content = 'x'.repeat(2000);
+      const content = 'x'.repeat(5000);
 
       try {
         const ack = await emitSendMessage(clientA, {
@@ -324,6 +379,65 @@ describe('Socket.IO Handlers', () => {
     } finally {
       clientA.disconnect();
       clientB.disconnect();
+    }
+  });
+
+  it('sends an image over the socket and names it in the push to an offline receiver', async () => {
+    const userA = await createTestUser({ email: 'media-a@test.com', firstName: 'Alice' });
+    const userB = await createTestUser({ email: 'media-b@test.com', firstName: 'Bob' });
+    await Connection.create({ user1: userA._id, user2: userB._id });
+    const pass = await attachmentService.createUploadPass(userA._id.toString(), userB._id.toString(), 'image');
+    const version = 1728600000;
+    const signV1 = cloudinary.utils.api_sign_request as unknown as (
+      params: Record<string, unknown>, secret: string, algorithm: null, signatureVersion: number,
+    ) => string;
+
+    const clientA = await connectClient(getAuthToken(userA));
+
+    try {
+      const ack = await new Promise<ChatSendMessageAck>((resolve) => {
+        clientA.emit(CHAT_SOCKET_EVENTS.SEND_MESSAGE, {
+          receiverId: userB._id.toString(),
+          attachment: {
+            id: pass.attachmentId,
+            version,
+            signature: signV1({ public_id: pass.fields.public_id, version }, process.env.CLOUDINARY_API_SECRET!, null, 1),
+          },
+        } satisfies ChatSendMessagePayload, resolve);
+      });
+
+      expect(ack.success).toBe(true);
+      if (ack.success) {
+        expect(ack.message.type).toBe('image');
+        expect(ack.message.attachment?.urls?.display).toMatch(/\/authenticated\//);
+      }
+      expect(notificationService.notifyChatMessage).toHaveBeenCalledWith(
+        expect.objectContaining({ receiverUserId: userB._id.toString(), messageType: 'image' }),
+      );
+    } finally {
+      clientA.disconnect();
+    }
+  });
+
+  it('reports a user-facing reason when a media send is refused', async () => {
+    const userA = await createTestUser({ email: 'media-c@test.com' });
+    const userB = await createTestUser({ email: 'media-d@test.com' });
+    await Connection.create({ user1: userA._id, user2: userB._id });
+    const pass = await attachmentService.createUploadPass(userA._id.toString(), userB._id.toString(), 'image');
+
+    const clientA = await connectClient(getAuthToken(userA));
+
+    try {
+      const ack = await new Promise<ChatSendMessageAck>((resolve) => {
+        clientA.emit(CHAT_SOCKET_EVENTS.SEND_MESSAGE, {
+          receiverId: userB._id.toString(),
+          attachment: { id: pass.attachmentId, version: 1, signature: 'b'.repeat(40) },
+        }, resolve);
+      });
+
+      expect(ack).toEqual({ success: false, message: 'Invalid upload receipt' });
+    } finally {
+      clientA.disconnect();
     }
   });
 });

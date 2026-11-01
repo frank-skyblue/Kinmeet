@@ -8,6 +8,8 @@ import { connectToDatabase } from './services/mongooseService';
 import { initializeSocket } from './socket/socketServer';
 import { errorHandler } from './middleware/errorHandler';
 import { corsConfig } from './config/cors';
+import { jsonBody } from './middleware/jsonBody';
+import { attachmentService } from './services/attachmentService';
 import authRoutes from './routes/authRoutes';
 import profileRoutes from './routes/profileRoutes';
 import matchingRoutes from './routes/matchingRoutes';
@@ -22,12 +24,11 @@ import { createAdminRouter } from './routes/adminRoutes';
 
 const app: Express = express()
 const httpServer = createServer(app) // Wrap Express with HTTP server for Socket.io
-const router = express.Router()
 if (TRUST_PROXY_HOPS > 0) {
     app.set('trust proxy', TRUST_PROXY_HOPS);
 }
 app.use(cors(corsConfig))
-app.use(express.json())
+app.use(jsonBody)
 app.use(cookieParser())
 
 // Request logging middleware
@@ -63,7 +64,6 @@ app.head('/', (req, res) => {
 });
 
 // Routes
-app.use('/api', router)
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/matching', matchingRoutes);
@@ -90,6 +90,13 @@ const start = async () => {
         // Initialize Socket.io
         initializeSocket(httpServer);
         console.log('✅ Socket.io server initialized');
+
+        // Hourly: delete chat uploads that were never attached to a message.
+        setInterval(() => {
+            attachmentService.cleanupOrphans()
+                .then((count) => { if (count > 0) console.log(`🧹 Removed ${count} unsent chat uploads`); })
+                .catch((err) => console.error('Chat upload cleanup failed:', err));
+        }, 60 * 60 * 1000).unref();
 
         // Listen with HTTP server instead of Express app
         // Render requires binding to 0.0.0.0 (all interfaces), not localhost

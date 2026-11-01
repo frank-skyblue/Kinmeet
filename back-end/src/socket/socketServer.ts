@@ -4,6 +4,17 @@ import { socketAuthMiddleware } from './socketMiddleware';
 import { registerChatHandlers } from './socketHandlers';
 import { corsConfig } from '../config/cors';
 
+let activeServer: Server | null = null;
+
+/**
+ * Closes every open socket for a user. Sockets are authenticated only when they connect,
+ * so revoking tokens alone would leave existing connections working. Clients disconnected
+ * by the server don't reconnect on their own, and a reconnect with a revoked token fails.
+ */
+export const disconnectUserSockets = (userId: string): void => {
+  activeServer?.in(`user:${userId}`).disconnectSockets(true);
+};
+
 export const initializeSocket = (httpServer: HTTPServer) => {
   const io = new Server(httpServer, {
     cors: {
@@ -11,6 +22,8 @@ export const initializeSocket = (httpServer: HTTPServer) => {
       methods: ['GET', 'POST'],
     },
   });
+
+  activeServer = io;
 
   // Authentication middleware for all socket connections
   io.use(socketAuthMiddleware);

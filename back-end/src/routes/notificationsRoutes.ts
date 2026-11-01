@@ -1,5 +1,8 @@
 import express from 'express';
-import { authenticateJWT, authenticateWithoutUserRateLimit } from '../middleware/authMiddleware';
+import {
+    authenticateJWT,
+    authenticateJWTAllowDeactivatedWithoutUserRateLimit,
+} from '../middleware/authMiddleware';
 import { validate } from '../middleware/validate';
 import {
     registerNotificationDeviceSchema,
@@ -9,11 +12,11 @@ import { registerDevice, unregisterDevice } from '../controllers/notificationsCo
 
 const router = express.Router();
 
-// Registered before the shared limiter. A valid user can delete their push
-// subscription without spending or refilling the token bucket, including during logout.
+// Before the shared limiter: a deactivated account can still remove this device's
+// push subscription, and the delete does not spend the user's token bucket.
 router.delete(
     '/devices',
-    authenticateWithoutUserRateLimit,
+    authenticateJWTAllowDeactivatedWithoutUserRateLimit,
     validate(unregisterNotificationDeviceSchema),
     unregisterDevice,
 );

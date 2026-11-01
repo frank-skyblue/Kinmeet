@@ -214,7 +214,7 @@ const BirthdaySelect: React.FC<BirthdaySelectProps> = ({
     <div>
       <label
         id={labelId}
-        className="block text-sm font-medium font-inter text-kin-navy mb-2"
+        className="block text-sm font-medium font-inter text-foreground mb-2"
       >
         {label}
         {required ? <span className="text-kin-coral ml-1">*</span> : null}

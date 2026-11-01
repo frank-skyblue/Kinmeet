@@ -1,5 +1,6 @@
 import React, { useEffect, useId, useRef } from 'react';
 import type { AdminFeedbackItem } from '../../types';
+import { surfaceCardClass } from '../../constants/ui';
 import {
   categoryTagClassName,
   contactLabel,
@@ -102,7 +103,7 @@ const AdminFeedbackDetails: React.FC<AdminFeedbackDetailsProps> = ({ item, onClo
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-overlay p-4"
       onClick={handleBackdropClick}
     >
       <div
@@ -111,56 +112,56 @@ const AdminFeedbackDetails: React.FC<AdminFeedbackDetailsProps> = ({ item, onClo
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className="bg-white rounded-kin-xl shadow-kin-strong max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 outline-none"
+        className={`${surfaceCardClass} rounded-kin-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 outline-none`}
       >
         <div className="flex items-start justify-between gap-4 mb-4">
-          <h2 id={titleId} className="text-xl font-bold font-montserrat text-kin-navy">
+          <h2 id={titleId} className="text-xl font-bold font-montserrat text-foreground">
             Feedback details
           </h2>
           <button
             ref={closeButtonRef}
             type="button"
             onClick={onClose}
-            className="text-kin-navy hover:text-kin-coral font-inter text-sm font-semibold"
+            className="text-foreground hover:text-kin-coral font-inter text-sm font-semibold cursor-pointer"
             aria-label="Close details"
           >
             Close
           </button>
         </div>
 
-        <dl className="space-y-3 font-inter text-sm text-kin-navy">
+        <dl className="space-y-3 font-inter text-sm text-foreground">
           <div>
-            <dt className="font-semibold text-kin-teal">Email</dt>
+            <dt className="font-semibold text-muted">Email</dt>
             <dd className="[overflow-wrap:anywhere]">{item.email || 'Email unavailable'}</dd>
           </div>
           <div>
-            <dt className="font-semibold text-kin-teal">Category</dt>
+            <dt className="font-semibold text-muted">Category</dt>
             <dd className="mt-1">
               <span className={categoryTagClassName(item.category)}>{item.category}</span>
             </dd>
           </div>
           <div>
-            <dt className="font-semibold text-kin-teal">Status</dt>
+            <dt className="font-semibold text-muted">Status</dt>
             <dd className="mt-1">
               <span className={statusTagClassName(item.status)}>{formatAdminStatus(item.status)}</span>
             </dd>
           </div>
           <div>
-            <dt className="font-semibold text-kin-teal">Contact</dt>
+            <dt className="font-semibold text-muted">Contact</dt>
             <dd className="mt-1">
               <span className={contactTagClassName(item.followUp)}>{contactLabel(item.followUp)}</span>
             </dd>
           </div>
           <div>
-            <dt className="font-semibold text-kin-teal">Submitted</dt>
+            <dt className="font-semibold text-muted">Submitted</dt>
             <dd>{formatAdminSubmittedAt(item.createdAt)}</dd>
           </div>
           <div>
-            <dt className="font-semibold text-kin-teal">Message</dt>
+            <dt className="font-semibold text-muted">Message</dt>
             <dd className="whitespace-pre-wrap break-words">{item.message}</dd>
           </div>
           <div>
-            <dt className="font-semibold text-kin-teal">Screenshots</dt>
+            <dt className="font-semibold text-muted">Screenshots</dt>
             <dd>
               {(item.screenshots ?? []).length === 0 ? (
                 <span>None</span>
@@ -172,7 +173,7 @@ const AdminFeedbackDetails: React.FC<AdminFeedbackDetailsProps> = ({ item, onClo
                         href={screenshot.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-kin-coral hover:text-kin-coral-600 break-all"
+                        className="text-kin-coral hover:text-kin-coral-600 break-all cursor-pointer"
                       >
                         {screenshot.url}
                       </a>

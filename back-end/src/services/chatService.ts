@@ -1,32 +1,125 @@
-import { Message } from '../models/Message';
+import { Types } from 'mongoose';
+import { Message, type IMessage, type IMessageAttachment, type MessageType } from '../models/Message';
 import { Connection } from '../models/Connection';
-import { User } from '../models/User';
+import { User, isAccountDeactivated } from '../models/User';
 import { AppError } from '../middleware/errorHandler';
+import { assertCanMessage } from './chatAccess';
+import { attachmentService, type AttachmentReceipt } from './attachmentService';
+import { buildChatMediaUrls, type ChatMediaUrls } from './cloudinaryService';
+
+export interface SendMessageOptions {
+    attachment?: AttachmentReceipt;
+    clientMessageId?: string;
+}
+
+const isDuplicateKeyError = (error: unknown): boolean =>
+    typeof error === 'object' && error !== null && (error as { code?: number }).code === 11000;
+
+export type ChatAttachmentView = Omit<IMessageAttachment, 'publicId' | 'resourceType' | 'version'> & {
+    /** Absent when the media was removed. */
+    urls?: ChatMediaUrls;
+};
+
+/** A message as clients see it, with participants populated. */
+export interface ChatMessageView {
+    _id: Types.ObjectId;
+    sender: unknown;
+    receiver: unknown;
+    type: MessageType;
+    content?: string;
+    attachment?: ChatAttachmentView;
+    clientMessageId?: string;
+    read: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+// Shown in place of a deactivated account's name. Conversation history (including photos and
+// voice messages) stays visible, but the other participant isn't told who the account was or why
+// it's unavailable.
+const UNAVAILABLE_USER_NAME = { firstName: 'Unavailable', lastName: '' };
+
+type ChatParticipant = { _id: { toString(): string }; firstName?: string; lastName?: string };
+
+/**
+ * The message as clients see it: attachments carry freshly signed viewing URLs instead of the
+ * stored Cloudinary identifiers, and a deactivated participant's name is replaced.
+ */
+const toChatMessage = (message: IMessage, unavailableUserId?: string): ChatMessageView => {
+    const { attachment, ...rest } = message.toObject() as Omit<ChatMessageView, 'attachment'> & {
+        attachment?: IMessageAttachment;
+    };
+
+    if (unavailableUserId) {
+        for (const key of ['sender', 'receiver'] as const) {
+            const participant = rest[key] as ChatParticipant | undefined;
+            if (participant?._id.toString() === unavailableUserId) {
+                rest[key] = { _id: participant._id, ...UNAVAILABLE_USER_NAME };
+            }
+        }
+    }
+
+    if (!attachment) return rest;
+
+    const { publicId, resourceType, version, ...details } = attachment;
+    const urls = attachment.removed ? undefined : buildChatMediaUrls({ publicId, resourceType, version });
+    return { ...rest, attachment: { ...details, urls } };
+};
+
+const populateParticipants = (message: IMessage) =>
+    message.populate('sender receiver', 'firstName lastName');
 
 export const chatService = {
-    sendMessage: async (senderId: string, receiverId: string, content: string) => {
-        if (!receiverId || !content?.trim()) {
+    sendMessage: async (
+        senderId: string,
+        receiverId: string,
+        content: string | undefined,
+        { attachment, clientMessageId }: SendMessageOptions = {},
+    ) => {
+        const text = content?.trim() ?? '';
+        if (!receiverId || (!text && !attachment)) {
             throw new AppError(400, 'Receiver ID and content are required');
         }
 
-        const connection = await Connection.findOne({
-            $or: [
-                { user1: senderId, user2: receiverId },
-                { user1: receiverId, user2: senderId },
-            ],
-        });
-        if (!connection) throw new AppError(403, 'Can only message connected users');
+        await assertCanMessage(senderId, receiverId);
+
+        // A retried send (e.g. after a lost acknowledgement) returns the original message.
+        if (clientMessageId) {
+            const existing = await Message.findOne({ sender: senderId, clientMessageId });
+            if (existing) return toChatMessage(await populateParticipants(existing));
+        }
+
+        const messageId = new Types.ObjectId();
+        let fields: Pick<IMessage, 'type' | 'content' | 'attachment'> = { type: 'text', content: text };
+        if (attachment) {
+            const claimed = await attachmentService.claimForMessage(senderId, receiverId, attachment, messageId);
+            if (claimed.type === 'voice' && text) {
+                await attachmentService.releaseClaim(attachment.id, messageId);
+                throw new AppError(400, 'Voice messages cannot have a caption');
+            }
+            fields = { type: claimed.type, content: text || undefined, attachment: claimed.attachment };
+        }
 
         const message = new Message({
+            _id: messageId,
             sender: senderId,
             receiver: receiverId,
-            content: content.trim(),
+            ...fields,
+            clientMessageId,
             read: false,
         });
-        await message.save();
-        await message.populate('sender receiver', 'firstName lastName');
+        try {
+            await message.save();
+        } catch (error) {
+            if (attachment) await attachmentService.releaseClaim(attachment.id, messageId);
+            if (clientMessageId && isDuplicateKeyError(error)) {
+                const existing = await Message.findOne({ sender: senderId, clientMessageId });
+                if (existing) return toChatMessage(await populateParticipants(existing));
+            }
+            throw error;
+        }
 
-        return message;
+        return toChatMessage(await populateParticipants(message));
     },
 
     getConversation: async (userId: string, otherUserId: string) => {
@@ -55,7 +148,8 @@ export const chatService = {
             { read: true },
         );
 
-        return messages;
+        const unavailableUserId = (await isAccountDeactivated(otherUserId)) ? otherUserId : undefined;
+        return messages.map((message) => toChatMessage(message, unavailableUserId));
     },
 
     getConversations: async (userId: string) => {
@@ -89,11 +183,20 @@ export const chatService = {
                     }),
 
                     User.findById(connectedUserId).select(
-                        'firstName lastName photo currentProvince currentCountry',
+                        'firstName lastName photo currentProvince currentCountry accountStatus',
                     ),
                 ]);
 
-                return { user, lastMessage, unreadCount };
+                if (user?.accountStatus === 'deactivated') {
+                    const unavailableUserId = user._id.toString();
+                    return {
+                        user: { _id: user._id, ...UNAVAILABLE_USER_NAME, unavailable: true },
+                        lastMessage: lastMessage && toChatMessage(lastMessage, unavailableUserId),
+                        unreadCount,
+                    };
+                }
+
+                return { user, lastMessage: lastMessage && toChatMessage(lastMessage), unreadCount };
             }),
         );
 

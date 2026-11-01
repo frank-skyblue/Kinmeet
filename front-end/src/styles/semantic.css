@@ -1,0 +1,22 @@
+/* Role tokens follow the active theme. `inline` makes utilities read the runtime variables. */
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-surface-hover: var(--surface-hover);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-hover: var(--secondary-hover);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-ring: var(--ring);
+  --color-overlay: var(--overlay);
+
+  --shadow-kin-soft: 0 2px 8px var(--shadow-soft);
+  --shadow-kin-medium: 0 4px 12px var(--shadow-medium);
+  --shadow-kin-strong: 0 8px 24px var(--shadow-strong);
+}

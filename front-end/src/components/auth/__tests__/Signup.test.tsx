@@ -186,4 +186,19 @@ describe('Signup', () => {
       ).toBeInTheDocument();
     });
   });
+
+  it('goes back to step 1 when the username was taken after it was checked', async () => {
+    mockRegister.mockRejectedValueOnce(new Error('This username is already taken.'));
+    const user = userEvent.setup();
+    renderSignup();
+
+    await user.click(screen.getByText('Next Step 1'));
+    await user.click(screen.getByText('Next Step 2'));
+    await user.click(screen.getByText('Next Step 3'));
+    await user.click(screen.getByText('Create Account'));
+
+    await waitFor(() => expect(screen.getByTestId('step-1')).toBeInTheDocument());
+    expect(screen.getByText('This username is already taken.')).toBeInTheDocument();
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
 });

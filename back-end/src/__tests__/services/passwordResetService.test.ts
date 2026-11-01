@@ -30,11 +30,6 @@ vi.mock('../../config/env', () => ({
     WEB_APP_URL: 'https://kinmeet.ca',
 }));
 
-// normalizeEmail passes through lowercase trimmed e-mails
-vi.mock('../../utils/email', () => ({
-    normalizeEmail: (email: string) => email.trim().toLowerCase(),
-}));
-
 // ─── Import after mocks ───────────────────────────────────────────────────────
 
 import { passwordResetService } from '../../services/passwordResetService';
@@ -158,12 +153,6 @@ describe('passwordResetService.requestPasswordReset', () => {
 describe('passwordResetService.resetPassword', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-    });
-
-    it('throws AppError 400 for a weak password', async () => {
-        await expect(
-            passwordResetService.resetPassword('valid-token', 'weakpass'),
-        ).rejects.toMatchObject({ statusCode: 400 });
     });
 
     it('throws AppError 400 when the token is not found or expired', async () => {

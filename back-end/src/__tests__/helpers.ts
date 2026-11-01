@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import { User, IUser } from '../models/User';
 import { errorHandler } from '../middleware/errorHandler';
 import { corsConfig } from '../config/cors';
+import { jsonBody } from '../middleware/jsonBody';
 import cors from 'cors';
 import authRoutes from '../routes/authRoutes';
 import profileRoutes from '../routes/profileRoutes';
@@ -21,7 +22,7 @@ import { createAdminRouter } from '../routes/adminRoutes';
 export const createTestApp = () => {
   const app = express();
   app.use(cors(corsConfig));
-  app.use(express.json());
+  app.use(jsonBody);
   app.use(cookieParser());
 
   app.use('/api/auth', authRoutes);
@@ -80,9 +81,10 @@ export const createTestUser = async (overrides: Partial<TestUserData> = {}): Pro
   return user;
 };
 
+// Mirrors signAuthToken. A freshly created user's tokenVersion is 0.
 export const getAuthToken = (user: IUser): string => {
   return jwt.sign(
-    { id: user._id.toString(), email: user.email, firstName: user.firstName },
+    { id: user._id.toString(), email: user.email, firstName: user.firstName, tv: user.tokenVersion ?? 0 },
     process.env.JWT_SECRET!,
     { expiresIn: '1h' },
   );

@@ -1,23 +1,28 @@
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../../contexts/useAuth';
+import { isAccountDeactivated } from '../../utils/account';
 
 const ProtectedRoute: React.FC = () => {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, deactivatedEmail } = useAuth();
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-kin-beige">
+      <div className="min-h-screen flex items-center justify-center bg-canvas">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-kin-coral mx-auto mb-4"></div>
-          <p className="text-kin-navy font-inter">Loading...</p>
+          <p className="text-foreground font-inter">Loading...</p>
         </div>
       </div>
     );
   }
 
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to={deactivatedEmail ? '/reactivate' : '/login'} replace />;
+  }
+
+  if (isAccountDeactivated(user)) {
+    return <Navigate to="/reactivate" replace />;
   }
 
   return <Outlet />;

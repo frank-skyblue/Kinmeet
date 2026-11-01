@@ -1,11 +1,26 @@
 import { z } from 'zod';
 import { normalizeEmail } from '../utils/email';
 import { FEEDBACK_CATEGORIES } from '../models/Feedback';
+import { REPORT_REASONS, REPORT_STATUSES } from '../models/Report';
 import { SUPPORT_ISSUE_TYPES } from '../models/SupportRequest';
+import {
+    CHAT_MEDIA_KINDS,
+    CHAT_MEDIA_LIMITS,
+    CHAT_THUMBNAIL_MAX_LENGTH,
+    CHAT_WAVEFORM_MAX_BARS,
+} from '../config/chatMedia';
 
-const objectId = z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid ID format');
+export const objectId = z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid ID format');
 const requiredString = (field: string, maxLength: number) =>
     z.string().trim().min(1, `${field} is required`).max(maxLength, `${field} is too long`);
+
+const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$/;
+export const passwordField = z
+    .string()
+    .regex(
+        PASSWORD_REGEX,
+        'Password must be at least 8 characters long and include uppercase, lowercase, and a number.',
+    );
 
 export const dateOfBirthString = z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date of birth must be YYYY-MM-DD').refine((value) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
@@ -60,9 +75,44 @@ const feedbackMessageField = z.preprocess(
 export const objectIdParam = (name: string) =>
     z.object({ [name]: objectId });
 
-export const sendMessageSchema = z.object({
+// Cloudinary's receipt (signature verified by the service) plus display details the client
+// measured. Those details aren't signed, so they're only range-checked here.
+const attachmentReceiptSchema = z.object({
+    id: objectId,
+    version: z.number().int().positive(),
+    signature: z.string().regex(/^[0-9a-f]{40,64}$/i, 'Invalid upload receipt'),
+    width: z.number().int().positive().max(CHAT_MEDIA_LIMITS.image.maxDimension).optional(),
+    height: z.number().int().positive().max(CHAT_MEDIA_LIMITS.image.maxDimension).optional(),
+    thumbnail: z
+        .string()
+        .max(CHAT_THUMBNAIL_MAX_LENGTH)
+        .regex(/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/, 'Invalid thumbnail')
+        .optional(),
+    durationMs: z
+        .number()
+        .int()
+        .positive()
+        .max(CHAT_MEDIA_LIMITS.voice.maxDurationMs + CHAT_MEDIA_LIMITS.voice.durationToleranceMs)
+        .optional(),
+    waveform: z.array(z.number().int().min(0).max(255)).max(CHAT_WAVEFORM_MAX_BARS).optional(),
+});
+
+export const sendMessageSchema = z
+    .object({
+        receiverId: objectId,
+        // Required for text; an optional caption for an image.
+        content: z.string().trim().max(5000, 'Message is too long').optional(),
+        attachment: attachmentReceiptSchema.optional(),
+        clientMessageId: z.string().trim().min(1).max(100).optional(),
+    })
+    .refine((data) => Boolean(data.content) || Boolean(data.attachment), {
+        message: 'Message cannot be empty',
+        path: ['content'],
+    });
+
+export const signAttachmentSchema = z.object({
     receiverId: objectId,
-    content: z.string().trim().min(1, 'Message cannot be empty').max(5000, 'Message is too long'),
+    kind: z.enum(CHAT_MEDIA_KINDS),
 });
 
 export const markAsReadSchema = z.object({
@@ -74,10 +124,20 @@ export const blockUserSchema = z.object({
     reason: z.string().optional(),
 });
 
-export const reportUserSchema = z.object({
-    userId: objectId,
-    reason: z.string().min(1, 'Reason is required'),
-});
+export const reportUserSchema = z
+    .object({
+        userId: objectId,
+        reason: z.enum(REPORT_REASONS, { message: 'Please choose a valid reason' }),
+        details: z
+            .string()
+            .trim()
+            .max(2000, 'Details must be 2000 characters or fewer')
+            .optional(),
+    })
+    .refine((data) => data.reason !== 'Other' || Boolean(data.details?.trim()), {
+        message: 'Please describe the issue when choosing Other',
+        path: ['details'],
+    });
 
 export const submitFeedbackSchema = z.object({
     category: feedbackCategorySchema,
@@ -119,8 +179,25 @@ const emailField = z
             .email('Invalid email address'),
     );
 
+// Usernames are case-insensitive and stored lowercase. Each rule has its own message, checked in
+// this order; the frontend (front-end/src/utils/username.ts) uses the same wording.
+export const usernameField = z
+    .string()
+    .transform((value) => normalizeEmail(value))
+    .pipe(
+        z
+            .string()
+            .min(3, 'Username must be at least 3 characters.')
+            .max(30, 'Username must be at most 30 characters.')
+            .regex(/^[a-z0-9_]+$/, 'Username can only contain letters, numbers, and underscores.'),
+    );
+
 export const checkEmailSchema = z.object({
     email: emailField,
+});
+
+export const checkUsernameSchema = z.object({
+    username: usernameField,
 });
 
 export const loginSchema = z.object({
@@ -130,8 +207,12 @@ export const loginSchema = z.object({
 
 export const registerSchema = z.object({
     email: checkEmailSchema.shape.email,
-    username: z.string().trim().toLowerCase().min(3, 'Username must be 3-30 characters using lowercase letters, numbers, or underscores').max(30, 'Username must be 3-30 characters using lowercase letters, numbers, or underscores').regex(/^[a-z0-9_]+$/, 'Username must be 3-30 characters using lowercase letters, numbers, or underscores').optional(),
-    password: z.string(),
+    // Optional: an empty value means "generate one for me", not a validation error.
+    username: z.preprocess(
+        (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+        usernameField.optional(),
+    ),
+    password: passwordField,
     firstName: requiredString('First name', 50),
     lastName: requiredString('Last name', 50),
     about: z.string().trim().max(500, 'About section must be 500 characters or fewer').optional(),
@@ -182,7 +263,7 @@ export const forgotPasswordSchema = z.object({
 
 export const resetPasswordSchema = z.object({
     token: z.string().min(1, 'Token is required'),
-    newPassword: z.string().min(1, 'New password is required'),
+    newPassword: passwordField,
 });
 
 export const userIdParams = objectIdParam('userId');
@@ -212,28 +293,23 @@ export const changeEmailSchema = z.object({
 });
 
 export const changeUsernameSchema = z.object({
-    newUsername: z
-        .string()
-        .trim()
-        .toLowerCase()
-        .min(3, 'Username must be 3-30 characters using lowercase letters, numbers, or underscores')
-        .max(30, 'Username must be 3-30 characters using lowercase letters, numbers, or underscores')
-        .regex(
-            /^[a-z0-9_]+$/,
-            'Username must be 3-30 characters using lowercase letters, numbers, or underscores',
-        ),
+    newUsername: usernameField,
 });
 
 export const changePasswordSchema = z.object({
     currentPassword: z.string().min(1, 'Current password is required'),
-    newPassword: z.string().min(1, 'New password is required'),
+    newPassword: passwordField,
+});
+
+export const deactivateAccountSchema = z.object({
+    currentPassword: z.string().min(1, 'Current password is required'),
 });
 
 export const adminLoginSchema = z.object({
     password: z.string().refine((value) => value.trim().length > 0, 'Password is required').max(256, 'Password is too long'),
 });
 
-export const listAdminFeedbackQuerySchema = z.object({
+const adminPageQuerySchema = z.object({
     page: z.preprocess((value) => {
         if (value === undefined || value === '') return 1;
         return value;
@@ -243,4 +319,13 @@ export const listAdminFeedbackQuerySchema = z.object({
     ).transform((value) => typeof value === 'number' ? value : Number(value)).pipe(
         z.number().int().min(1, 'Page must be at least 1').max(100000, 'Page is too large'),
     )),
+});
+
+export const listAdminFeedbackQuerySchema = adminPageQuerySchema;
+export const listAdminReportsQuerySchema = adminPageQuerySchema;
+
+export const adminReportIdParams = objectIdParam('reportId');
+
+export const updateAdminReportStatusSchema = z.object({
+    status: z.enum(REPORT_STATUSES, { message: 'Invalid report status' }),
 });

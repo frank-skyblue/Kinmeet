@@ -35,13 +35,17 @@ const installLimiter = (
     return limiter;
 };
 
-const signToken = (
-    id: string,
-    email: string,
-    firstName: string,
-    options: jwt.SignOptions = { expiresIn: '1h' },
-): string =>
-    jwt.sign({ id, email, firstName }, process.env.JWT_SECRET!, options);
+const signUserToken = (user: IUser, options: jwt.SignOptions = { expiresIn: '1h' }): string =>
+    jwt.sign(
+        {
+            id: user._id.toString(),
+            email: user.email,
+            firstName: user.firstName,
+            tv: user.tokenVersion ?? 0,
+        },
+        process.env.JWT_SECRET!,
+        options,
+    );
 
 const expiredAuthToken = (user: IUser): string =>
     jwt.sign(
@@ -132,9 +136,8 @@ describe('authenticated user rate limit', () => {
 
     it('shares one bucket across tokens and protected routes', async () => {
         const user = await createTestUser({ email: 'rate-limit-shared@example.com' });
-        const userId = user._id.toString();
-        const firstToken = signToken(userId, user.email, user.firstName, { expiresIn: '1h', jwtid: 'a' });
-        const secondToken = signToken(userId, user.email, user.firstName, { expiresIn: '1h', jwtid: 'b' });
+        const firstToken = signUserToken(user, { expiresIn: '1h', jwtid: 'a' });
+        const secondToken = signUserToken(user, { expiresIn: '1h', jwtid: 'b' });
         expect(firstToken).not.toBe(secondToken);
 
         const profile = await request(app)
@@ -176,7 +179,11 @@ describe('authenticated user rate limit', () => {
         const user = await createTestUser({ email: 'rate-limit-rejected@example.com' });
         const token = getAuthToken(user);
         const expired = expiredAuthToken(user);
-        const emptyId = signToken('', 'empty-id@example.com', 'Empty');
+        const emptyId = jwt.sign(
+            { id: '', email: 'empty-id@example.com', firstName: 'Empty', tv: 0 },
+            process.env.JWT_SECRET!,
+            { expiresIn: '1h' },
+        );
 
         const missing = await getProfile();
         expect(missing.status).toBe(401);
@@ -288,12 +295,13 @@ describe('authenticated user rate limit', () => {
 
     it('reports a downstream error as 500 after the token was spent', async () => {
         installLimiter({ capacity: 1 });
+        const user = await createTestUser({ email: 'rate-limit-downstream@example.com' });
+        const token = getAuthToken(user);
         const downstream = express();
         downstream.get('/boom', authenticateJWT, () => {
             throw new Error('downstream');
         });
         downstream.use(errorHandler);
-        const token = signToken('downstream-user', 'downstream@example.com', 'Down');
 
         const failed = await request(downstream).get('/boom').set('Authorization', `Bearer ${token}`);
         expect(failed.status).toBe(500);
@@ -498,5 +506,73 @@ describe('authenticated user rate limit', () => {
             token: 'push-token-nearby',
         });
         expect(remaining).toBe(1);
+    });
+
+    it('does not spend quota when a deactivated account is rejected or removes its device', async () => {
+        installLimiter({ capacity: 1 });
+        const user = await createTestUser({ email: 'rate-limit-deactivated@example.com' });
+        const authToken = getAuthToken(user);
+        const deviceToken = 'push-token-deactivated';
+        await DeviceSubscription.create({
+            userId: user._id,
+            channel: 'web_push',
+            token: deviceToken,
+        });
+        user.accountStatus = 'deactivated';
+        await user.save();
+
+        const profile = await getProfile(authToken);
+        expect(profile.status).toBe(403);
+        expect(profile.body.code).toBe('ACCOUNT_DEACTIVATED');
+        expect(limiter.bucketCount()).toBe(0);
+
+        const removed = await deletePushDevice(authToken, '/api/notifications/devices', deviceToken);
+        expect(removed.status).toBe(200);
+        expect(limiter.bucketCount()).toBe(0);
+
+        const remaining = await DeviceSubscription.countDocuments({ userId: user._id, token: deviceToken });
+        expect(remaining).toBe(0);
+
+        const stillRejected = await getProfile(authToken);
+        expect(stillRejected.status).toBe(403);
+    });
+
+    it('does not delete a device for a revoked token', async () => {
+        const user = await createTestUser({ email: 'rate-limit-revoked@example.com' });
+        const authToken = getAuthToken(user);
+        const deviceToken = 'push-token-revoked';
+        await DeviceSubscription.create({
+            userId: user._id,
+            channel: 'web_push',
+            token: deviceToken,
+        });
+        user.tokenVersion = 1;
+        user.accountStatus = 'deactivated';
+        await user.save();
+
+        const removed = await deletePushDevice(authToken, '/api/notifications/devices', deviceToken);
+        expect(removed.status).toBe(401);
+        expect(removed.body.code).toBe('ACCOUNT_DEACTIVATED');
+
+        const remaining = await DeviceSubscription.countDocuments({ userId: user._id, token: deviceToken });
+        expect(remaining).toBe(1);
+    });
+
+    it('returns 401 for a deleted account instead of resetting or spending quota', async () => {
+        installLimiter({ capacity: 1 });
+        const user = await createTestUser({ email: 'rate-limit-deleted@example.com' });
+        const authToken = getAuthToken(user);
+
+        const allowed = await getProfile(authToken);
+        expect(allowed.status).toBe(200);
+
+        const blocked = await getProfile(authToken);
+        expect(blocked.status).toBe(429);
+
+        await User.findByIdAndDelete(user._id);
+
+        const missingAccount = await getProfile(authToken);
+        expect(missingAccount.status).toBe(401);
+        expect(missingAccount.body.code).toBe('INVALID_TOKEN');
     });
 });

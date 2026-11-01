@@ -10,6 +10,18 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="KinMeet" />
     <title>KinMeet - Connect with Your Homeland Abroad</title>
+    <!-- Keep allowed names in sync with THEME_PREFERENCES in src/constants/themes.ts -->
+    <script>
+      (function () {
+        try {
+          /* Keep in sync with THEME_PREFERENCES. See THEME_IMPLEMENTATION.md. */
+          var allowed = { light: true };
+          var stored = localStorage.getItem("kinmeet-theme");
+          var theme = allowed[stored] ? stored : "light";
+          document.documentElement.setAttribute("data-theme", theme);
+        } catch (e) {}
+      })();
+    </script>
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
