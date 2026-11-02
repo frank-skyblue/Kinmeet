@@ -1,11 +1,21 @@
+import bcrypt from 'bcryptjs';
 import { User, type IUser } from '../models/User';
 import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../config/env';
 import { AppError } from '../middleware/errorHandler';
+import { loginLockoutService } from './loginLockoutService';
 import { findUserByEmail, normalizeEmail, findUserByUsername } from '../utils/email';
+import { hashEmail, logSecurityEvent } from '../utils/securityLog';
 
 const DUPLICATE_EMAIL_MESSAGE = 'This email is already registered. Please log in instead.';
 export const USERNAME_TAKEN_MESSAGE = 'This username is already taken.';
+
+export const SIGN_IN_FAILED_MESSAGE = 'Unable to sign in. Please check your details and try again.';
+export const SIGN_IN_LOCKED_MESSAGE =
+    'Too many unsuccessful sign-in attempts. Please try again later or reset your password.';
+
+// Cost 10, same as User passwords. A match is still a failed sign-in for an unknown email.
+const UNKNOWN_EMAIL_PASSWORD_HASH = '$2b$10$IdS2eHCGXMh5nty3ynQ2qu1CxW6KFH2XnVzKQVoX2MIU/9ibaM9NG';
 
 /** Generated usernames that collide (someone took it a moment earlier) are regenerated this often. */
 const GENERATED_USERNAME_ATTEMPTS = 5;
@@ -108,12 +118,40 @@ export interface LoginResponse {
 
 export const authenticationService = {
     login: async (credentials: LoginCredentials): Promise<LoginResponse> => {
-        const { email, password } = credentials;
-        const user = await findUserByEmail(email, '+tokenVersion');
-        if (!user) throw new AppError(401, 'Invalid credentials');
+        const email = normalizeEmail(credentials.email);
+        if (!email) throw new AppError(401, SIGN_IN_FAILED_MESSAGE);
 
-        const isMatch = await user.comparePassword(password);
-        if (!isMatch) throw new AppError(401, 'Invalid credentials');
+        // Each lockout call reads its own clock. Password comparison can outlast a window or a lock.
+        if (await loginLockoutService.hasActiveLock(email)) {
+            logSecurityEvent({ type: 'login_rejected_while_locked', emailHash: hashEmail(email) });
+            throw new AppError(401, SIGN_IN_LOCKED_MESSAGE);
+        }
+
+        const user = await findUserByEmail(email, '+tokenVersion');
+        const passwordMatches = user
+            ? await user.comparePassword(credentials.password)
+            : await bcrypt.compare(credentials.password, UNKNOWN_EMAIL_PASSWORD_HASH);
+        const userId = user?._id.toString();
+
+        if (!user || !passwordMatches) {
+            const outcome = await loginLockoutService.recordFailure(email);
+            if (outcome.justLocked) {
+                logSecurityEvent({ type: 'login_locked', emailHash: hashEmail(email), userId });
+                throw new AppError(401, SIGN_IN_LOCKED_MESSAGE);
+            }
+            if (outcome.locked) {
+                logSecurityEvent({ type: 'login_rejected_while_locked', emailHash: hashEmail(email), userId });
+                throw new AppError(401, SIGN_IN_LOCKED_MESSAGE);
+            }
+            logSecurityEvent({ type: 'login_failed', emailHash: hashEmail(email), userId });
+            throw new AppError(401, SIGN_IN_FAILED_MESSAGE);
+        }
+
+        const decision = await loginLockoutService.clearIfUnlocked(email);
+        if (decision === 'locked') {
+            logSecurityEvent({ type: 'login_rejected_while_locked', emailHash: hashEmail(email), userId });
+            throw new AppError(401, SIGN_IN_LOCKED_MESSAGE);
+        }
 
         return {
             success: true,

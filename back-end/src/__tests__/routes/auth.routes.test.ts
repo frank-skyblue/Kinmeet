@@ -1,6 +1,9 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import request from 'supertest';
 import { User } from '../../models/User';
+import { LoginLockout } from '../../models/LoginLockout';
+import { authenticationService, SIGN_IN_LOCKED_MESSAGE } from '../../services/authenticationService';
+import { PASSWORD_RESET_REQUEST_MESSAGE } from '../../controllers/passwordResetController';
 import { createTestApp, createTestUser } from '../helpers';
 
 const app = createTestApp();
@@ -307,17 +310,20 @@ describe('Auth Routes', () => {
   });
 
   describe('POST /api/auth/forgot-password', () => {
-    it('returns 404 when no account exists for the email', async () => {
+    it('returns the same response when no account exists for the email', async () => {
       const res = await request(app)
         .post('/api/auth/forgot-password')
         .send({ email: 'nobody@example.com' });
 
-      expect(res.status).toBe(404);
-      expect(res.body.success).toBe(false);
-      expect(res.body.message).toBe('No account found with this email.');
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({
+        success: true,
+        message: PASSWORD_RESET_REQUEST_MESSAGE,
+      });
+      expect(await User.exists({ email: 'nobody@example.com' })).toBeNull();
     });
 
-    it('returns 200 and success message when account exists', async () => {
+    it('returns the same response when the account exists', async () => {
       await createTestUser({ email: 'forgot@example.com', password: 'TestPass123' });
 
       const res = await request(app)
@@ -325,8 +331,10 @@ describe('Auth Routes', () => {
         .send({ email: 'forgot@example.com' });
 
       expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
-      expect(res.body.message).toContain('reset link sent');
+      expect(res.body).toEqual({
+        success: true,
+        message: PASSWORD_RESET_REQUEST_MESSAGE,
+      });
     });
 
     it('returns 400 for a missing email body', async () => {
@@ -528,5 +536,111 @@ describe('Auth Routes', () => {
       expect(res.status).toBe(409);
       expect(res.body.message).toBe('This username is already taken.');
     });
+  });
+});
+
+describe('login lockout over HTTP', () => {
+  afterEach(() => {
+    delete process.env.LOGIN_IP_MAX_ATTEMPTS;
+    delete process.env.LOGIN_LOCKOUT_MAX_ATTEMPTS;
+  });
+
+  it('keeps an existing session usable after the account is locked', async () => {
+    const isolated = createTestApp();
+    const email = 'session-lock@test.com';
+    const user = await createTestUser({ email, password: 'TestPass123' });
+    const loginRes = await request(isolated)
+      .post('/api/auth/login')
+      .send({ email, password: 'TestPass123' });
+    const token = loginRes.body.token as string;
+
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      await request(isolated).post('/api/auth/login').send({ email, password: 'Wrong1234' });
+    }
+
+    const profile = await request(isolated)
+      .get('/api/profile/me')
+      .set('Authorization', `Bearer ${token}`);
+    expect(profile.status).toBe(200);
+    const stored = await User.findById(user._id).select('+tokenVersion');
+    expect(stored?.tokenVersion).toBe(0);
+  });
+
+  it('does not record another failure when the IP limit responds', async () => {
+    process.env.LOGIN_IP_MAX_ATTEMPTS = '2';
+    process.env.LOGIN_LOCKOUT_MAX_ATTEMPTS = '1';
+    const isolated = createTestApp();
+    const email = 'ip-lock@test.com';
+    await createTestUser({ email, password: 'TestPass123' });
+    const loginSpy = vi.spyOn(authenticationService, 'login');
+
+    const first = await request(isolated)
+      .post('/api/auth/login')
+      .send({ email, password: 'Wrong1234' });
+    expect(first.status).toBe(401);
+    expect(first.body.message).toBe(SIGN_IN_LOCKED_MESSAGE);
+
+    const second = await request(isolated)
+      .post('/api/auth/login')
+      .send({ email, password: 'Wrong1234' });
+    expect(second.status).toBe(401);
+    const locked = await LoginLockout.findOne({ email });
+
+    const blocked = await request(isolated)
+      .post('/api/auth/login')
+      .send({ email, password: 'Wrong1234' });
+    expect(blocked.status).toBe(429);
+    expect(blocked.body).toEqual({
+      success: false,
+      message: 'Too many sign-in attempts from this network. Try again later.',
+    });
+    expect(loginSpy).toHaveBeenCalledTimes(2);
+    const after = await LoginLockout.findOne({ email });
+    expect(after?.failedAt.map((stamp) => stamp.getTime())).toEqual(
+      locked?.failedAt.map((stamp) => stamp.getTime()),
+    );
+    expect(after?.lockedUntil).toEqual(locked?.lockedUntil);
+    loginSpy.mockRestore();
+  });
+
+  it('does not spend IP quota on a successful sign-in', async () => {
+    process.env.LOGIN_IP_MAX_ATTEMPTS = '1';
+    const isolated = createTestApp();
+    const email = 'ip-success@test.com';
+    await createTestUser({ email, password: 'TestPass123' });
+
+    const success = await request(isolated)
+      .post('/api/auth/login')
+      .send({ email, password: 'TestPass123' });
+    expect(success.status).toBe(200);
+
+    const failure = await request(isolated)
+      .post('/api/auth/login')
+      .send({ email, password: 'Wrong1234' });
+    expect(failure.status).toBe(401);
+
+    const blocked = await request(isolated)
+      .post('/api/auth/login')
+      .send({ email, password: 'Wrong1234' });
+    expect(blocked.status).toBe(429);
+  });
+
+  it('still accepts a password reset request after the login IP limit is exhausted', async () => {
+    process.env.LOGIN_IP_MAX_ATTEMPTS = '1';
+    const isolated = createTestApp();
+    const email = 'ip-reset@test.com';
+    await createTestUser({ email, password: 'TestPass123' });
+
+    await request(isolated).post('/api/auth/login').send({ email, password: 'Wrong1234' });
+    const blocked = await request(isolated)
+      .post('/api/auth/login')
+      .send({ email, password: 'Wrong1234' });
+    expect(blocked.status).toBe(429);
+
+    const forgot = await request(isolated)
+      .post('/api/auth/forgot-password')
+      .send({ email });
+    expect(forgot.status).toBe(200);
+    expect(forgot.body.message).toBe(PASSWORD_RESET_REQUEST_MESSAGE);
   });
 });
