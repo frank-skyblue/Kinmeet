@@ -84,7 +84,7 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
   };
 
   return (
-    <div ref={containerRef} className={`relative shrink-0 ${className}`.trim()}>
+    <div ref={containerRef} className={`absolute shrink-0 ${className}`.trim()}>
       <button
         type="button"
         id={triggerId}
@@ -100,9 +100,9 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
       >
         <span className="sr-only">Open menu</span>
         <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
-          <circle cx="12" cy="5" r="1.8" />
+          <circle cx="5" cy="12" r="1.8" />
           <circle cx="12" cy="12" r="1.8" />
-          <circle cx="12" cy="19" r="1.8" />
+          <circle cx="19" cy="12" r="1.8" />
         </svg>
       </button>
 
