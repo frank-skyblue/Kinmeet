@@ -36,7 +36,7 @@ export const getConnectionRequests = async (userId: string) => {
     })
         .populate({
             path: 'sender',
-            select: '-password -email -blockedUsers',
+            select: '-password -lastName -email -blockedUsers',
             match: ACTIVE_ACCOUNT_FILTER,
         })
         .sort({ createdAt: -1 });

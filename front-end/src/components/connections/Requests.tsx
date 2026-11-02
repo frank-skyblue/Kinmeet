@@ -5,7 +5,7 @@ import { blockAPI, connectionsAPI, getPhotoUrl } from "../../services/api";
 import { getErrorMessage } from "../../utils/error";
 import ActionMenu from "../common/ActionMenu";
 import ReportUserModal from "../common/ReportUserModal";
-import type { ConnectionRequestItem } from "../../types";
+import type { ConnectionRequestItem, ConnectionRequestSender } from "../../types";
 import ConnectionsPaginationNav from "./ConnectionsPaginationNav";
 import { primaryActionClass, secondaryActionClass } from "../../constants/ui"
 import CountryFlag from "../common/CountryFlag";
@@ -54,14 +54,28 @@ const useRequestsPageSize = (): number => {
   return pageSize;
 };
 
-const getAge = (dateOfBirth: string): number | undefined => {
-  if (dateOfBirth){
-    const birth = new Date(dateOfBirth);
-    if (birth){
-      return Math.floor((new Date().getTime() - birth.getTime())/(1000 * 60 * 60 * 24 * 365));
-    }
-  }
-}
+/** Whole years since birth, or undefined if the date is missing or can't be read. */
+const getAge = (dateOfBirth?: string): number | undefined => {
+  if (!dateOfBirth) return undefined;
+
+  const birth = new Date(dateOfBirth);
+  if (Number.isNaN(birth.getTime())) return undefined;
+
+  // The stored UTC date is the birth date; in local time, some timezones would see a different day.
+  const today = new Date();
+  const age = today.getFullYear() - birth.getUTCFullYear();
+  const hadBirthdayThisYear =
+    today.getMonth() > birth.getUTCMonth() ||
+    (today.getMonth() === birth.getUTCMonth() && today.getDate() >= birth.getUTCDate());
+
+  return hadBirthdayThisYear ? age : age - 1;
+};
+
+/** "Marie, 30", or just "Marie" without an age. Last names stay hidden until people connect. */
+const formatSenderName = ({ firstName, dateOfBirth }: ConnectionRequestSender): string => {
+  const age = getAge(dateOfBirth);
+  return age === undefined ? firstName : `${firstName}, ${age}`;
+};
 
 const Requests: React.FC<RequestsProps> = ({ embedded = false }) => {
   const { refetchConnectionRequests } = useConnectionRequests();
@@ -253,8 +267,8 @@ const Requests: React.FC<RequestsProps> = ({ embedded = false }) => {
                           )}
                           <div className="w-full min-w-0 text-center">
                             <h3 className="wrap-break-word font-montserrat text-sm font-bold text-foreground sm:text-base">
-                              {request.sender.firstName} {request.sender.lastName}, {getAge(request.sender.dateOfBirth)} {" "}
-                              <span><CountryFlag country={request.sender.homeCountry}/></span>
+                              {formatSenderName(request.sender)}{" "}
+                              <CountryFlag country={request.sender.homeCountry} />
                             </h3>
                           </div>
                       </div>

@@ -221,7 +221,6 @@ export interface GetBlockedUsersResponse {
 export interface ConnectionRequestSender {
     _id: string;
     firstName: string;
-    lastName: string;
     dateOfBirth: string;
     homeCountry: string;
     currentProvince: string;
