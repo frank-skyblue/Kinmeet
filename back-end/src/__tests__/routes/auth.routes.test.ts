@@ -494,12 +494,14 @@ describe('Auth Routes', () => {
     });
 
     it('rate-limits checks', async () => {
-      let lastStatus = 0;
+      let last: { status: number; body: { message?: string } } = { status: 0, body: {} };
       for (let i = 0; i < 61; i += 1) {
-        lastStatus = (await check({ username: `name_${i}` })).status;
+        const res = await check({ username: `name_${i}` });
+        last = res;
       }
 
-      expect(lastStatus).toBe(429);
+      expect(last.status).toBe(429);
+      expect(last.body.message).toBe('Too many checks, please wait a moment');
     });
   });
 
