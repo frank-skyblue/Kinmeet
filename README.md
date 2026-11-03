@@ -297,9 +297,16 @@ Kinmeet/
 - `DELETE /api/profile/photo` - Remove profile photo
 
 ### Matching
-- `GET /api/matching` - Get potential matches
+- `GET /api/matching` - Get potential matches. When there are none, `emptyState` says why: `community_growing` (no one else shares your home and current country) or `all_caught_up` (you've seen everyone who does)
 - `POST /api/matching/meet` - Send a Meet request
-- `POST /api/matching/pass` - Pass on a user
+- `POST /api/matching/pass` - Pass on a user (`{ userId }`); passed users are not shown again
+
+### Notifications
+- `POST /api/notifications/devices` / `DELETE /api/notifications/devices` - Register or remove this browser for push
+- `GET /api/notifications/preferences` - "New people nearby" alert settings: `{ newPeopleNearby: { email, push } }` (both off by default)
+- `PATCH /api/notifications/preferences` - Change one or both channels; only the channels sent are saved. Turning push on needs a registered device (409 otherwise)
+
+**New people nearby alerts:** when someone joins your group (same home and current country), you get an email and/or push straight away, on the channels you turned on. After that, one 6-hour cooldown covers both channels; people who join during it are sent together as one "N new people" alert. Alerts never name the person or say exactly where they live, and open Discover. Email is sent through Resend (`RESEND_API_KEY`, `EMAIL_FROM`; in development also `ENABLE_DEVELOPMENT_EMAIL=true`), push through Firebase.
 
 ### Connections
 - `GET /api/connections` - Get all connections

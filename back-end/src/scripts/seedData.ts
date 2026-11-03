@@ -70,6 +70,12 @@ export const SEED_MESSAGES: readonly { senderIdx: number; receiverIdx: number; c
   { senderIdx: 0, receiverIdx: 5, content: 'Snakes and Lattes on Thursday if you are free.', read: false },
   { senderIdx: 8, receiverIdx: 0, content: 'Hola Lucia — saw your post about the asado. Count me in!', read: true },
   { senderIdx: 0, receiverIdx: 8, content: 'Amazing — I will send details this weekend.', read: false },
+  ...Array.from({ length: 150 }, (_, i) => ({
+    senderIdx: i % 2 === 0 ? 0 : 1,       // alternate who sends
+    receiverIdx: i % 2 === 0 ? 1 : 0,
+    content: `Hey Mateo — still good for coffee Saturday? (#${i + 1})`,  // unique, so the seed's duplicate check keeps all 150
+    read: true,
+  })),
 ];
 
 export const seedUsers: SeedUserData[] = [

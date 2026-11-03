@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import Requests from "../Requests";
@@ -14,12 +14,17 @@ vi.mock("../../../contexts/connectionRequestsContext", () => ({
   }),
 }));
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+// Well past their 30th birthday, so the expected age holds whenever the test runs.
+const THIRTY_YEARS_OLD = new Date(Date.now() - (30 * 365.25 + 60) * DAY_MS).toISOString();
+
 const mockRequests = [
   {
     _id: "req-1",
     sender: {
       _id: "user-2",
       firstName: "Marie",
+      dateOfBirth: THIRTY_YEARS_OLD,
       homeCountry: "France",
       currentProvince: "Ontario",
       currentCountry: "Canada",
@@ -78,9 +83,50 @@ describe("Requests", () => {
   it("renders pending requests", async () => {
     renderRequests();
     await waitFor(() => {
-      expect(screen.getByText("Marie")).toBeInTheDocument();
+      expect(screen.getByText(/^Marie\b/)).toBeInTheDocument();
     });
     expect(screen.getByText("1 pending")).toBeInTheDocument();
+  });
+
+  it("shows the sender's first name and age", async () => {
+    renderRequests();
+    expect(await screen.findByText("Marie, 30")).toBeInTheDocument();
+  });
+
+  it("leaves no stray comma when the age is missing", async () => {
+    vi.mocked(connectionsAPI.getConnectionRequests).mockResolvedValue({
+      success: true,
+      requests: [{ ...mockRequests[0], sender: { ...mockRequests[0].sender, dateOfBirth: "" } }],
+    });
+    renderRequests();
+    expect(await screen.findByText("Marie")).toBeInTheDocument();
+  });
+
+  describe("age", () => {
+    beforeEach(() => {
+      // Only Date is faked: the timers that findByText relies on keep running.
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(new Date(2026, 5, 15, 12));
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it.each([
+      ["the day after their birthday", "1996-06-14T00:00:00.000Z", "Marie, 30"],
+      ["on their birthday", "1996-06-15T00:00:00.000Z", "Marie, 30"],
+      ["the day before their birthday", "1996-06-16T00:00:00.000Z", "Marie, 29"],
+      ["a month before their birthday", "1996-07-15T00:00:00.000Z", "Marie, 29"],
+      ["a date that can't be read", "not-a-date", "Marie"],
+    ])("is correct %s", async (_when, dateOfBirth, expected) => {
+      vi.mocked(connectionsAPI.getConnectionRequests).mockResolvedValue({
+        success: true,
+        requests: [{ ...mockRequests[0], sender: { ...mockRequests[0].sender, dateOfBirth } }],
+      });
+      renderRequests();
+      expect(await screen.findByText(expected)).toBeInTheDocument();
+    });
   });
 
   it("shows empty state when no requests", async () => {
@@ -97,12 +143,12 @@ describe("Requests", () => {
   it("removes request from list on Accept", async () => {
     const user = userEvent.setup();
     renderRequests();
-    await waitFor(() => expect(screen.getByText("Marie")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/^Marie\b/)).toBeInTheDocument());
 
     await user.click(screen.getByRole("button", { name: /accept/i }));
 
     await waitFor(() => {
-      expect(screen.queryByText("Marie")).not.toBeInTheDocument();
+      expect(screen.queryByText(/^Marie\b/)).not.toBeInTheDocument();
     });
     expect(connectionsAPI.acceptRequest).toHaveBeenCalledWith("req-1");
     expect(mockRefetchConnectionRequests).toHaveBeenCalled();
@@ -111,12 +157,12 @@ describe("Requests", () => {
   it("removes request from list on Ignore", async () => {
     const user = userEvent.setup();
     renderRequests();
-    await waitFor(() => expect(screen.getByText("Marie")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/^Marie\b/)).toBeInTheDocument());
 
     await user.click(screen.getByRole("button", { name: /ignore/i }));
 
     await waitFor(() => {
-      expect(screen.queryByText("Marie")).not.toBeInTheDocument();
+      expect(screen.queryByText(/^Marie\b/)).not.toBeInTheDocument();
     });
     expect(connectionsAPI.ignoreRequest).toHaveBeenCalledWith("req-1");
     expect(mockRefetchConnectionRequests).toHaveBeenCalled();
@@ -133,7 +179,7 @@ describe("Requests", () => {
       requests: four,
     });
     renderRequests();
-    await waitFor(() => expect(screen.getByText("U1")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/^U1\b/)).toBeInTheDocument());
     expect(
       screen.queryByRole("navigation", { name: /kin requests pagination/i }),
     ).not.toBeInTheDocument();
@@ -151,22 +197,22 @@ describe("Requests", () => {
       requests: six,
     });
     renderRequests();
-    await waitFor(() => expect(screen.getByText("User1")).toBeInTheDocument());
-    expect(screen.getByText("User4")).toBeInTheDocument();
-    expect(screen.queryByText("User5")).not.toBeInTheDocument();
-    expect(screen.queryByText("User6")).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText(/^User1\b/)).toBeInTheDocument());
+    expect(screen.getByText(/^User4\b/)).toBeInTheDocument();
+    expect(screen.queryByText(/^User5\b/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^User6\b/)).not.toBeInTheDocument();
     const pagination = screen.getByRole("navigation", {
       name: /kin requests pagination/i,
     });
     expect(pagination).toHaveTextContent("1/2");
 
     await user.click(screen.getByRole("button", { name: /^next page$/i }));
-    expect(screen.getByText("User6")).toBeInTheDocument();
-    expect(screen.queryByText("User1")).not.toBeInTheDocument();
+    expect(screen.getByText(/^User6\b/)).toBeInTheDocument();
+    expect(screen.queryByText(/^User1\b/)).not.toBeInTheDocument();
     expect(pagination).toHaveTextContent("2/2");
 
     await user.click(screen.getByRole("button", { name: /^previous page$/i }));
-    expect(screen.getByText("User1")).toBeInTheDocument();
-    expect(screen.queryByText("User6")).not.toBeInTheDocument();
+    expect(screen.getByText(/^User1\b/)).toBeInTheDocument();
+    expect(screen.queryByText(/^User6\b/)).not.toBeInTheDocument();
   });
 });

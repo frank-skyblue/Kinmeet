@@ -1,39 +1,55 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { blockAPI, matchingAPI, getPhotoUrl } from '../../services/api';
 import { getErrorMessage } from '../../utils/error';
 import ActionMenu from '../common/ActionMenu';
 import ReportUserModal from '../common/ReportUserModal';
-import type { Match } from '../../types';
+import type { DiscoverEmptyState as EmptyStateKind, Match } from '../../types';
 import { primaryActionClass, secondaryActionClass, surfaceCardClass } from '../../constants/ui';
+import DiscoverEmptyState from './DiscoverEmptyState';
 
 const Discover: React.FC = () => {
   const [matches, setMatches] = useState<Match[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [emptyState, setEmptyState] = useState<EmptyStateKind>();
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [error, setError] = useState('');
   const [isBlocking, setIsBlocking] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    loadMatches();
-  }, []);
-
-  const loadMatches = async () => {
+  const loadMatches = useCallback(async () => {
     try {
       setIsLoading(true);
+      setLoadError('');
       const response = await matchingAPI.getMatches();
       if (response.success) {
         setMatches(response.matches);
+        setCurrentIndex(0);
+        setEmptyState(response.matches.length === 0 ? response.emptyState ?? 'all_caught_up' : undefined);
+      } else {
+        // Without this, the "load more" effect below would retry forever.
+        setLoadError('Failed to load matches');
       }
     } catch (err: unknown) {
-      setError('Failed to load matches');
+      setLoadError('Failed to load matches');
       console.error(err);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    void loadMatches();
+  }, [loadMatches]);
+
+  // Discover loads profiles in pages. At the end of one, ask the server for more; only it can
+  // say whether the group is empty or the user has seen everyone.
+  const needsMore = !isLoading && !loadError && !emptyState && currentIndex >= matches.length;
+  useEffect(() => {
+    if (needsMore) void loadMatches();
+  }, [needsMore, loadMatches]);
 
   const handleMeet = async () => {
     const currentMatch = matches[currentIndex];
@@ -71,7 +87,7 @@ const Discover: React.FC = () => {
 
   const handlePass = async () => {
     try {
-      await matchingAPI.passUser();
+      await matchingAPI.passUser(matches[currentIndex]._id);
       moveToNext();
     } catch (err: unknown) {
       setError(getErrorMessage(err, 'Failed to pass'));
@@ -98,21 +114,21 @@ const Discover: React.FC = () => {
     );
   }
 
-  if (matches.length === 0 || currentIndex >= matches.length) {
+  if (currentIndex >= matches.length) {
+    if (emptyState) return <DiscoverEmptyState kind={emptyState} />;
+
     return (
       <div className="h-full flex items-center justify-center bg-canvas px-4">
-        <div className="text-center max-w-md">
-          <div className="text-6xl mb-4">🌍</div>
-          <h2 className="text-2xl font-bold font-montserrat text-foreground mb-2">No More Matches</h2>
-          <p className="text-muted font-inter mb-6">
-            Check back later for more people from your homeland!
-          </p>
-          <button
-            onClick={loadMatches}
-            className={`${primaryActionClass} px-6 py-3 rounded-kin-sm font-semibold font-montserrat shadow-kin-soft hover:shadow-kin-medium cursor-pointer transition`}
-          >
-            Refresh
-          </button>
+        <div role="alert" className="text-center max-w-md">
+          <p className="text-foreground font-inter mb-4">{loadError || 'Loading matches...'}</p>
+          {loadError && (
+            <button
+              onClick={() => void loadMatches()}
+              className={`${primaryActionClass} px-6 py-3 rounded-kin-sm font-semibold font-montserrat shadow-kin-soft hover:shadow-kin-medium cursor-pointer transition`}
+            >
+              Try again
+            </button>
+          )}
         </div>
       </div>
     );

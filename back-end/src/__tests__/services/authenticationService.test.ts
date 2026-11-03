@@ -2,6 +2,7 @@ import { vi, describe, it, expect } from 'vitest';
 import { authenticationService } from '../../services/authenticationService';
 import { User } from '../../models/User';
 import { createTestUser } from '../helpers';
+import { newPeopleAlertService } from '../../services/newPeopleAlertService';
 import jwt from 'jsonwebtoken';
 
 describe('authenticationService', () => {
@@ -20,6 +21,17 @@ describe('authenticationService', () => {
       dateOfBirth: '1990-06-15',
       gender: 'female',
     };
+
+    it('joins the Discover group and alerts it in the background', async () => {
+      const notify = vi.spyOn(newPeopleAlertService, 'notifyGroup').mockResolvedValue(0);
+
+      await authenticationService.register(validData);
+
+      const saved = await User.findOne({ email: 'new@example.com' }).select('groupJoinedAt').lean();
+      expect(saved!.groupJoinedAt).toBeInstanceOf(Date);
+      expect(notify).toHaveBeenCalledWith({ homeCountry: 'France', currentCountry: 'Canada' });
+      notify.mockRestore();
+    });
 
     it('registers a new user and returns a token', async () => {
       const result = await authenticationService.register(validData);

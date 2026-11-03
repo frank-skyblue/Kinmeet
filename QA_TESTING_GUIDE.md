@@ -95,7 +95,7 @@ Real-time chat, connection requests, and blocking need **two logged-in users at 
 | Connections list & remove kin | **Lucia** | 9 kins |
 | Existing chats + unread badge | **Lucia** | 4 threads; **2 unread** (from Mateo & Valentina) |
 | Empty states everywhere | **Patricia** | No kins/requests/messages |
-| "No More Matches" empty state | **Lucia** | Only 1 candidate left (Patricia); Meet/Pass her → empty |
+| "You're all caught up" empty state | **Lucia** | Only 1 candidate left (Patricia); Meet/Pass her → empty |
 | Two-way chat / real-time | **Lucia** + **Mateo** | Connected + existing thread |
 | Blocked-side behavior | **Tomas** (blocked by Mateo) | Connection to Mateo was removed |
 | Sender of a pending request | any of **Alejandro…Diego (10–18)** | Each has 1 pending request to Lucia |
@@ -284,18 +284,32 @@ graph TD
 **Precondition:** logged in as **Patricia** (clean account, many candidates). Go to `/discover`.
 - [ ] A single profile **card** shows with a remaining-count indicator.
 - [ ] Card shows photo/first name only, industry, about, education, home + current location, languages, interests, looking-for. **No last name.**
-- [ ] **Pass** → advances to next card (nothing is persisted server-side — passing is a no-op).
+- [ ] **Pass** → advances to next card and is saved server-side.
 - [ ] **Meet** → sends a connection request and advances to next card.
-- [ ] Passed users **reappear** on reload/refresh (Pass isn't remembered). *(Known — §12.)*
+- [ ] Passed users **do not reappear** on reload (Pass is remembered permanently). *(Known — §12.)*
 
-### 5.2 "No More Matches" empty state
+### 5.2 Empty states and "Notify me"
 **Precondition:** logged in as **Lucia** (she is connected to 1–9 and has requests from 10–18, leaving only Patricia).
 - [ ] `/discover` shows **exactly one** candidate (Patricia).
-- [ ] **Meet** or **Pass** her → **"No More Matches"** empty state with a **Refresh** button appears.
-- [ ] Click **Refresh** → still empty (no eligible candidates remain).
+- [ ] **Meet** or **Pass** her → **"You're all caught up"** (compass illustration) with a **Notify me** button. Reload → still caught up.
+- [ ] A user whose home + current country no one else shares → **"Your community is still growing"** (globe illustration) instead. Blocked and deactivated users don't count as "someone else".
+- [ ] **Notify me** opens the **Manage alerts** panel over Discover (no page change): back arrow, Email and Push toggles (both **off** for a new user, grey), helper text.
+- [ ] Toggle **Email** on → turns coral, **"Preferences updated."** appears, panel stays open. Back arrow → button reads **Manage alerts** with **"Email on · Push off"** under it.
+- [ ] Reopen → toggles show what was saved. Reload the page → still saved. Turn both off → button goes back to **Notify me**.
+- [ ] Toggle **Push** on → the browser asks for permission. **Block** → toggle stays off with a "blocked in this browser" message. **Allow** → turns on. *(Needs Firebase env; in dev also `VITE_ENABLE_WEB_PUSH=true`.)*
+- [ ] Stop the backend, flip a toggle → it goes back to its previous position with **"Couldn't save your change."** and **Retry**.
+- [ ] Escape also closes the panel; focus returns to the button. Check both light and dark themes.
+
+### 5.2a New people nearby alerts
+**Precondition:** user A has Email (and/or Push) on in Manage alerts. In development set `ENABLE_DEVELOPMENT_EMAIL=true` to really send email (otherwise it's logged).
+- [ ] Register user B with the **same home and current country** → A gets an email/push right away: "1 new person from {country} joined near you". It doesn't contain B's name, email or province/city. Clicking it opens `/discover`.
+- [ ] Register users C and D within the next 6 hours → no alert at once; after A's 6-hour cooldown, one alert says "2 new people…".
+- [ ] Only the channels A turned on are used. With both off, nothing is sent.
+- [ ] A user registering in a **different** group, or one A has already passed/blocked, is not counted.
+- [ ] Changing your current country in Edit Profile counts as joining the new group.
 
 ### 5.3 Matching filter edge cases
-- [ ] Register a brand-new user with **Home country ≠ Argentina** (or **Current country ≠ Canada**) → `/discover` shows **"No More Matches"** immediately (no one shares both countries).
+- [ ] Register a brand-new user with **Home country ≠ Argentina** (or **Current country ≠ Canada**) → `/discover` shows **"Your community is still growing"** immediately (no one shares both countries).
 - [ ] After you **Meet** someone, they no longer appear as a candidate (request now exists).
 - [ ] A user you've **blocked** or been **blocked by** never appears (verify with API-created blocks, §9).
 
@@ -485,7 +499,7 @@ Get a token by logging in via `POST /api/auth/login`, then set `Authorization: B
 
 ### 11.3 Loading, empty & error states
 - [ ] Full-screen spinner appears briefly on protected pages during auth hydration and on data-loading pages (Discover, Profile, Connections, Requests, Chat).
-- [ ] Empty states verified: Discover "No More Matches", Kins "No Kins Yet", Requests "No Pending Requests", Chat inbox "No conversations yet", Chat thread "Start the conversation".
+- [ ] Empty states verified: Discover "Your community is still growing" / "You're all caught up", Kins "No Kins Yet", Requests "No Pending Requests", Chat inbox "No conversations yet", Chat thread "Start the conversation".
 - [ ] Error feedback: form/API errors show a **coral** banner (`role="alert"`); successes show a **green** banner (`role="status"`). **No toast pop-ups** are used anywhere.
 
 ### 11.4 Accessibility spot-checks
@@ -506,7 +520,7 @@ These are **current, intended/known** behaviors — verify them, but they are **
 | 3 | **Signup Step 1 & password-change client validation only check length / confirm-match**; strength (upper/lower/digit) is enforced by the **server**. | Auth / Settings |
 | 4 | **Forgot-password & signup email check reveal whether an email is registered** (404 vs 200 / availability). | Auth |
 | 5 | **Sign Out does not invalidate the JWT** server-side (valid ~7 days); it only clears this device. Deactivation is the one action that revokes every session, by incrementing the user's `tokenVersion`. | Auth |
-| 6 | **Pass is a no-op** — passed users reappear on refresh; no server-side "passed" list. | Discovery |
+| 6 | **Pass is permanent** — passed users never return to Discover; there is no undo. | Discovery |
 | 7 | **Ignored requests are permanent** — the row is kept, so the sender can't re-request (and the pair won't re-match) until a connection removal/block clears it. | Requests |
 | 8 | **No sender "cancel request"** and **no outgoing-requests UI**. | Requests |
 | 9 | **No block/report UI** — API only. | Blocking |
@@ -539,7 +553,9 @@ Copy this into your run sheet and mark **Pass / Fail / N/A**.
 [ ] Other profile: last name hidden until connected; shown after accept
 [ ] Profile edit save + validations; photo add/replace/remove
 [ ] Discover card stack: Meet, Pass, remaining count
-[ ] "No More Matches" (Lucia) + non-matching-country new user
+[ ] "You're all caught up" (Lucia) + "Your community is still growing" (non-matching-country new user)
+[ ] Notify me / Manage alerts: toggles save, summary, push permission, failure + Retry
+[ ] New people nearby alert on signup in the same group; grouped after the 6h cooldown
 [ ] Requests: 9 pending for Lucia; Accept → becomes kin; Ignore → gone; badges
 [ ] Re-request blocked after ignore
 [ ] Kins list (9), pagination, Message link, Remove Kin (confirm)
