@@ -220,21 +220,23 @@ graph TD
 
 ### 3.3 Login
 - [ ] Valid credentials (`lucia.martinez@example.com` / `Password123`) → `/discover`.
-- [ ] Wrong password → coral error banner "Invalid credentials".
-- [ ] Non-existent email → same generic "Invalid credentials" (no distinction between wrong email vs wrong password).
+- [ ] Wrong password → coral error banner "Unable to sign in. Please check your details and try again."
+- [ ] Non-existent email → the same message (no distinction between wrong email and wrong password).
+- [ ] Five wrong passwords within 15 minutes → "Too many unsuccessful sign-in attempts. Please try again later or reset your password." A correct password does not bypass the lock. "Forgot password?" still opens.
+- [ ] Too many failed sign-in attempts from one address → "Too many sign-in attempts from this network. Try again later." This does not say the account is locked and does not suggest a password reset.
 - [ ] Empty email / password → HTML5 required validation.
 - [ ] Email case-insensitivity: `LUCIA.MARTINEZ@EXAMPLE.COM` logs in (email is normalized/lowercased).
 - [ ] "Forgot password?" link navigates to `/forgot-password`.
 
 ### 3.4 Forgot / reset password
 **Precondition:** Logged out; back-end console visible (dev email logging) or real inbox configured.
-- [ ] `/forgot-password` → submit **known** email → success message replaces form ("check your email"), "Back to Sign In" shown.
-- [ ] Submit **unknown** email → **404 "No account found with this email."** *(Reveals whether email is registered — known privacy gap, §12.)*
+- [ ] `/forgot-password` → submit a **known or unknown** email → the same 200 and message: "If an account exists for this email, we'll send password reset instructions." "Back to Sign In" stays available. A real account can still respond more slowly because it stores a token and sends mail. That timing gap remains.
+
 - [ ] Grab the reset link: from Resend inbox, or from the back-end console log (`{WEB_APP_URL}/reset-password?token=...`).
-- [ ] Open reset link → set new password `NewPass123` (must satisfy 8+/upper/lower/digit) + confirm → success → redirected to `/login` with **green flash** "Password reset successful…".
+- [ ] Open reset link → set new password `NewPass123` (must satisfy 8+/upper/lower/digit) + confirm → success → redirected to `/login` with **green flash** "Password reset successful. You can now sign in with your new password." A completed reset saves the new password, then clears an active sign-in lock, then marks the reset token used. Those steps are separate writes.
 - [ ] Log in with the **new** password → succeeds; old password → fails.
-- [ ] **Edge:** open `/reset-password` with **no token** → "Invalid Link" + link to request a new one.
-- [ ] **Edge:** reuse a **used** token, or wait > **1 hour** for expiry → reset fails with an appropriate error (link to request a new one may appear).
+- [ ] **Edge:** open `/reset-password` with **no token** → "Invalid Link" and "This password reset link is missing or malformed." plus "Request a new link".
+- [ ] **Edge:** reuse a **used** token, or wait > **1 hour** for expiry → "This reset link has expired or is invalid." and "Request a new link".
 - [ ] **Edge:** reset-password with mismatched confirm → client blocks; weak password → client regex blocks.
 
 ### 3.5 Logout & session
@@ -518,7 +520,7 @@ These are **current, intended/known** behaviors — verify them, but they are **
 | 1 | **No email verification** — account is active and logged in immediately after signup. | Auth |
 | 2 | **No minimum age** — DOB under 18 is accepted. | Signup / Profile |
 | 3 | **Signup Step 1 & password-change client validation only check length / confirm-match**; strength (upper/lower/digit) is enforced by the **server**. | Auth / Settings |
-| 4 | **Forgot-password & signup email check reveal whether an email is registered** (404 vs 200 / availability). | Auth |
+| 4 | **Forgot-password returns the same 200 and message** whether or not the email is registered. A real account can still be slower (token write and email). **Signup email check** still reveals whether an email is available. | Auth |
 | 5 | **Sign Out does not invalidate the JWT** server-side (valid ~7 days); it only clears this device. Deactivation is the one action that revokes every session, by incrementing the user's `tokenVersion`. | Auth |
 | 6 | **Pass is permanent** — passed users never return to Discover; there is no undo. | Discovery |
 | 7 | **Ignored requests are permanent** — the row is kept, so the sender can't re-request (and the pair won't re-match) until a connection removal/block clears it. | Requests |
@@ -530,7 +532,7 @@ These are **current, intended/known** behaviors — verify them, but they are **
 | 13 | **Messages icon is not in the mobile bottom nav** (top bar only). | Nav |
 | 14 | **No `profileComplete` gate** in the UI — seed users and new signups are all `profileComplete: true`. | Onboarding |
 | 15 | **No notification-preferences page**; web push is silent/background and requires Firebase config. | Settings |
-| 16 | **No rate limiting** on auth, messaging, or requests. | Backend-wide |
+| 16 | **User login** has a temporary account lock in MongoDB (default 5 failures / 15 minutes, then locked for 15 minutes) and a per-process IP limit (default 20 failures / 15 minutes). Instances that share the database share the lock. Each Node process counts the IP limit on its own. Existing limits on other endpoints are unchanged. | Auth |
 
 ---
 

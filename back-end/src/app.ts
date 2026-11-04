@@ -10,8 +10,9 @@ import { errorHandler } from './middleware/errorHandler';
 import { corsConfig } from './config/cors';
 import { jsonBody } from './middleware/jsonBody';
 import { attachmentService } from './services/attachmentService';
+import { LoginLockout } from './models/LoginLockout';
+import { createAuthRouter } from './routes/authRoutes';
 import { NEW_PEOPLE_SWEEP_INTERVAL_MS, newPeopleAlertService } from './services/newPeopleAlertService';
-import authRoutes from './routes/authRoutes';
 import profileRoutes from './routes/profileRoutes';
 import matchingRoutes from './routes/matchingRoutes';
 import connectionsRoutes from './routes/connectionsRoutes';
@@ -65,7 +66,7 @@ app.head('/', (req, res) => {
 });
 
 // Routes
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', createAuthRouter());
 app.use('/api/profile', profileRoutes);
 app.use('/api/matching', matchingRoutes);
 app.use('/api/connections', connectionsRoutes);
@@ -87,6 +88,8 @@ const start = async () => {
         console.log(`   - PORT: ${PORT}`);
 
         await connectToDatabase();
+        // The unique index is part of duplicate-key retry. Do not accept traffic before it exists.
+        await LoginLockout.createIndexes();
 
         // Initialize Socket.io
         initializeSocket(httpServer);
