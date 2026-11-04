@@ -168,6 +168,10 @@ export const sendMeetRequestSchema = z.object({
     receiverId: objectId,
 });
 
+export const passUserSchema = z.object({
+    userId: objectId,
+});
+
 const emailField = z
     .string()
     .transform((value) => normalizeEmail(value))
@@ -267,6 +271,11 @@ export const resetPasswordSchema = z.object({
 });
 
 export const userIdParams = objectIdParam('userId');
+
+/** `cursor`: the id of the oldest message already loaded, from the previous batch's `nextCursor`. */
+export const conversationQuerySchema = z.object({
+    cursor: objectId.optional(),
+});
 export const requestIdParams = objectIdParam('requestId');
 
 const notificationDeviceChannel = z.enum(['web_push']);
@@ -277,6 +286,15 @@ export const registerNotificationDeviceSchema = z.object({
 });
 
 export const unregisterNotificationDeviceSchema = registerNotificationDeviceSchema;
+
+export const updateNotificationPreferencesSchema = z.object({
+    newPeopleNearby: z
+        .object({ email: z.boolean().optional(), push: z.boolean().optional() })
+        .strict()
+        .refine((value) => value.email !== undefined || value.push !== undefined, {
+            message: 'Choose email or push to update',
+        }),
+}).strict();
 
 export const changeEmailSchema = z.object({
     newEmail: z

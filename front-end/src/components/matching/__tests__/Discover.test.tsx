@@ -32,7 +32,18 @@ vi.mock('../../../services/api', () => ({
     sendMeetRequest: vi.fn(),
     passUser: vi.fn(),
   },
+  notificationsAPI: {
+    getPreferences: vi.fn().mockResolvedValue({
+      success: true,
+      preferences: { newPeopleNearby: { email: false, push: false } },
+    }),
+    updatePreferences: vi.fn(),
+  },
   getPhotoUrl: (p: string) => p,
+}));
+
+vi.mock('../../../services/pushNotifications', () => ({
+  registerWebPushForCurrentUser: vi.fn(),
 }));
 
 import { matchingAPI } from '../../../services/api';
@@ -61,12 +72,55 @@ describe('Discover', () => {
     expect(screen.getByText('France')).toBeInTheDocument();
   });
 
-  it('shows "No More Matches" when empty', async () => {
-    vi.mocked(matchingAPI.getMatches).mockResolvedValue({ success: true, matches: [] });
-    renderDiscover();
-    await waitFor(() => {
-      expect(screen.getByText('No More Matches')).toBeInTheDocument();
+  it('shows "Your community is still growing" when no one else is in the group', async () => {
+    vi.mocked(matchingAPI.getMatches).mockResolvedValue({
+      success: true,
+      matches: [],
+      emptyState: 'community_growing',
     });
+    renderDiscover();
+
+    expect(
+      await screen.findByRole('heading', { name: 'Your community is still growing' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Get notified when someone from your home country joins near you\./),
+    ).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /notify me/i })).toBeInTheDocument();
+  });
+
+  it('shows "You’re all caught up" when everyone has been seen', async () => {
+    vi.mocked(matchingAPI.getMatches).mockResolvedValue({
+      success: true,
+      matches: [],
+      emptyState: 'all_caught_up',
+    });
+    renderDiscover();
+
+    expect(await screen.findByRole('heading', { name: 'You’re all caught up' })).toBeInTheDocument();
+    expect(
+      screen.getByText('Get notified when new people from your home country join.'),
+    ).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /notify me/i })).toBeInTheDocument();
+  });
+
+  it('offers to try again when loading fails', async () => {
+    vi.mocked(matchingAPI.getMatches).mockRejectedValueOnce(new Error('offline'));
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const user = userEvent.setup();
+    renderDiscover();
+
+    await user.click(await screen.findByRole('button', { name: /try again/i }));
+
+    expect(await screen.findByText('Marie')).toBeInTheDocument();
+  });
+
+  it('stops and offers to try again when the server answers without success', async () => {
+    vi.mocked(matchingAPI.getMatches).mockResolvedValue({ success: false, matches: [] });
+    renderDiscover();
+
+    expect(await screen.findByRole('button', { name: /try again/i })).toBeInTheDocument();
+    expect(matchingAPI.getMatches).toHaveBeenCalledTimes(1);
   });
 
   it('advances to next match on Meet', async () => {
@@ -92,21 +146,23 @@ describe('Discover', () => {
     await waitFor(() => {
       expect(screen.getByText('Julien')).toBeInTheDocument();
     });
+    expect(matchingAPI.passUser).toHaveBeenCalledWith('match-1');
   });
 
-  it('shows "No More Matches" after last match', async () => {
-    vi.mocked(matchingAPI.getMatches).mockResolvedValue({
-      success: true,
-      matches: [mockMatches[0]],
-    });
+  it('asks the server for more at the end of the list before showing an empty state', async () => {
+    vi.mocked(matchingAPI.getMatches)
+      .mockResolvedValueOnce({ success: true, matches: [mockMatches[0]] })
+      .mockResolvedValueOnce({ success: true, matches: [mockMatches[1]] })
+      .mockResolvedValueOnce({ success: true, matches: [], emptyState: 'all_caught_up' });
     const user = userEvent.setup();
     renderDiscover();
     await waitFor(() => expect(screen.getByText('Marie')).toBeInTheDocument());
 
     await user.click(screen.getByRole('button', { name: /pass/i }));
+    expect(await screen.findByText('Julien')).toBeInTheDocument();
 
-    await waitFor(() => {
-      expect(screen.getByText('No More Matches')).toBeInTheDocument();
-    });
+    await user.click(screen.getByRole('button', { name: /pass/i }));
+    expect(await screen.findByRole('heading', { name: 'You’re all caught up' })).toBeInTheDocument();
+    expect(matchingAPI.getMatches).toHaveBeenCalledTimes(3);
   });
 });

@@ -28,6 +28,23 @@ describe('Connections Routes', () => {
     });
   });
 
+  describe('GET /api/connections/requests privacy', () => {
+    it("doesn't reveal the sender's last name or email before they are connected", async () => {
+      const sender = await createTestUser({ email: 'sender@test.com', firstName: 'Marie', lastName: 'Hidden' });
+      const receiver = await createTestUser({ email: 'receiver@test.com' });
+      await ConnectionRequest.create({ sender: sender._id, receiver: receiver._id, status: 'pending' });
+
+      const res = await request(app)
+        .get('/api/connections/requests')
+        .set('Authorization', `Bearer ${getAuthToken(receiver)}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.requests[0].sender.firstName).toBe('Marie');
+      expect(res.body.requests[0].sender.lastName).toBeUndefined();
+      expect(res.body.requests[0].sender.email).toBeUndefined();
+    });
+  });
+
   describe('POST /api/connections/requests/:requestId/accept', () => {
     it('accepts a request and creates a connection', async () => {
       const sender = await createTestUser({ email: 'sender@test.com' });

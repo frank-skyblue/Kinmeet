@@ -7,6 +7,7 @@ import {
     markAsReadSchema,
     userIdParams,
     signAttachmentSchema,
+    conversationQuerySchema,
 } from '../middleware/schemas';
 import {
     sendMessage,
@@ -25,7 +26,12 @@ router.post('/attachments/upload-notification', handleUploadNotification);
 router.use(authenticateJWT);
 
 router.get('/conversations', getConversations);
-router.get('/conversations/:userId', validate(userIdParams, 'params'), getConversation);
+router.get(
+    '/conversations/:userId',
+    validate(userIdParams, 'params'),
+    validate(conversationQuerySchema, 'query'),
+    getConversation,
+);
 router.post('/messages', validate(sendMessageSchema), sendMessage);
 router.post('/messages/read', validate(markAsReadSchema), markAsRead);
 router.post(

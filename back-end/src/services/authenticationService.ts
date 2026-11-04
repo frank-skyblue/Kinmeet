@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../config/env';
 import { AppError } from '../middleware/errorHandler';
 import { loginLockoutService } from './loginLockoutService';
+import { notifyGroupInBackground } from './newPeopleAlertService';
 import { findUserByEmail, normalizeEmail, findUserByUsername } from '../utils/email';
 import { hashEmail, logSecurityEvent } from '../utils/securityLog';
 
@@ -234,9 +235,11 @@ export const authenticationService = {
                     lookingFor,
                     photo,
                     profileComplete: true,
+                    groupJoinedAt: new Date(),
                 });
 
                 await newUser.save();
+                notifyGroupInBackground({ homeCountry: newUser.homeCountry, currentCountry: newUser.currentCountry });
 
                 return {
                     success: true,
