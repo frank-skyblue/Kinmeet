@@ -20,6 +20,7 @@ import type {
   UpdateProfilePayload,
   RegisterNotificationDevicePayload,
   NotificationPreferencesResponse,
+  GetConversationResponse,
   UpdateNotificationPreferencesPayload,
   AdminAuthResponse,
   AdminFeedbackListResponse,
@@ -242,8 +243,11 @@ export const chatAPI = {
     return response.data;
   },
 
-  getConversation: async (userId: string) => {
-    const response = await api.get(`/chat/conversations/${userId}`);
+  /** With no cursor, the newest page; with the previous page's `nextCursor`, the page before it. */
+  getConversation: async (userId: string, cursor: string | null): Promise<GetConversationResponse> => {
+    const response = await api.get<GetConversationResponse>(`/chat/conversations/${userId}`, {
+      params: cursor ? { cursor } : {},
+    });
     return response.data;
   },
 

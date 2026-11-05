@@ -5,9 +5,10 @@ import { blockAPI, connectionsAPI, getPhotoUrl } from "../../services/api";
 import { getErrorMessage } from "../../utils/error";
 import ActionMenu from "../common/ActionMenu";
 import ReportUserModal from "../common/ReportUserModal";
-import type { ConnectionRequestItem } from "../../types";
+import type { ConnectionRequestItem, ConnectionRequestSender } from "../../types";
 import ConnectionsPaginationNav from "./ConnectionsPaginationNav";
 import { primaryActionClass, secondaryActionClass } from "../../constants/ui"
+import CountryFlag from "../common/CountryFlag";
 
 export type RequestsProps = {
   /** When true, used inside ConnectionsHub: no page chrome, no outer padding/bg. */
@@ -51,6 +52,29 @@ const useRequestsPageSize = (): number => {
   }, []);
 
   return pageSize;
+};
+
+/** Whole years since birth, or undefined if the date is missing or can't be read. */
+const getAge = (dateOfBirth?: string): number | undefined => {
+  if (!dateOfBirth) return undefined;
+
+  const birth = new Date(dateOfBirth);
+  if (Number.isNaN(birth.getTime())) return undefined;
+
+  // The stored UTC date is the birth date; in local time, some timezones would see a different day.
+  const today = new Date();
+  const age = today.getFullYear() - birth.getUTCFullYear();
+  const hadBirthdayThisYear =
+    today.getMonth() > birth.getUTCMonth() ||
+    (today.getMonth() === birth.getUTCMonth() && today.getDate() >= birth.getUTCDate());
+
+  return hadBirthdayThisYear ? age : age - 1;
+};
+
+/** "Marie, 30", or just "Marie" without an age. Last names stay hidden until people connect. */
+const formatSenderName = ({ firstName, dateOfBirth }: ConnectionRequestSender): string => {
+  const age = getAge(dateOfBirth);
+  return age === undefined ? firstName : `${firstName}, ${age}`;
 };
 
 const Requests: React.FC<RequestsProps> = ({ embedded = false }) => {
@@ -224,99 +248,72 @@ const Requests: React.FC<RequestsProps> = ({ embedded = false }) => {
                   onClick={() => handleViewProfile(request.sender._id)}
                   className="flex min-h-0 min-w-0 flex-col gap-3 rounded-kin-lg bg-surface p-3 shadow-kin-soft transition hover:shadow-kin-medium sm:p-3.5 cursor-pointer [&:hover:not(:has(.inner:hover))]:bg-surface-hover"
                 >
-                  <div className="flex min-w-0 shrink-0 gap-3 border-b border-border pb-3">
-                    {request.sender.photo ? (
-                      <img
-                        src={getPhotoUrl(request.sender.photo)}
-                        alt=""
-                        className="h-12 w-12 shrink-0 rounded-full object-cover ring-1 ring-border sm:h-14 sm:w-14"
-                      />
-                    ) : (
-                      <div
-                        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-kin-coral to-kin-teal text-base font-bold font-montserrat text-white ring-1 ring-kin-coral-200/50 sm:h-14 sm:w-14"
-                        aria-hidden
-                      >
-                        {request.sender.firstName.charAt(0)}
+                  <div className="min-w-0 shrink-0 gap-3 border-b border-border pb-3">
+                    <div className="relative">
+                      <div className="flex flex-col items-center justify-center gap-3">
+                        {request.sender.photo ? (
+                            <img
+                              src={getPhotoUrl(request.sender.photo)}
+                              alt=""
+                              className="h-12 w-12 shrink-0 rounded-full object-cover ring-1 ring-border sm:h-14 sm:w-14"
+                            />
+                          ) : (
+                            <div
+                              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-kin-coral to-kin-teal text-base font-bold font-montserrat text-white ring-1 ring-kin-coral-200/50 sm:h-14 sm:w-14"
+                              aria-hidden
+                            >
+                              {request.sender.firstName.charAt(0)}
+                            </div>
+                          )}
+                          <div className="w-full min-w-0 text-center">
+                            <h3 className="wrap-break-word font-montserrat text-sm font-bold text-foreground sm:text-base">
+                              {formatSenderName(request.sender)}{" "}
+                              <CountryFlag country={request.sender.homeCountry} />
+                            </h3>
+                          </div>
                       </div>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <h3 className="truncate font-montserrat text-sm font-bold text-foreground sm:text-base">
-                        {request.sender.firstName}
-                      </h3>
-                      <p className="mt-0.5 text-xs text-muted font-inter">
-                        Meet request
-                      </p>
-                    </div>
+                      <ActionMenu
+                        size="sm"
+                        className="top-0 right-0 inner self-start"
+                        label={`More actions for ${request.sender.firstName}`}
+                        items={[
+                          {
+                            label: "View Profile",
+                            onSelect: () => handleViewProfile(request.sender._id),
+                          },
+                          {
+                            label: "Report",
+                            onSelect: () =>
+                              setReportTarget({
+                                userId: request.sender._id,
+                                requestId: request._id,
+                                name: request.sender.firstName,
+                              }),
+                            variant: "destructive",
+                          },
+                          {
+                            label:
+                              blockingUserId === request.sender._id
+                                ? "Blocking…"
+                                : "Block",
+                            onSelect: () =>
+                              void handleBlock(
+                                request.sender._id,
+                                request._id,
+                                request.sender.firstName,
+                              ),
+                            variant: "destructive",
+                            disabled: blockingUserId === request.sender._id,
+                          },
+                        ]}
+                      />
 
-                    <ActionMenu
-                      size="sm"
-                      className="inner self-start"
-                      label={`More actions for ${request.sender.firstName}`}
-                      items={[
-                        {
-                          label: "View Profile",
-                          onSelect: () => handleViewProfile(request.sender._id),
-                        },
-                        {
-                          label: "Report",
-                          onSelect: () =>
-                            setReportTarget({
-                              userId: request.sender._id,
-                              requestId: request._id,
-                              name: request.sender.firstName,
-                            }),
-                          variant: "destructive",
-                        },
-                        {
-                          label:
-                            blockingUserId === request.sender._id
-                              ? "Blocking…"
-                              : "Block",
-                          onSelect: () =>
-                            void handleBlock(
-                              request.sender._id,
-                              request._id,
-                              request.sender.firstName,
-                            ),
-                          variant: "destructive",
-                          disabled: blockingUserId === request.sender._id,
-                        },
-                      ]}
-                    />
+                    </div>
                   </div>
 
                   <div className="flex min-w-0 flex-1 flex-col gap-2.5 text-left">
-                    <p className="flex min-w-0 gap-2 text-xs leading-snug text-foreground/85 font-inter">
-                      <span
-                        className="mt-0.5 shrink-0 text-muted"
-                        aria-hidden
-                      >
-                        <svg
-                          className="h-3.5 w-3.5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                          />
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                          />
-                        </svg>
-                      </span>
-                      <span className="min-w-0 wrap-break-word">
-                        {request.sender.homeCountry}
-                        <span className="text-foreground/40"> · </span>
-                        {request.sender.currentProvince},{" "}
-                        {request.sender.currentCountry}
-                      </span>
+                    <p className="flex min-w-0 gap-2 text-sm leading-snug text-foreground/85 font-bold">
+                      <span aria-hidden="true">📍</span> {request.sender.currentProvince}, {request.sender.currentCountry} <CountryFlag country={request.sender.currentCountry}/>
                     </p>
 
                     <div className="space-y-2">

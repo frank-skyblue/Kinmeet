@@ -342,6 +342,8 @@ Kinmeet/
 - Password hashing with bcryptjs
 - JWT-based authentication with server-side revocation: each token carries the user's `tokenVersion`, and incrementing it (on account deactivation) signs out every device
 - Protected API routes
+- Per-user token bucket on protected routes (60 tokens, 1 per second, shared, in-process)
+- Push-device unregister does not consume that quota
 - CORS configuration
 - Privacy-first design (no city-level location sharing)
 

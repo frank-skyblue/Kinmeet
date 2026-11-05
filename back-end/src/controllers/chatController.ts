@@ -39,10 +39,10 @@ export const handleUploadNotification = asyncHandler(async (req: Request, res: R
 export const getConversation = asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user!.id;
     const { userId: otherUserId } = req.params;
+    const { cursor } = req.query as { cursor?: string };
+    const { messages, nextCursor } = await chatService.getConversation(userId, otherUserId, cursor);
 
-    const messages = await chatService.getConversation(userId, otherUserId);
-
-    return res.status(200).json({ success: true, messages });
+    return res.status(200).json({ success: true, messages, nextCursor });
 });
 
 export const getConversations = asyncHandler(async (req: AuthRequest, res: Response) => {

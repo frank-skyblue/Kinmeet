@@ -1,5 +1,8 @@
 import express from 'express';
-import { authenticateJWT, authenticateJWTAllowDeactivated } from '../middleware/authMiddleware';
+import {
+    authenticateJWT,
+    authenticateJWTAllowDeactivatedWithoutUserRateLimit,
+} from '../middleware/authMiddleware';
 import { validate } from '../middleware/validate';
 import {
     registerNotificationDeviceSchema,
@@ -15,11 +18,11 @@ import {
 
 const router = express.Router();
 
-// Registered before router.use(authenticateJWT): signing out of a deactivated account
-// still removes this device's push subscription.
+// Before the shared limiter: a deactivated account can still remove this device's
+// push subscription, and the delete does not spend the user's token bucket.
 router.delete(
     '/devices',
-    authenticateJWTAllowDeactivated,
+    authenticateJWTAllowDeactivatedWithoutUserRateLimit,
     validate(unregisterNotificationDeviceSchema),
     unregisterDevice,
 );

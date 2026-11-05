@@ -6,12 +6,11 @@ import { AppError } from '../middleware/errorHandler';
 import { assertCanMessage } from './chatAccess';
 import { attachmentService, type AttachmentReceipt } from './attachmentService';
 import { buildChatMediaUrls, type ChatMediaUrls } from './cloudinaryService';
-
 export interface SendMessageOptions {
     attachment?: AttachmentReceipt;
     clientMessageId?: string;
 }
-
+export const MESSAGE_PER_PAGINATION = 36;
 const isDuplicateKeyError = (error: unknown): boolean =>
     typeof error === 'object' && error !== null && (error as { code?: number }).code === 11000;
 
@@ -122,7 +121,8 @@ export const chatService = {
         return toChatMessage(await populateParticipants(message));
     },
 
-    getConversation: async (userId: string, otherUserId: string) => {
+    /** One batch of a conversation, oldest first. `cursor` is the `nextCursor` of the previous batch. */
+    getConversation: async (userId: string, otherUserId: string, cursor?: string) => {
         const connection = await Connection.findOne({
             $or: [
                 { user1: userId, user2: otherUserId },
@@ -132,16 +132,24 @@ export const chatService = {
         if (!connection) {
             throw new AppError(403, 'Can only view conversations with connected users');
         }
-
-        const messages = await Message.find({
+        // Newest first so the limit keeps the latest messages; a cursor (the oldest message the
+        // client has) asks for the batch just before it. Sorted by _id, the field the cursor
+        // compares, so no message is skipped or repeated between batches.
+        const page = await Message.find({
+            ...(cursor ? { _id: { $lt: cursor } } : {}),
             $or: [
                 { sender: userId, receiver: otherUserId },
                 { sender: otherUserId, receiver: userId },
             ],
         })
-            .sort({ createdAt: 1 })
+            .sort({ _id: -1 })
+            .limit(MESSAGE_PER_PAGINATION)
             .populate('sender', 'firstName lastName')
             .populate('receiver', 'firstName lastName');
+        const messages = page.reverse();
+        // A full batch may have older messages before it; a shorter one reached the start of the
+        // conversation, so there is nothing more to load.
+        const nextCursor = messages.length === MESSAGE_PER_PAGINATION ? messages[0]!._id.toString() : null;
 
         await Message.updateMany(
             { sender: otherUserId, receiver: userId, read: false },
@@ -149,7 +157,10 @@ export const chatService = {
         );
 
         const unavailableUserId = (await isAccountDeactivated(otherUserId)) ? otherUserId : undefined;
-        return messages.map((message) => toChatMessage(message, unavailableUserId));
+        return {
+            messages: messages.map((message) => toChatMessage(message, unavailableUserId)),
+            nextCursor,
+        };
     },
 
     getConversations: async (userId: string) => {

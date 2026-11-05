@@ -148,6 +148,7 @@ describe('Chat media', () => {
             const limited = await requestPass(aliceToken, bobId);
 
             expect(limited.status).toBe(429);
+            expect(limited.body.message).toBe('Too many uploads, please wait a moment');
         });
     });
 
