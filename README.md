@@ -52,14 +52,14 @@ KinMeet is a social networking application that connects people from the same ho
 - **Socket.io** client for real-time updates
 
 ### Mobile
-- **Expo** (SDK 57) with **React Native** and **TypeScript**
+- **Expo** (SDK 58) with **React Native** and **TypeScript**
 - **React Navigation** for native stacks and tabs
 - **NativeWind** (Tailwind) for styling
 - **Axios** for API calls
 - **expo-secure-store** for the session
 - **Socket.io** client for real-time updates (not connected on launch yet)
 
-Android is the first release target. The iOS bundle id is already set in `mobile/app.config.ts`.
+iOS is the first release target. The Android package is already set in `mobile/app.config.ts`.
 
 ## 📋 Prerequisites
 
@@ -132,7 +132,7 @@ Create a `front-end/.env` file (optional):
 VITE_API_URL=http://localhost:8080/api
 ```
 
-### Mobile app (Android first)
+### Mobile app (iOS first)
 
 ```bash
 cd mobile
@@ -145,7 +145,7 @@ Copy `mobile/.env.example` to `mobile/.env`:
 EXPO_PUBLIC_API_URL=http://localhost:8080/api
 ```
 
-On the Android emulator, point that URL at `http://10.0.2.2:8080/api` so the app can reach an API running on your machine. `npm run ios` is available for a later iOS release. See [mobile/README.md](mobile/README.md).
+On an iPhone, install Expo Go from the App Store, set `EXPO_PUBLIC_API_URL` to this Mac's LAN address, and follow [mobile/README.md](mobile/README.md). `npm run ios` opens the Simulator. The Android emulator uses `http://10.0.2.2:8080/api`.
 
 ### 5. Start MongoDB
 

@@ -23,9 +23,9 @@ Use **two terminals** from the repo root (after `back-end/.env` and `front-end/.
 |----------|-------------|----------------|-------------------------|
 | 1        | `back-end/` | `npm run dev`  | API `http://localhost:8080` |
 | 2        | `front-end/` | `npm run dev` | App `http://localhost:5173` |
-| 3 (optional) | `mobile/` | `npm run android` | Expo on an Android emulator or device |
+| 3 (optional) | `mobile/` | `npm start` | Expo dev server. Open it on an iPhone from the QR code. See [mobile/README.md](mobile/README.md) |
 
-The front-end expects the API (see `VITE_API_URL` in the README — typically `http://localhost:8080/api`). The mobile app uses `EXPO_PUBLIC_API_URL` (see [mobile/README.md](mobile/README.md)). `npm run ios` exists for a later iOS release and is not the current store target.
+The front-end expects the API (see `VITE_API_URL` in the README — typically `http://localhost:8080/api`). The mobile app uses `EXPO_PUBLIC_API_URL` (see [mobile/README.md](mobile/README.md)). iOS is the first release target. A physical iPhone needs this Mac's LAN address in that URL. `npm run ios` opens the Simulator.
 
 ---
 
@@ -81,7 +81,7 @@ For the **exact** edge list, request targets, block list, and message threads, r
 |------|--------|
 | **Backend** (`back-end/`) | Node.js, Express, TypeScript, MongoDB + Mongoose, JWT (bcryptjs), Zod, Socket.io, Cloudinary, Multer |
 | **Frontend** (`front-end/`) | React 19, TypeScript, Vite, React Router, Tailwind CSS, Axios, Socket.io client |
-| **Mobile** (`mobile/`) | Expo, React Native, TypeScript, React Navigation, NativeWind, Axios, SecureStore. Android first; iOS bundle id is already configured |
+| **Mobile** (`mobile/`) | Expo, React Native, TypeScript, React Navigation, NativeWind, Axios, SecureStore. iOS first; Android package is already configured |
 | **Backend tests** | Vitest, Supertest, `mongodb-memory-server` — `back-end/src/__tests__/` |
 | **Frontend tests** | Vitest, Testing Library — `front-end/src/**/__tests__/` |
 | **Mobile tests** | Jest, React Native Testing Library — `mobile/src/**/__tests__/` |
@@ -138,7 +138,7 @@ Native MongoDB or Atlas: see the [README](README.md).
 |------|---------|
 | `back-end/` | REST API + Socket.io server |
 | `front-end/` | Vite + React SPA |
-| `mobile/` | Expo app (Android first, iOS configured) |
+| `mobile/` | Expo app (iOS first, Android configured) |
 | `.cursor/rules/` | Architecture and conventions for humans and AI assistants |
 | `front-end/docs/ARCHITECTURE.md` | Frontend system map (update when you change routing, providers, or `services/api.ts` organization) |
 | `mobile/docs/ARCHITECTURE.md` | Mobile system map (update when you change navigation, providers, or `services/api.ts` organization) |

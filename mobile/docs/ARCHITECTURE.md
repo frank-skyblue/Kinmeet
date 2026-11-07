@@ -12,7 +12,7 @@ Login submits email and password through `authAPI.login`. A stored token opens t
 | --- | --- |
 | `index.ts` | Registers `App` with Expo |
 | `App.tsx` | Imports `global.css`, then `SafeAreaProvider`, `AuthProvider`, and `NavigationContainer` |
-| `app.config.ts` | App name, `com.kinmeet.app` for Android and iOS, SecureStore plugin |
+| `app.config.ts` | App name, `com.kinmeet.app` for iOS and Android, SecureStore plugin. iOS is the first release target |
 | `global.css` | Tailwind entry for NativeWind |
 
 `android/` and `ios/` are generated at build time and are gitignored.

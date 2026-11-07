@@ -108,6 +108,18 @@
     {
       "type": "node-terminal",
       "request": "launch",
+      "name": "Start Mobile (iOS)",
+      "command": "npm run ios",
+      "cwd": "${workspaceFolder}/mobile",
+      // The iOS Simulator reaches the Mac at localhost.
+      // A physical iPhone needs your computer's LAN address in mobile/.env instead.
+      "env": {
+        "EXPO_PUBLIC_API_URL": "http://localhost:8080/api"
+      }
+    },
+    {
+      "type": "node-terminal",
+      "request": "launch",
       "name": "Start Mobile (Android)",
       "command": "npm run android",
       "cwd": "${workspaceFolder}/mobile",
@@ -136,7 +148,7 @@
       "name": "Run Mobile + Backend",
       "configurations": [
         "Debug Backend with Nodemon",
-        "Start Mobile (Android)"
+        "Start Mobile (iOS)"
       ],
       "presentation": {
         "hidden": false,

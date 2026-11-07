@@ -28,7 +28,7 @@ const config: ExpoConfig = {
     favicon: './assets/favicon.png',
     bundler: 'metro',
   },
-  plugins: ['expo-secure-store'],
+  plugins: ['expo-secure-store', 'expo-status-bar'],
 };
 
 export default config;
