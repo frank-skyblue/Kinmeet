@@ -1,7 +1,7 @@
 {
   "mcpServers": {
     "todoist": {
-      "command": "npx",
+      "command": "/Users/frankkong/.nvm/versions/node/v22.22.2/bin/npx",
       "args": ["-y", "mcp-remote", "https://ai.todoist.net/mcp"]
     }
   }

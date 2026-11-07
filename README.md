@@ -51,6 +51,16 @@ KinMeet is a social networking application that connects people from the same ho
 - **Axios** for API calls
 - **Socket.io** client for real-time updates
 
+### Mobile
+- **Expo** (SDK 58) with **React Native** and **TypeScript**
+- **React Navigation** for native stacks and tabs
+- **NativeWind** (Tailwind) for styling
+- **Axios** for API calls
+- **expo-secure-store** for the session
+- **Socket.io** client for real-time updates (not connected on launch yet)
+
+iOS is the first release target. The Android package is already set in `mobile/app.config.ts`.
+
 ## 📋 Prerequisites
 
 - **Node.js 22** (managed via `.nvmrc` — see below)
@@ -124,6 +134,21 @@ Create a `front-end/.env` file (optional):
 VITE_API_URL=http://localhost:8080/api
 ```
 
+### Mobile app (iOS first)
+
+```bash
+cd mobile
+npm ci
+```
+
+Copy `mobile/.env.example` to `mobile/.env`:
+
+```env
+EXPO_PUBLIC_API_URL=http://localhost:8080/api
+```
+
+On an iPhone, install Expo Go and follow [mobile/README.md](mobile/README.md). `npm start` serves the JavaScript bundle. Set `EXPO_PUBLIC_API_URL` to the LAN address Metro prints (`exp://<lan-ip>:8081`), on port 8080, then restart Metro. `localhost` on the phone is the phone. `npm run ios` opens the Simulator. The Android emulator uses `http://10.0.2.2:8080/api`.
+
 ### 5. Start MongoDB
 
 If using a local installation:
@@ -182,6 +207,15 @@ cd front-end
 npm test              # single run
 npm run test:watch    # watch mode
 npm run test:coverage # with coverage report
+```
+
+### Mobile Tests (Jest + React Native Testing Library)
+
+```bash
+cd mobile
+npm test              # single run
+npm run test:watch    # watch mode
+npm run typecheck
 ```
 
 ### E2E Tests (Playwright)

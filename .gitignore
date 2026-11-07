@@ -147,5 +147,10 @@ test-results/
 .vercel
 .turbo
 
+# Expo / React Native (generated native projects stay out of git)
+mobile/.expo/
+mobile/android/
+mobile/ios/
+
 data/**
 trace/**
