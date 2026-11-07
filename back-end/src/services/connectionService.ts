@@ -1,6 +1,6 @@
 import { Connection } from '../models/Connection';
 import { ConnectionRequest } from '../models/ConnectionRequest';
-import { User } from '../models/User';
+import { ACTIVE_ACCOUNT_FILTER, User, isAccountDeactivated } from '../models/User';
 import { areUsersBlocked } from '../models/Block';
 import { AppError } from '../middleware/errorHandler';
 
@@ -34,10 +34,15 @@ export const getConnectionRequests = async (userId: string) => {
         receiver: userId,
         status: 'pending'
     })
-        .populate('sender', '-password -lastName -email -blockedUsers')
+        .populate({
+            path: 'sender',
+            select: '-password -lastName -email -blockedUsers',
+            match: ACTIVE_ACCOUNT_FILTER,
+        })
         .sort({ createdAt: -1 });
 
-    return requests;
+    // Requests from deactivated senders are kept but hidden until they reactivate.
+    return requests.filter((request) => request.sender);
 };
 
 export const acceptConnectionRequest = async (userId: string, requestId: string) => {
@@ -46,6 +51,10 @@ export const acceptConnectionRequest = async (userId: string, requestId: string)
 
     if (request.receiver.toString() !== userId) {
         throw new AppError(403, 'Not authorized');
+    }
+
+    if (await isAccountDeactivated(request.sender.toString())) {
+        throw new AppError(404, 'Request not found');
     }
 
     if (await areUsersBlocked(userId, request.sender.toString())) {
@@ -99,7 +108,8 @@ export const getConnections = async (userId: string) => {
     );
 
     const users = await User.find({
-        _id: { $in: connectedUserIds }
+        _id: { $in: connectedUserIds },
+        ...ACTIVE_ACCOUNT_FILTER
     }).select('-password -email -blockedUsers');
 
     return users;

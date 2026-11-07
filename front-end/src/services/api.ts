@@ -1,6 +1,9 @@
 import axios from 'axios';
 import { normalizeEmail } from '../utils/email';
 import type {
+  AccountStatus,
+  ChatMediaKind,
+  ChatUploadPass,
   ChangeEmailPayload,
   ChangePasswordPayload,
   ChangeUsernamePayload,
@@ -16,6 +19,9 @@ import type {
   SubmitSupportRequestResponse,
   UpdateProfilePayload,
   RegisterNotificationDevicePayload,
+  NotificationPreferencesResponse,
+  GetConversationResponse,
+  UpdateNotificationPreferencesPayload,
   AdminAuthResponse,
   AdminFeedbackListResponse,
   AdminReportListResponse,
@@ -87,6 +93,33 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// 401 codes the API sends when this device's session is over. Other 401s, like a wrong
+// current password, carry neither and must not sign the user out.
+const SESSION_ENDED_CODES: Record<string, SessionEndReason> = {
+  // Expired or revoked token.
+  INVALID_TOKEN: 'invalid',
+  // Revoked because the account was deactivated, possibly on another device.
+  ACCOUNT_DEACTIVATED: 'deactivated',
+};
+
+export type SessionEndReason = 'invalid' | 'deactivated';
+
+let handleSessionEnded: ((reason: SessionEndReason) => void) | null = null;
+
+/** Registers what to do when the API rejects this device's session. */
+export const setSessionEndedHandler = (handler: ((reason: SessionEndReason) => void) | null) => {
+  handleSessionEnded = handler;
+};
+
+api.interceptors.response.use(undefined, (error: unknown) => {
+  if (axios.isAxiosError(error) && error.response?.status === 401) {
+    const code = (error.response.data as { code?: string } | undefined)?.code;
+    const reason = code ? SESSION_ENDED_CODES[code] : undefined;
+    if (reason) handleSessionEnded?.(reason);
+  }
+  return Promise.reject(error);
+});
+
 export const authAPI = {
   login: async (email: string, password: string) => {
     const response = await api.post('/auth/login', { email, password });
@@ -100,6 +133,11 @@ export const authAPI = {
 
   checkEmail: async (email: string) => {
     const response = await api.post('/auth/check-email', { email });
+    return response.data as { success: boolean; available?: boolean; message?: string };
+  },
+
+  checkUsername: async (username: string) => {
+    const response = await api.post('/auth/check-username', { username });
     return response.data as { success: boolean; available?: boolean; message?: string };
   },
 
@@ -166,8 +204,8 @@ export const matchingAPI = {
     return response.data;
   },
 
-  passUser: async () => {
-    const response = await api.post('/matching/pass');
+  passUser: async (userId: string) => {
+    const response = await api.post('/matching/pass', { userId });
     return response.data;
   },
 };
@@ -205,14 +243,22 @@ export const chatAPI = {
     return response.data;
   },
 
-  getConversation: async (userId: string) => {
-    const response = await api.get(`/chat/conversations/${userId}`);
+  /** With no cursor, the newest page; with the previous page's `nextCursor`, the page before it. */
+  getConversation: async (userId: string, cursor: string | null): Promise<GetConversationResponse> => {
+    const response = await api.get<GetConversationResponse>(`/chat/conversations/${userId}`, {
+      params: cursor ? { cursor } : {},
+    });
     return response.data;
   },
 
   markAsRead: async (senderId: string) => {
     const response = await api.post('/chat/messages/read', { senderId });
     return response.data;
+  },
+
+  requestUploadPass: async (receiverId: string, kind: ChatMediaKind) => {
+    const response = await api.post('/chat/attachments/sign', { receiverId, kind });
+    return response.data as { success: boolean; pass: ChatUploadPass };
   },
 };
 
@@ -224,6 +270,19 @@ export const notificationsAPI = {
 
   unregisterDevice: async (payload: RegisterNotificationDevicePayload) => {
     const response = await api.delete('/notifications/devices', { data: payload });
+    return response.data;
+  },
+
+  getPreferences: async (): Promise<NotificationPreferencesResponse> => {
+    const response = await api.get<NotificationPreferencesResponse>('/notifications/preferences');
+    return response.data;
+  },
+
+  /** Saves only the channels given; the others keep their saved value. */
+  updatePreferences: async (
+    payload: UpdateNotificationPreferencesPayload,
+  ): Promise<NotificationPreferencesResponse> => {
+    const response = await api.patch<NotificationPreferencesResponse>('/notifications/preferences', payload);
     return response.data;
   },
 };
@@ -264,6 +323,16 @@ export const settingsAPI = {
   changePassword: async (payload: ChangePasswordPayload) => {
     const response = await api.patch('/settings/password', payload);
     return response.data as { success: boolean; message: string };
+  },
+
+  deactivateAccount: async (currentPassword: string) => {
+    const response = await api.post('/settings/account/deactivate', { currentPassword });
+    return response.data as { success: boolean; message: string };
+  },
+
+  reactivateAccount: async () => {
+    const response = await api.post('/settings/account/reactivate');
+    return response.data as { success: boolean; message: string; accountStatus: AccountStatus };
   },
 };
 

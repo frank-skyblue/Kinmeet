@@ -23,6 +23,7 @@ import type { ResolvedCityLocation } from '../../utils/citySearch';
 import type { UserProfile } from '../../types';
 import ProfilePhotoEditor from './ProfilePhotoEditor';
 import ProfileLocationFields from './ProfileLocationFields';
+import { primaryActionClass, secondaryActionClass, surfaceCardClass, textFieldClass } from '../../constants/ui';
 
 interface ProfileEditFormProps {
   profile: UserProfile;
@@ -270,10 +271,10 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
   };
 
   return (
-    <div className="bg-kin-beige py-8 px-4">
+    <div className="bg-canvas py-8 px-4">
       <div className="max-w-2xl mx-auto">
-        <div className="bg-white rounded-kin-xl shadow-kin-strong p-8">
-          <h1 className="text-2xl font-bold font-montserrat text-kin-navy mb-6">Edit Profile</h1>
+        <div className={`${surfaceCardClass} rounded-kin-xl p-8`}>
+          <h1 className="text-2xl font-bold font-montserrat text-foreground mb-6">Edit Profile</h1>
 
           {error && (
             <div className="bg-kin-coral-50 border border-kin-coral-200 text-kin-coral-700 px-4 py-3 rounded-kin font-inter mb-6">
@@ -296,7 +297,7 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label htmlFor="firstName" className="block text-sm font-medium font-inter text-kin-navy mb-2">
+                <label htmlFor="firstName" className="block text-sm font-medium font-inter text-foreground mb-2">
                   First Name
                 </label>
                 <input
@@ -304,12 +305,12 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
                   id="firstName"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
-                  className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
+                  className={`${textFieldClass} w-full px-4 py-3 rounded-kin-sm transition`}
                   required
                 />
               </div>
               <div>
-                <label htmlFor="lastName" className="block text-sm font-medium font-inter text-kin-navy mb-2">
+                <label htmlFor="lastName" className="block text-sm font-medium font-inter text-foreground mb-2">
                   Last Name
                 </label>
                 <input
@@ -317,10 +318,10 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
                   id="lastName"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
-                  className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
+                  className={`${textFieldClass} w-full px-4 py-3 rounded-kin-sm transition`}
                   required
                 />
-                <p className="text-xs text-kin-teal font-inter mt-1">Hidden until kin request is accepted</p>
+                <p className="text-xs text-muted font-inter mt-1">Hidden until kin request is accepted</p>
               </div>
             </div>
 
@@ -345,20 +346,20 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
             />
 
             <div>
-              <label htmlFor="about" className="block text-sm font-medium font-inter text-kin-navy mb-2">
+              <label htmlFor="about" className="block text-sm font-medium font-inter text-foreground mb-2">
                 About You
               </label>
               <textarea
                 id="about"
                 value={about}
                 onChange={(e) => setAbout(e.target.value)}
-                className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter resize-none"
+                className={`${textFieldClass} w-full px-4 py-3 rounded-kin-sm transition resize-none`}
                 placeholder="Tell others a bit about yourself..."
                 rows={3}
                 maxLength={ABOUT_MAX_LENGTH}
                 aria-label="About you"
               />
-              <p className="text-xs text-kin-teal font-inter mt-1">
+              <p className="text-xs text-muted font-inter mt-1">
                 {about.length}/{ABOUT_MAX_LENGTH} characters
               </p>
             </div>
@@ -392,7 +393,7 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
                 ... keep Education Level SearchableSelect in left column ...
               </div>
               <div>
-                <label htmlFor="graduationYear" className="block text-sm font-medium font-inter text-kin-navy mb-2">
+                <label htmlFor="graduationYear" className="block text-sm font-medium font-inter text-foreground mb-2">
                   Graduation Year
                 </label>
                 <input
@@ -400,7 +401,7 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
                   id="graduationYear"
                   value={graduationYear}
                   onChange={(e) => setGraduationYear(e.target.value)}
-                  className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
+                  className={`${textFieldClass} w-full px-4 py-3 rounded-kin-sm transition`}
                   min={1950}
                   max={2100}
                 />
@@ -483,14 +484,14 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
               <button
                 type="button"
                 onClick={onCancel}
-                className="flex-1 bg-kin-stone-200 text-kin-navy py-3 rounded-kin-sm font-bold font-montserrat hover:bg-kin-stone-300 cursor-pointer transition-all"
+                className={`${secondaryActionClass} flex-1 py-3 rounded-kin-sm font-bold font-montserrat cursor-pointer transition-all`}
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isSaving}
-                className="flex-1 bg-kin-coral text-white py-3 rounded-kin-sm font-bold font-montserrat hover:bg-kin-coral-600 focus:ring-4 focus:ring-kin-coral-300 shadow-kin-medium hover:shadow-kin-strong cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className={`${primaryActionClass} flex-1 py-3 rounded-kin-sm font-bold font-montserrat focus:ring-4 focus:ring-ring shadow-kin-medium hover:shadow-kin-strong cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed`}
               >
                 {isSaving ? 'Saving...' : 'Save Changes'}
               </button>

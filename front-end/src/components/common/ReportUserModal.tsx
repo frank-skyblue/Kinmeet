@@ -4,6 +4,7 @@ import type { ReportReason } from '../../constants/reportOptions';
 import { blockAPI } from '../../services/api';
 import { getErrorMessage } from '../../utils/error';
 import SearchableSelect from './SearchableSelect';
+import { secondaryActionClass, surfaceCardClass } from '../../constants/ui';
 
 const reasonOptions = REPORT_REASONS.map((option) => ({ value: option, label: option }));
 
@@ -90,11 +91,11 @@ const ReportUserModal: React.FC<ReportUserModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-kin-xl shadow-kin-strong max-w-md w-full p-6">
+    <div className="fixed inset-0 bg-overlay flex items-center justify-center z-50 p-4">
+      <div className={`${surfaceCardClass} rounded-kin-xl max-w-md w-full p-6`}>
         {isSubmitted ? (
           <>
-            <h2 className="text-xl font-bold font-montserrat text-kin-navy mb-2">
+            <h2 className="text-xl font-bold font-montserrat text-foreground mb-2">
               Report received
             </h2>
             <div
@@ -107,7 +108,7 @@ const ReportUserModal: React.FC<ReportUserModalProps> = ({
               </p>
             </div>
 
-            <p className="text-kin-navy font-inter mb-4">
+            <p className="text-foreground font-inter mb-4">
               Would you also like to block {displayName}? They won’t be able to message you or
               see you in Discover.
             </p>
@@ -123,7 +124,7 @@ const ReportUserModal: React.FC<ReportUserModalProps> = ({
                 type="button"
                 onClick={handleClose}
                 disabled={isBlocking}
-                className="flex-1 bg-kin-stone-200 text-kin-navy py-3 rounded-kin-sm font-semibold font-montserrat cursor-pointer hover:bg-kin-stone-300 transition disabled:opacity-50"
+                className={`${secondaryActionClass} flex-1 py-3 rounded-kin-sm font-semibold font-montserrat cursor-pointer transition disabled:opacity-50`}
               >
                 No, thanks
               </button>
@@ -139,10 +140,10 @@ const ReportUserModal: React.FC<ReportUserModalProps> = ({
           </>
         ) : (
           <form noValidate onSubmit={handleSubmit}>
-            <h2 className="text-xl font-bold font-montserrat text-kin-navy mb-2">
+            <h2 className="text-xl font-bold font-montserrat text-foreground mb-2">
               Report {displayName}
             </h2>
-            <p className="text-kin-navy font-inter text-sm mb-5">
+            <p className="text-foreground font-inter text-sm mb-5">
               Tell us what’s wrong. {displayName} won’t be notified, and reporting doesn’t block
               them.
             </p>
@@ -171,13 +172,13 @@ const ReportUserModal: React.FC<ReportUserModalProps> = ({
             <div className="mb-5">
               <label
                 htmlFor="report-details"
-                className="block text-sm font-semibold font-inter text-kin-navy mb-2"
+                className="block text-sm font-semibold font-inter text-foreground mb-2"
               >
                 Additional details
                 {detailsRequired ? (
                   <span className="text-kin-coral ml-1">*</span>
                 ) : (
-                  <span className="font-normal text-kin-navy/50"> (optional)</span>
+                  <span className="font-normal text-foreground/50"> (optional)</span>
                 )}
               </label>
               <div className="relative">
@@ -192,14 +193,14 @@ const ReportUserModal: React.FC<ReportUserModalProps> = ({
                   maxLength={REPORT_DETAILS_MAX_LENGTH}
                   required={detailsRequired}
                   aria-describedby="report-details-count"
-                  className="w-full px-4 pt-3 pb-8 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent font-inter text-kin-navy"
+                  className="w-full px-4 pt-3 pb-8 border border-border rounded-kin-sm focus:ring-2 focus:ring-ring focus:border-transparent font-inter text-foreground"
                 />
                 <span
                   id="report-details-count"
                   className={`pointer-events-none absolute bottom-3 right-3 text-xs font-inter ${
                     details.length >= REPORT_DETAILS_MAX_LENGTH
                       ? 'text-kin-coral'
-                      : 'text-kin-navy/50'
+                      : 'text-foreground/50'
                   }`}
                 >
                   {details.length} / {REPORT_DETAILS_MAX_LENGTH}
@@ -223,7 +224,7 @@ const ReportUserModal: React.FC<ReportUserModalProps> = ({
                 type="button"
                 onClick={handleClose}
                 disabled={isSubmitting}
-                className="flex-1 bg-kin-stone-200 text-kin-navy py-3 rounded-kin-sm font-semibold font-montserrat cursor-pointer hover:bg-kin-stone-300 transition disabled:opacity-50"
+                className={`${secondaryActionClass} flex-1 py-3 rounded-kin-sm font-semibold font-montserrat cursor-pointer transition disabled:opacity-50`}
               >
                 Cancel
               </button>

@@ -1,12 +1,15 @@
 import mongoose from 'mongoose';
-import { User } from '../models/User';
+import { ACTIVE_ACCOUNT_FILTER, User } from '../models/User';
 import { areUsersBlocked } from '../models/Block';
 import { Connection } from '../models/Connection';
 import { ConnectionRequest } from '../models/ConnectionRequest';
 import { Message } from '../models/Message';
+import { DiscoverPass } from '../models/DiscoverPass';
 import { AppError } from '../middleware/errorHandler';
 import { dateOfBirthString } from '../middleware/schemas';
 import { uploadImage, destroyImage } from './cloudinaryService';
+import { attachmentService } from './attachmentService';
+import { notifyGroupInBackground } from './newPeopleAlertService';
 
 const AVATARS_SUBFOLDER = 'avatars';
 
@@ -34,7 +37,8 @@ export const getUserProfile = async (requesterId: string, targetUserId: string) 
         ? '-password -blockedUsers'
         : '-password -lastName -blockedUsers';
 
-    const user = await User.findById(targetUserId).select(selectFields);
+    // Deactivated accounts are reported as 404 too, so viewers aren't told why.
+    const user = await User.findOne({ _id: targetUserId, ...ACTIVE_ACCOUNT_FILTER }).select(selectFields);
     if (!user) throw new AppError(404, 'User not found');
 
     return { user, isConnected: !!connection };
@@ -54,13 +58,25 @@ export const updateProfile = async (userId: string, updates: Record<string, unkn
         }
     }
 
+    const before = await User.findById(userId).select('homeCountry currentCountry profileComplete');
+    if (!before) throw new AppError(404, 'User not found');
+
+    // Completing a profile or moving to another home/current country joins a Discover group,
+    // which counts as a new arrival for that group's alerts.
+    const joinsGroup = !before.profileComplete
+        || (updates.homeCountry !== undefined && updates.homeCountry !== before.homeCountry)
+        || (updates.currentCountry !== undefined && updates.currentCountry !== before.currentCountry);
+
     const user = await User.findByIdAndUpdate(
         userId,
-        { ...updates, profileComplete: true },
+        { ...updates, profileComplete: true, ...(joinsGroup ? { groupJoinedAt: new Date() } : {}) },
         { new: true, runValidators: true }
     ).select('-password');
 
     if (!user) throw new AppError(404, 'User not found');
+    if (joinsGroup) {
+        notifyGroupInBackground({ homeCountry: user.homeCountry, currentCountry: user.currentCountry });
+    }
     return user;
 };
 
@@ -71,6 +87,8 @@ export const deleteProfile = async (userId: string) => {
     if (userToDelete?.photo) {
         await destroyImage(userToDelete.photo, AVATARS_SUBFOLDER);
     }
+    // Before the messages go: chat media lives in Cloudinary, not in the message rows.
+    await attachmentService.deleteMediaForUser(userId);
 
     await Promise.all([
         Connection.deleteMany({
@@ -78,6 +96,9 @@ export const deleteProfile = async (userId: string) => {
         }),
         ConnectionRequest.deleteMany({
             $or: [{ sender: userObjectId }, { receiver: userObjectId }]
+        }),
+        DiscoverPass.deleteMany({
+            $or: [{ viewer: userObjectId }, { viewed: userObjectId }]
         }),
         Message.deleteMany({
             $or: [{ sender: userObjectId }, { receiver: userObjectId }]

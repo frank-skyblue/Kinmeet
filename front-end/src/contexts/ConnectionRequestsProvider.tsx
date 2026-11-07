@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { connectionsAPI } from '../services/api';
 import { ConnectionRequestsContext } from './connectionRequestsContext';
 import { useAuth } from './useAuth';
+import { activeUserOrNull } from '../utils/account';
 
 interface ConnectionRequestsProviderProps {
   children: React.ReactNode;
@@ -10,7 +11,8 @@ interface ConnectionRequestsProviderProps {
 export const ConnectionRequestsProvider: React.FC<ConnectionRequestsProviderProps> = ({
   children,
 }) => {
-  const { user, isLoading: authLoading } = useAuth();
+  const { user: authUser, isLoading: authLoading } = useAuth();
+  const user = activeUserOrNull(authUser);
   const [pendingRequestCount, setPendingRequestCount] = useState(0);
 
   const refetchConnectionRequests = useCallback(async () => {

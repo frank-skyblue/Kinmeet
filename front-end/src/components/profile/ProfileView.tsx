@@ -5,6 +5,8 @@ import CountryFlag from '../common/CountryFlag';
 import CountryWithFlag from '../common/CountryWithFlag';
 import type { UserProfile } from '../../types';
 import { calculateAgeFromDateOfBirth } from '../../utils/age';
+import { surfaceCardClass } from '../../constants/ui';
+import BackButton from '../common/BackButton';
 
 const genderLabel = (value: string | undefined) => {
 	if (value === 'female') return 'Female';
@@ -35,9 +37,12 @@ const ProfileView: React.FC<ProfileViewProps> = ({
 	const showActionsMenu = !showManageActions && Boolean(onBlock);
 
 	return (
-		<div className="bg-kin-beige py-8 px-4">
+		<div className="bg-canvas py-8 px-4">
+
+			<BackButton />
+
 			<div className="max-w-3xl mx-auto">
-				<div className="bg-white rounded-kin-xl shadow-kin-strong overflow-hidden">
+				<div className={`${surfaceCardClass} rounded-kin-xl overflow-hidden`}>
 					<div className="bg-gradient-to-br from-kin-coral to-kin-teal h-32"></div>
 
 					<div className="px-8 pb-8">
@@ -46,12 +51,12 @@ const ProfileView: React.FC<ProfileViewProps> = ({
 								<img
 									src={getPhotoUrl(profile.photo)}
 									alt={`${profile.firstName} ${profile.lastName}`}
-									className="w-32 h-32 rounded-full border-4 border-white object-cover shadow-kin-medium hover:cursor-pointer"
+									className="w-32 h-32 rounded-full border-4 border-surface object-cover shadow-kin-medium hover:cursor-pointer"
 									onClick={() => onProfileOpen()}
 								/>
 							) : (
 								<div
-									className="w-32 h-32 rounded-full border-4 border-white bg-gradient-to-br from-kin-coral to-kin-teal flex items-center justify-center text-white text-5xl font-bold font-montserrat shadow-kin-medium hover:cursor-pointer"
+									className="w-32 h-32 rounded-full border-4 border-surface bg-gradient-to-br from-kin-coral to-kin-teal flex items-center justify-center text-white text-5xl font-bold font-montserrat shadow-kin-medium hover:cursor-pointer"
 									onClick={() => onProfileOpen()}
 								>
 									{profile.firstName.charAt(0)}
@@ -61,11 +66,11 @@ const ProfileView: React.FC<ProfileViewProps> = ({
 
 						<div className="mb-6 flex items-start justify-between gap-2">
 							<div className="min-w-0">
-								<h1 className="truncate text-3xl font-bold font-montserrat text-kin-navy mb-2">
+								<h1 className="truncate text-3xl font-bold font-montserrat text-foreground mb-2">
 									{profile.firstName} {profile.lastName}
 								</h1>
 								{profile.username && (
-									<p className="truncate text-kin-teal font-inter">
+									<p className="truncate text-muted font-inter">
 										@{profile.username}
 									</p>
 								)}
@@ -92,18 +97,18 @@ const ProfileView: React.FC<ProfileViewProps> = ({
 
 						<div className="space-y-6 mb-6">
 							<div>
-								<h3 className="text-sm font-semibold font-inter text-kin-navy mb-2">
+								<h3 className="text-sm font-semibold font-inter text-foreground mb-2">
 									Gender
 								</h3>
-								<p className="text-lg text-kin-navy font-montserrat">
+								<p className="text-lg text-foreground font-montserrat">
 									{genderLabel(profile.gender) ?? '—'}
 								</p>
 							</div>
 							<div>
-								<h3 className="text-sm font-semibold font-inter text-kin-navy mb-2">
+								<h3 className="text-sm font-semibold font-inter text-foreground mb-2">
 									Age
 								</h3>
-								<p className="text-lg text-kin-navy font-montserrat">
+								<p className="text-lg text-foreground font-montserrat">
 									{calculateAgeFromDateOfBirth(profile.dateOfBirth) ?? '—'}
 								</p>
 							</div>
@@ -112,10 +117,10 @@ const ProfileView: React.FC<ProfileViewProps> = ({
 						<div className="space-y-6">
 							{profile.about && (
 								<div>
-									<h3 className="text-sm font-semibold font-inter text-kin-navy mb-2">
+									<h3 className="text-sm font-semibold font-inter text-foreground mb-2">
 										About
 									</h3>
-									<p className="text-kin-navy font-inter leading-relaxed">
+									<p className="text-foreground font-inter leading-relaxed">
 										{profile.about}
 									</p>
 								</div>
@@ -123,10 +128,10 @@ const ProfileView: React.FC<ProfileViewProps> = ({
 
 							{profile.industry && (
 								<div>
-									<h3 className="text-sm font-semibold font-inter text-kin-navy mb-2">
+									<h3 className="text-sm font-semibold font-inter text-foreground mb-2">
 										Work
 									</h3>
-									<p className="text-lg text-kin-navy font-montserrat">
+									<p className="text-lg text-foreground font-montserrat">
 										{profile.industry}
 									</p>
 								</div>
@@ -134,30 +139,30 @@ const ProfileView: React.FC<ProfileViewProps> = ({
 
 							{profile.educationLevel && (
 								<div>
-									<h3 className="text-sm font-semibold font-inter text-kin-navy mb-2">
+									<h3 className="text-sm font-semibold font-inter text-foreground mb-2">
 										Education
 									</h3>
-									<p className="text-lg text-kin-navy font-montserrat">
+									<p className="text-lg text-foreground font-montserrat">
 										{profile.educationLevel}
 									</p>
 								</div>
 							)}
 
 							<div>
-								<h3 className="text-sm font-semibold font-inter text-kin-navy mb-2">
+								<h3 className="text-sm font-semibold font-inter text-foreground mb-2">
 									Home Country
 								</h3>
 								<CountryWithFlag
 									country={profile.homeCountry}
-									className="text-lg text-kin-navy font-montserrat"
+									className="text-lg text-foreground font-montserrat"
 								/>
 							</div>
 
 							<div>
-								<h3 className="text-sm font-semibold font-inter text-kin-navy mb-2">
+								<h3 className="text-sm font-semibold font-inter text-foreground mb-2">
 									Current Location
 								</h3>
-								<p className="text-lg text-kin-navy font-montserrat inline-flex items-center gap-2">
+								<p className="text-lg text-foreground font-montserrat inline-flex items-center gap-2">
 									<CountryFlag country={profile.currentCountry} />
 									<span>
 										{profile.currentProvince}, {profile.currentCountry}
@@ -166,7 +171,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({
 							</div>
 
 							<div>
-								<h3 className="text-sm font-semibold font-inter text-kin-navy mb-3">
+								<h3 className="text-sm font-semibold font-inter text-foreground mb-3">
 									Languages
 								</h3>
 								<div className="flex flex-wrap gap-2">
@@ -183,7 +188,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({
 
 							{profile.interests.length > 0 && (
 								<div>
-									<h3 className="text-sm font-semibold font-inter text-kin-navy mb-3">
+									<h3 className="text-sm font-semibold font-inter text-foreground mb-3">
 										Interests
 									</h3>
 									<div className="flex flex-wrap gap-2">
@@ -200,7 +205,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({
 							)}
 
 							<div>
-								<h3 className="text-sm font-semibold font-inter text-kin-navy mb-3">
+								<h3 className="text-sm font-semibold font-inter text-foreground mb-3">
 									Looking For
 								</h3>
 								<div className="flex flex-wrap gap-2">

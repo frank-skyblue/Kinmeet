@@ -22,26 +22,26 @@ export const AdminPagination: React.FC<AdminPaginationProps> = ({
 
   return (
     <nav
-      className="flex shrink-0 items-center justify-center gap-5 text-sm font-inter text-kin-navy/70"
+      className="flex shrink-0 items-center justify-center gap-5 text-sm font-inter text-foreground/70"
       aria-label={ariaLabel}
     >
       <button
         type="button"
         onClick={onPrevious}
         disabled={currentPage <= 1}
-        className="text-kin-teal underline-offset-2 transition hover:text-kin-navy hover:underline disabled:pointer-events-none disabled:opacity-35 disabled:no-underline cursor-pointer"
+        className="text-muted underline-offset-2 transition hover:text-foreground hover:underline disabled:pointer-events-none disabled:opacity-35 disabled:no-underline cursor-pointer"
         aria-label="Previous page"
       >
         Prev
       </button>
-      <span className="tabular-nums text-kin-navy/60" aria-live="polite">
+      <span className="tabular-nums text-foreground/60" aria-live="polite">
         {currentPage}/{totalPages}
       </span>
       <button
         type="button"
         onClick={onNext}
         disabled={currentPage >= totalPages}
-        className="text-kin-teal underline-offset-2 transition hover:text-kin-navy hover:underline disabled:pointer-events-none disabled:opacity-35 disabled:no-underline cursor-pointer"
+        className="text-muted underline-offset-2 transition hover:text-foreground hover:underline disabled:pointer-events-none disabled:opacity-35 disabled:no-underline cursor-pointer"
         aria-label="Next page"
       >
         Next
@@ -53,14 +53,14 @@ export const AdminPagination: React.FC<AdminPaginationProps> = ({
 const VIEW_ARROW_PATH = 'M9 5l7 7-7 7';
 
 const viewButtonClassName =
-  'inline-flex h-10 items-center gap-1 whitespace-nowrap rounded-kin-sm px-2 text-kin-coral font-semibold hover:bg-kin-coral-50 cursor-pointer hover:text-kin-coral-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral';
+  'inline-flex h-10 items-center gap-1 whitespace-nowrap rounded-kin-sm px-2 text-kin-coral font-semibold hover:bg-kin-coral-50 cursor-pointer hover:text-kin-coral-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring';
 
 export const AdminSubmittedStamp: React.FC<{ value: string }> = ({ value }) => {
   const { date, time } = formatAdminSubmittedParts(value);
   return (
     <span className="flex flex-col leading-snug">
       <span>{date}</span>
-      {time ? <span className="text-xs text-kin-navy/60">{time}</span> : null}
+      {time ? <span className="text-xs text-foreground/60">{time}</span> : null}
     </span>
   );
 };

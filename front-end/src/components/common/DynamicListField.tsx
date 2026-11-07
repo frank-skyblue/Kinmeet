@@ -29,7 +29,7 @@ const DynamicListField: React.FC<DynamicListFieldProps> = ({
 }) => {
     return (
         <div>
-            <label className="block text-sm font-medium font-inter text-kin-navy mb-2">
+            <label className="block text-sm font-medium font-inter text-foreground mb-2">
                 {label}{required && ' *'}
             </label>
             {items.map((item, index) => (
@@ -66,7 +66,7 @@ const DynamicListField: React.FC<DynamicListFieldProps> = ({
             <button
                 type="button"
                 onClick={onAdd}
-                className="text-kin-teal font-semibold font-inter hover:text-kin-teal-600 transition"
+                className="text-muted font-semibold font-inter hover:text-kin-teal-600 transition"
             >
                 {addLabel}
             </button>

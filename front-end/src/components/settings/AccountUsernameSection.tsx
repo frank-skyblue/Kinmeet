@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { settingsAPI } from '../../services/api';
 import { useAuth } from '../../contexts/useAuth';
 import { getErrorMessage } from '../../utils/error';
+import { useUsernameAvailability } from '../../hooks/useUsernameAvailability';
+import { handleLowercaseInput } from '../../utils/username';
 
 type SectionState = {
   editing: boolean;
@@ -21,6 +23,9 @@ const AccountUsernameSection: React.FC = () => {
   const { user, refreshUser } = useAuth();
   const [section, setSection] = useState<SectionState>(initialSection);
   const [newUsername, setNewUsername] = useState('');
+  // Only checks while editing; the user's current username is recognised as their own.
+  const availability = useUsernameAvailability(section.editing ? newUsername : '', user?.username);
+  const canSave = availability.status === 'available' && !section.loading;
 
   const handleEdit = () => {
     setNewUsername(user?.username ?? '');
@@ -34,6 +39,7 @@ const AccountUsernameSection: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canSave) return;
     setSection((prev) => ({ ...prev, loading: true, error: null, success: null }));
     try {
       await settingsAPI.changeUsername({ newUsername });
@@ -55,12 +61,12 @@ const AccountUsernameSection: React.FC = () => {
         <div className="flex-1 min-w-0">
           <h2
             id="username-heading"
-            className="text-sm font-semibold font-inter text-kin-navy mb-1"
+            className="text-sm font-semibold font-inter text-foreground mb-1"
           >
             Username
           </h2>
           {!section.editing && (
-            <p className="text-kin-navy font-inter text-sm">
+            <p className="text-foreground font-inter text-sm">
               {user?.username ? `@${user.username}` : '—'}
             </p>
           )}
@@ -74,7 +80,7 @@ const AccountUsernameSection: React.FC = () => {
           <button
             type="button"
             onClick={handleEdit}
-            className="shrink-0 text-sm font-semibold font-inter text-kin-teal hover:text-kin-teal-700 cursor-pointer transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral"
+            className="shrink-0 text-sm font-semibold font-inter text-muted hover:text-kin-teal-700 cursor-pointer transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             aria-label="Edit username"
           >
             Edit
@@ -87,7 +93,7 @@ const AccountUsernameSection: React.FC = () => {
           <div>
             <label
               htmlFor="new-username"
-              className="block text-sm font-inter text-kin-navy mb-1"
+              className="block text-sm font-inter text-foreground mb-1"
             >
               New username
             </label>
@@ -97,10 +103,29 @@ const AccountUsernameSection: React.FC = () => {
               autoComplete="username"
               required
               value={newUsername}
-              onChange={(e) => setNewUsername(e.target.value)}
-              className="w-full border border-kin-stone-300 rounded-kin-sm px-3 py-2 text-sm font-inter text-kin-navy placeholder-kin-stone-400 focus:outline-none focus:ring-2 focus:ring-kin-teal"
+              onChange={(e) => handleLowercaseInput(e, setNewUsername)}
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              maxLength={30}
+              className="w-full border border-border rounded-kin-sm px-3 py-2 text-sm font-inter text-foreground placeholder-kin-stone-400 focus:outline-none focus:ring-2 focus:ring-ring"
               placeholder="3–30 characters: a–z, 0–9, _"
             />
+            {availability.message && (
+              <p
+                aria-live="polite"
+                data-testid="username-status"
+                className={`text-sm font-inter mt-1 ${
+                  availability.status === 'available'
+                    ? 'text-green-600'
+                    : availability.status === 'checking' || availability.status === 'current'
+                      ? 'text-muted'
+                      : 'text-kin-coral'
+                }`}
+              >
+                {availability.message}
+              </p>
+            )}
           </div>
           {section.error && (
             <p role="alert" className="text-kin-coral text-sm font-inter">
@@ -110,8 +135,8 @@ const AccountUsernameSection: React.FC = () => {
           <div className="flex gap-3">
             <button
               type="submit"
-              disabled={section.loading}
-              className="bg-kin-teal text-white px-4 py-2 rounded-kin-sm text-sm font-semibold font-montserrat hover:bg-kin-teal-700 cursor-pointer transition disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral"
+              disabled={!canSave}
+              className="bg-kin-teal text-white px-4 py-2 rounded-kin-sm text-sm font-semibold font-montserrat hover:bg-kin-teal-700 cursor-pointer transition disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             >
               {section.loading ? 'Saving…' : 'Save'}
             </button>
@@ -119,7 +144,7 @@ const AccountUsernameSection: React.FC = () => {
               type="button"
               onClick={handleCancel}
               disabled={section.loading}
-              className="px-4 py-2 rounded-kin-sm text-sm font-semibold font-montserrat text-kin-navy hover:bg-kin-stone-100 cursor-pointer transition disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral"
+              className="px-4 py-2 rounded-kin-sm text-sm font-semibold font-montserrat text-foreground hover:bg-surface-muted cursor-pointer transition disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             >
               Cancel
             </button>

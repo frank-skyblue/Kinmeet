@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { chatService } from '../../services/chatService';
+import { MESSAGE_PER_PAGINATION, chatService } from '../../services/chatService';
 import { createTestUser } from '../helpers';
 import { Block } from '../../models/Block';
 import { Connection } from '../../models/Connection';
@@ -69,14 +69,65 @@ describe('chatService', () => {
       await chatService.sendMessage(userA._id.toString(), userB._id.toString(), 'First');
       await chatService.sendMessage(userB._id.toString(), userA._id.toString(), 'Second');
 
-      const messages = await chatService.getConversation(
+      const { messages, nextCursor } = await chatService.getConversation(
         userA._id.toString(),
         userB._id.toString(),
       );
 
       expect(messages).toHaveLength(2);
-      expect(messages[0].content).toBe('First');
-      expect(messages[1].content).toBe('Second');
+      expect(messages[0]!.content).toBe('First');
+      expect(messages[1]!.content).toBe('Second');
+      // Fewer than a page: this is the whole conversation, so there is nothing earlier to load.
+      expect(nextCursor).toBeNull();
+    });
+
+    it('pages back from the newest messages until the start of the conversation', async () => {
+      const { userA, userB } = await connectUsers();
+      const total = MESSAGE_PER_PAGINATION + 5;
+      const start = Date.now() - total * 60_000;
+      await Message.insertMany(
+        Array.from({ length: total }, (_, i) => ({
+          sender: i % 2 === 0 ? userA._id : userB._id,
+          receiver: i % 2 === 0 ? userB._id : userA._id,
+          content: `m${i}`,
+          createdAt: new Date(start + i * 60_000),
+        })),
+      );
+      const a = userA._id.toString();
+      const b = userB._id.toString();
+
+      const newest = await chatService.getConversation(a, b);
+      expect(newest.messages).toHaveLength(MESSAGE_PER_PAGINATION);
+      expect(newest.messages[0]!.content).toBe('m5');
+      expect(newest.messages.at(-1)!.content).toBe(`m${total - 1}`);
+      expect(newest.nextCursor).toEqual(expect.any(String));
+
+      const older = await chatService.getConversation(a, b, newest.nextCursor!);
+      expect(older.messages.map((m) => m.content)).toEqual(['m0', 'm1', 'm2', 'm3', 'm4']);
+      expect(older.nextCursor).toBeNull();
+    });
+
+    it('neither skips nor repeats messages when createdAt is out of order with their ids', async () => {
+      // e.g. seeded or imported messages whose createdAt was set by hand.
+      const { userA, userB } = await connectUsers();
+      const total = MESSAGE_PER_PAGINATION + 5;
+      await Message.insertMany(
+        Array.from({ length: total }, (_, i) => ({
+          sender: userA._id,
+          receiver: userB._id,
+          content: `m${i}`,
+          createdAt: new Date(Date.now() - i * 60_000),
+        })),
+      );
+      const a = userA._id.toString();
+      const b = userB._id.toString();
+
+      const newest = await chatService.getConversation(a, b);
+      const older = await chatService.getConversation(a, b, newest.nextCursor!);
+      const seen = [...older.messages, ...newest.messages].map((m) => m.content);
+
+      expect(seen).toHaveLength(total);
+      expect(new Set(seen).size).toBe(total);
     });
 
     it('marks unread messages as read when fetching conversation', async () => {

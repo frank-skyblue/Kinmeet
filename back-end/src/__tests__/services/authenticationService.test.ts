@@ -1,7 +1,8 @@
-import { describe, it, expect } from 'vitest';
+import { vi, describe, it, expect } from 'vitest';
 import { authenticationService } from '../../services/authenticationService';
 import { User } from '../../models/User';
 import { createTestUser } from '../helpers';
+import { newPeopleAlertService } from '../../services/newPeopleAlertService';
 import jwt from 'jsonwebtoken';
 
 describe('authenticationService', () => {
@@ -21,6 +22,17 @@ describe('authenticationService', () => {
       gender: 'female',
     };
 
+    it('joins the Discover group and alerts it in the background', async () => {
+      const notify = vi.spyOn(newPeopleAlertService, 'notifyGroup').mockResolvedValue(0);
+
+      await authenticationService.register(validData);
+
+      const saved = await User.findOne({ email: 'new@example.com' }).select('groupJoinedAt').lean();
+      expect(saved!.groupJoinedAt).toBeInstanceOf(Date);
+      expect(notify).toHaveBeenCalledWith({ homeCountry: 'France', currentCountry: 'Canada' });
+      notify.mockRestore();
+    });
+
     it('registers a new user and returns a token', async () => {
       const result = await authenticationService.register(validData);
 
@@ -31,6 +43,7 @@ describe('authenticationService', () => {
 
       const decoded = jwt.verify(result.token!, process.env.JWT_SECRET!) as Record<string, unknown>;
       expect(decoded.email).toBe('new@example.com');
+      expect(decoded.tv).toBe(0);
 
       const user = await User.findOne({ email: 'new@example.com' });
       expect(user?.gender).toBe('female');
@@ -240,9 +253,52 @@ describe('authenticationService', () => {
           username: 'taken_name',
         }),
       ).rejects.toMatchObject({
-        statusCode: 400,
-        message: 'Username is already taken',
+        statusCode: 409,
+        message: 'This username is already taken.',
       });
+    });
+
+    it('treats usernames as case-insensitive', async () => {
+      await authenticationService.register({ ...validData, username: 'albert' });
+
+      await expect(
+        authenticationService.register({ ...validData, email: 'second@example.com', username: 'Albert' }),
+      ).rejects.toMatchObject({ statusCode: 409, message: 'This username is already taken.' });
+    });
+
+    it('generates a username when the field is empty', async () => {
+      const result = await authenticationService.register({ ...validData, username: '' });
+
+      expect(result.user?.username).toMatch(/^[a-z0-9_]{3,30}$/);
+    });
+
+    it('lets only one of two simultaneous sign-ups claim the same username', async () => {
+      await User.init(); // make sure the unique index exists in the in-memory database
+
+      const results = await Promise.allSettled([
+        authenticationService.register({ ...validData, email: 'one@example.com', username: 'race_name' }),
+        authenticationService.register({ ...validData, email: 'two@example.com', username: 'race_name' }),
+      ]);
+
+      expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
+      const rejected = results.find((r): r is PromiseRejectedResult => r.status === 'rejected');
+      expect(rejected?.reason).toMatchObject({ statusCode: 409, message: 'This username is already taken.' });
+      expect(await User.countDocuments({ username: 'race_name' })).toBe(1);
+    });
+
+    it('picks another generated username when two sign-ups generate the same one at once', async () => {
+      await User.init();
+      vi.spyOn(Math, 'random').mockReturnValue(0.5); // both sign-ups generate the same candidate
+
+      const results = await Promise.allSettled([
+        authenticationService.register({ ...validData, email: 'gen1@example.com', username: undefined }),
+        authenticationService.register({ ...validData, email: 'gen2@example.com', username: undefined }),
+      ]);
+
+      expect(results.every((r) => r.status === 'fulfilled')).toBe(true);
+      const usernames = (await User.find({ email: /^gen/ })).map((u) => u.username);
+      expect(new Set(usernames).size).toBe(2);
+      vi.restoreAllMocks();
     });
   });
 
@@ -257,6 +313,30 @@ describe('authenticationService', () => {
       expect(result.success).toBe(true);
       expect(result.token).toBeDefined();
       expect(result.user?.email).toBe('login@test.com');
+    });
+
+    it('signs the token with the current tokenVersion', async () => {
+      const user = await createTestUser({ email: 'versioned@test.com', password: 'TestPass123' });
+      await User.updateOne({ _id: user._id }, { $inc: { tokenVersion: 2 } });
+
+      const result = await authenticationService.login({
+        email: 'versioned@test.com',
+        password: 'TestPass123',
+      });
+
+      const decoded = jwt.verify(result.token!, process.env.JWT_SECRET!) as Record<string, unknown>;
+      expect(decoded.tv).toBe(2);
+    });
+
+    it('does not return tokenVersion in the user payload', async () => {
+      await createTestUser({ email: 'payload@test.com', password: 'TestPass123' });
+
+      const result = await authenticationService.login({
+        email: 'payload@test.com',
+        password: 'TestPass123',
+      });
+
+      expect(result.user).not.toHaveProperty('tokenVersion');
     });
 
     it('logs in with mixed-case email', async () => {

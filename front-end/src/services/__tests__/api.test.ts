@@ -1,5 +1,6 @@
-import { describe, expect, it, beforeEach } from 'vitest';
-import api, { blockAPI, feedbackAPI, supportAPI } from '../api';
+import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest';
+import { AxiosError, type AxiosResponse } from 'axios';
+import api, { blockAPI, feedbackAPI, supportAPI, setSessionEndedHandler } from '../api';
 
 const postWithAdapter = async (data: unknown, headers?: Record<string, string>) => {
   let capturedUrl: string | undefined;
@@ -282,5 +283,55 @@ describe('blockAPI', () => {
 
     expect(url).toBe(`/block/unblock/${userId}`);
     expect(method).toBe('delete');
+  });
+});
+
+describe('session revoked handling', () => {
+  const respondWith = (status: number, data: unknown) => {
+    api.defaults.adapter = (config) => {
+      const response = { data, status, statusText: '', headers: {}, config } as AxiosResponse;
+      return Promise.reject(new AxiosError('Request failed', 'ERR_BAD_REQUEST', config, null, response));
+    };
+  };
+
+  afterEach(() => {
+    api.defaults.adapter = undefined;
+    setSessionEndedHandler(null);
+  });
+
+  it('reports an invalid or revoked token', async () => {
+    const handler = vi.fn();
+    setSessionEndedHandler(handler);
+    respondWith(401, { success: false, code: 'INVALID_TOKEN', message: 'Invalid token' });
+
+    await expect(api.get('/profile/me')).rejects.toBeInstanceOf(AxiosError);
+    expect(handler).toHaveBeenCalledExactlyOnceWith('invalid');
+  });
+
+  it('reports a session ended by deactivation', async () => {
+    const handler = vi.fn();
+    setSessionEndedHandler(handler);
+    respondWith(401, { success: false, code: 'ACCOUNT_DEACTIVATED', message: 'Your account is deactivated' });
+
+    await expect(api.get('/profile/me')).rejects.toBeInstanceOf(AxiosError);
+    expect(handler).toHaveBeenCalledExactlyOnceWith('deactivated');
+  });
+
+  it('ignores other 401s, such as a wrong current password', async () => {
+    const handler = vi.fn();
+    setSessionEndedHandler(handler);
+    respondWith(401, { success: false, message: 'Current password is incorrect' });
+
+    await expect(api.post('/settings/account/deactivate', {})).rejects.toBeInstanceOf(AxiosError);
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it('ignores a deactivated-account 403', async () => {
+    const handler = vi.fn();
+    setSessionEndedHandler(handler);
+    respondWith(403, { success: false, code: 'ACCOUNT_DEACTIVATED' });
+
+    await expect(api.get('/matching')).rejects.toBeInstanceOf(AxiosError);
+    expect(handler).not.toHaveBeenCalled();
   });
 });

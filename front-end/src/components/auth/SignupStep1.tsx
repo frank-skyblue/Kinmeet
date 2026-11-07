@@ -2,6 +2,10 @@ import React from "react";
 import { authAPI } from "../../services/api";
 import { getErrorMessage } from "../../utils/error";
 import { PASSWORD_HINT, PASSWORD_REGEX } from "../../constants/validation";
+import { primaryActionClass, textFieldClass } from '../../constants/ui';
+import PasswordInputField from "../common/PasswordInputField";
+import { useUsernameAvailability } from "../../hooks/useUsernameAvailability";
+import { handleLowercaseInput } from "../../utils/username";
 
 const DUPLICATE_EMAIL_MESSAGE =
   "This email is already registered. Please log in instead.";
@@ -19,7 +23,6 @@ interface SignupStep1Props {
   setError: React.Dispatch<React.SetStateAction<string>>;
 }
 
-const USERNAME_PATTERN = /^[a-z0-9_]{3,30}$/;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const SignupStep1: React.FC<SignupStep1Props> = ({
@@ -34,6 +37,17 @@ const SignupStep1: React.FC<SignupStep1Props> = ({
   onNext,
   setError,
 }) => {
+  // Live availability check; an empty username is fine (one is generated).
+  const { status: usernameStatus, message: usernameMessage, confirm: confirmUsername } =
+    useUsernameAvailability(username);
+
+  /** Blocks Next on an invalid or taken username; re-checks if a check is pending or failed. */
+  const ensureUsernameAllowed = async (): Promise<boolean> => {
+    const problem = await confirmUsername();
+    if (problem) setError(problem);
+    return problem === null;
+  };
+
   const validate = (): boolean => {
     if (!email) {
       setError("Please enter your email address.");
@@ -55,13 +69,6 @@ const SignupStep1: React.FC<SignupStep1Props> = ({
       setError("Please enter a valid email address.");
       return false;
     }
-    const trimmedUsername = username.trim();
-    if (trimmedUsername !== "" && !USERNAME_PATTERN.test(trimmedUsername.toLowerCase())) {
-      setError(
-        "Username must be 3-30 characters using lowercase letters, numbers, or underscores",
-      );
-      return false;
-    }
     if (password !== confirmPassword) {
       setError("Passwords do not match");
       return false;
@@ -76,6 +83,7 @@ const SignupStep1: React.FC<SignupStep1Props> = ({
   const handleNext = async () => {
     setError("");
     if (!validate()) return;
+    if (!(await ensureUsernameAllowed())) return;
 
     try {
       const result = await authAPI.checkEmail(email);
@@ -95,14 +103,14 @@ const SignupStep1: React.FC<SignupStep1Props> = ({
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold font-montserrat text-kin-navy mb-4">
+      <h2 className="text-2xl font-bold font-montserrat text-foreground mb-4">
         Create Account
       </h2>
 
       <div>
         <label
           htmlFor="email"
-          className="block text-sm font-medium font-inter text-kin-navy mb-2"
+          className="block text-sm font-medium font-inter text-foreground mb-2"
         >
           Email
         </label>
@@ -111,7 +119,7 @@ const SignupStep1: React.FC<SignupStep1Props> = ({
           id="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
+          className={`${textFieldClass} w-full px-4 py-3 rounded-kin-sm transition`}
           placeholder="you@example.com"
           required
         />
@@ -120,7 +128,7 @@ const SignupStep1: React.FC<SignupStep1Props> = ({
       <div>
         <label
           htmlFor="username"
-          className="block text-sm font-medium font-inter text-kin-navy mb-2"
+          className="block text-sm font-medium font-inter text-foreground mb-2"
         >
           Username
         </label>
@@ -128,35 +136,47 @@ const SignupStep1: React.FC<SignupStep1Props> = ({
           type="text"
           id="username"
           value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
+          onChange={(e) => handleLowercaseInput(e, setUsername)}
+          className={`${textFieldClass} w-full px-4 py-3 rounded-kin-sm transition`}
           placeholder="e.g., jane_doe"
           autoComplete="username"
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
           maxLength={30}
         />
-        <p className="text-xs text-kin-teal font-inter mt-1">
+        <p className="text-xs text-muted font-inter mt-1">
           Optional. 3-30 lowercase letters, numbers, or underscores. We'll
           create one for you if you leave this blank.
         </p>
+        {usernameMessage && (
+          <p
+            aria-live="polite"
+            data-testid="username-status"
+            className={`text-sm font-inter mt-1 ${
+              usernameStatus === "available"
+                ? "text-green-600"
+                : usernameStatus === "checking"
+                  ? "text-muted"
+                  : "text-kin-coral"
+            }`}
+          >
+            {usernameMessage}
+          </p>
+        )}
       </div>
 
       <div>
         <label
           htmlFor="password"
-          className="block text-sm font-medium font-inter text-kin-navy mb-2"
+          className="block text-sm font-medium font-inter text-foreground mb-2"
         >
           Password
         </label>
-        <input
-          type="password"
-          id="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
-          placeholder="••••••••"
-          required
-        />
-        <p className="text-xs text-kin-teal font-inter mt-1">
+
+				<PasswordInputField id="password" value={password} setPassword={setPassword} required />
+
+        <p className="text-xs text-muted font-inter mt-1">
           Must be at least 8 characters with uppercase, lowercase, and
           number
         </p>
@@ -165,25 +185,18 @@ const SignupStep1: React.FC<SignupStep1Props> = ({
       <div>
         <label
           htmlFor="confirmPassword"
-          className="block text-sm font-medium font-inter text-kin-navy mb-2"
+          className="block text-sm font-medium font-inter text-foreground mb-2"
         >
           Confirm Password
         </label>
-        <input
-          type="password"
-          id="confirmPassword"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
-          placeholder="••••••••"
-          required
-        />
+
+				<PasswordInputField id="confirmPassword" value={confirmPassword} setPassword={setConfirmPassword} />
       </div>
 
       <button
         type="button"
         onClick={handleNext}
-        className="w-full bg-kin-coral text-white py-4 px-6 rounded-kin-sm font-bold font-montserrat text-lg hover:bg-kin-coral-600 focus:ring-4 focus:ring-kin-coral-300 shadow-kin-medium hover:shadow-kin-strong transition-all duration-200 mt-4"
+        className={`${primaryActionClass} w-full py-4 px-6 rounded-kin-sm font-bold font-montserrat text-lg focus:ring-4 focus:ring-ring shadow-kin-medium hover:shadow-kin-strong transition-all duration-200 mt-4`}
       >
         Next
       </button>

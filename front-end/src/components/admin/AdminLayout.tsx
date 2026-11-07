@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import Logo from '../common/Logo';
+import { primaryActionClass } from '../../constants/ui';
 
 export type AdminSection = 'feedback' | 'reports';
 
@@ -26,7 +27,7 @@ const REPORTS_ICON_PATH =
 const navLinkClassName = (active: boolean) =>
   active
     ? 'inline-flex items-center gap-2 px-5 py-2.5 text-base font-medium font-inter rounded-kin-sm text-kin-coral bg-kin-coral-50 shadow-kin-soft'
-    : 'inline-flex items-center gap-2 px-5 py-2.5 text-base font-medium font-inter rounded-kin-sm text-kin-navy hover:bg-kin-beige transition';
+    : 'inline-flex items-center gap-2 px-5 py-2.5 text-base font-medium font-inter rounded-kin-sm text-foreground hover:bg-surface-muted transition';
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({
   children,
@@ -36,13 +37,13 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
   logoutBusy,
 }) => {
   return (
-    <div className="min-h-screen flex flex-col bg-kin-beige">
-      <header className="shrink-0 bg-white shadow-kin-soft border-b border-kin-stone-200">
+    <div className="min-h-screen flex flex-col bg-canvas">
+      <header className="shrink-0 bg-surface shadow-kin-soft border-b border-border">
         <div className={shellClassName}>
           <div className="flex min-h-18 flex-wrap items-center gap-x-6 gap-y-2 py-2">
             <div className="flex min-w-0 items-center gap-2">
               <Logo size="md" className="shrink-0" />
-              <span className="truncate text-xl font-bold font-montserrat text-kin-navy sm:text-2xl">
+              <span className="truncate text-xl font-bold font-montserrat text-foreground sm:text-2xl">
                 KinMeet
               </span>
             </div>
@@ -71,18 +72,18 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
             </nav>
 
             <div className="ml-auto flex items-center justify-end gap-3">
-              <span className="inline-flex items-center gap-1.5 text-sm font-medium font-inter text-kin-navy">
+              <span className="inline-flex items-center gap-1.5 text-sm font-medium font-inter text-foreground">
                 <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={SHIELD_ICON_PATH} />
                 </svg>
                 Admin
               </span>
-              <span className="h-5 w-px shrink-0 bg-kin-stone-300" aria-hidden />
+              <span className="h-5 w-px shrink-0 bg-border" aria-hidden />
               <button
                 type="button"
                 onClick={onLogout}
                 disabled={logoutBusy}
-                className="text-sm font-semibold font-montserrat text-kin-navy hover:text-kin-coral cursor-pointer transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="text-sm font-semibold font-montserrat text-foreground hover:text-kin-coral cursor-pointer transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Log out
               </button>
@@ -99,7 +100,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
               type="button"
               onClick={onLogout}
               disabled={logoutBusy}
-              className="self-start sm:self-auto bg-kin-coral text-white px-4 py-2 rounded-kin-sm font-semibold font-montserrat hover:bg-kin-coral-600 transition disabled:opacity-50 cursor-pointer"
+              className={`${primaryActionClass} self-start sm:self-auto px-4 py-2 rounded-kin-sm font-semibold font-montserrat transition disabled:opacity-50 cursor-pointer`}
             >
               Retry log out
             </button>

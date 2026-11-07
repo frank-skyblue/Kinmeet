@@ -25,6 +25,8 @@ const ConnectionRequestSchema: Schema<IConnectionRequest> = new Schema({
 
 // Ensure one request per sender-receiver pair
 ConnectionRequestSchema.index({ sender: 1, receiver: 1 }, { unique: true });
+// Incoming requests; the compound index above only serves lookups by sender.
+ConnectionRequestSchema.index({ receiver: 1 });
 
 export const ConnectionRequest = mongoose.model<IConnectionRequest>('ConnectionRequest', ConnectionRequestSchema);
 

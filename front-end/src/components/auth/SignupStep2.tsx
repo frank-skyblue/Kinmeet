@@ -15,6 +15,7 @@ import {
 import type { ResolvedCityLocation } from "../../utils/citySearch";
 import { ABOUT_MAX_LENGTH } from "../../constants/validation";
 import { dobIsoBoundsUtc } from "../../utils/age";
+import { primaryActionClass, secondaryActionClass, textFieldClass } from '../../constants/ui';
 
 interface SignupStep2Props {
   firstName: string;
@@ -145,7 +146,7 @@ const SignupStep2: React.FC<SignupStep2Props> = ({
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold font-montserrat text-kin-navy mb-4">
+      <h2 className="text-2xl font-bold font-montserrat text-foreground mb-4">
         Profile Information
       </h2>
 
@@ -156,10 +157,10 @@ const SignupStep2: React.FC<SignupStep2Props> = ({
             <img
               src={photoPreview}
               alt="Profile preview"
-              className="w-24 h-24 rounded-full object-cover border-4 border-kin-stone-200"
+              className="w-24 h-24 rounded-full object-cover border-4 border-border"
             />
           ) : (
-            <div className="w-24 h-24 rounded-full border-4 border-dashed border-kin-stone-300 bg-kin-stone-100 flex items-center justify-center">
+            <div className="w-24 h-24 rounded-full border-4 border-dashed border-border bg-surface-muted flex items-center justify-center">
               <svg
                 className="w-8 h-8 text-kin-stone-400"
                 fill="none"
@@ -186,7 +187,7 @@ const SignupStep2: React.FC<SignupStep2Props> = ({
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="px-4 py-2 text-sm font-semibold font-inter text-kin-teal border border-kin-teal rounded-kin-sm hover:bg-kin-teal hover:text-white transition"
+            className="px-4 py-2 text-sm font-semibold font-inter text-muted border border-kin-teal rounded-kin-sm hover:bg-kin-teal hover:text-white transition"
             aria-label="Upload profile photo"
           >
             {photoPreview ? "Change Photo" : "Add Photo"}
@@ -210,7 +211,7 @@ const SignupStep2: React.FC<SignupStep2Props> = ({
           className="hidden"
           aria-hidden="true"
         />
-        <p className="text-xs text-kin-teal font-inter">
+        <p className="text-xs text-muted font-inter">
           Optional. JPEG, PNG, WebP, or GIF. Max 5 MB.
         </p>
       </div>
@@ -219,7 +220,7 @@ const SignupStep2: React.FC<SignupStep2Props> = ({
         <div>
           <label
             htmlFor="firstName"
-            className="block text-sm font-medium font-inter text-kin-navy mb-2"
+            className="block text-sm font-medium font-inter text-foreground mb-2"
           >
             First Name *
           </label>
@@ -228,7 +229,7 @@ const SignupStep2: React.FC<SignupStep2Props> = ({
             id="firstName"
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
-            className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
+            className={`${textFieldClass} w-full px-4 py-3 rounded-kin-sm transition`}
             required
           />
         </div>
@@ -236,7 +237,7 @@ const SignupStep2: React.FC<SignupStep2Props> = ({
         <div>
           <label
             htmlFor="lastName"
-            className="block text-sm font-medium font-inter text-kin-navy mb-2"
+            className="block text-sm font-medium font-inter text-foreground mb-2"
           >
             Last Name *
           </label>
@@ -245,10 +246,10 @@ const SignupStep2: React.FC<SignupStep2Props> = ({
             id="lastName"
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
-            className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter"
+            className={`${textFieldClass} w-full px-4 py-3 rounded-kin-sm transition`}
             required
           />
-          <p className="text-xs text-kin-teal font-inter mt-1">
+          <p className="text-xs text-muted font-inter mt-1">
             Hidden until kin request is accepted
           </p>
         </div>
@@ -257,7 +258,7 @@ const SignupStep2: React.FC<SignupStep2Props> = ({
       <div>
         <label
           htmlFor="about"
-          className="block text-sm font-medium font-inter text-kin-navy mb-2"
+          className="block text-sm font-medium font-inter text-foreground mb-2"
         >
           About You
         </label>
@@ -265,13 +266,13 @@ const SignupStep2: React.FC<SignupStep2Props> = ({
           id="about"
           value={about}
           onChange={(e) => setAbout(e.target.value)}
-          className="w-full px-4 py-3 border border-kin-stone-300 rounded-kin-sm focus:ring-2 focus:ring-kin-coral focus:border-transparent outline-none transition font-inter resize-none"
+          className={`${textFieldClass} w-full px-4 py-3 rounded-kin-sm transition resize-none`}
           placeholder="Tell others a bit about yourself..."
           rows={3}
           maxLength={ABOUT_MAX_LENGTH}
           aria-label="About you"
         />
-        <p className="text-xs text-kin-teal font-inter mt-1">
+        <p className="text-xs text-muted font-inter mt-1">
           {about.length}/{ABOUT_MAX_LENGTH} characters
         </p>
       </div>
@@ -289,8 +290,8 @@ const SignupStep2: React.FC<SignupStep2Props> = ({
         leadingContent={<CountryFlag country={homeCountry} />}
       />
 
-      <div className="border-t border-kin-stone-200 pt-6 space-y-4">
-        <p className="text-sm font-semibold font-montserrat text-kin-navy">
+      <div className="border-t border-border pt-6 space-y-4">
+        <p className="text-sm font-semibold font-montserrat text-foreground">
           Where you live now
         </p>
 
@@ -328,11 +329,11 @@ const SignupStep2: React.FC<SignupStep2Props> = ({
         />
 
         {!manualCountryMode ? (
-          <div className="rounded-kin-sm border border-kin-stone-200 bg-kin-stone-50 px-4 py-3">
-            <p className="text-sm font-medium font-inter text-kin-navy mb-1">
+          <div className="rounded-kin-sm border border-border bg-surface-muted px-4 py-3">
+            <p className="text-sm font-medium font-inter text-foreground mb-1">
               Country
             </p>
-            <p className="text-kin-navy font-inter">
+            <p className="text-foreground font-inter">
               {currentCountry ? (
                 <CountryWithFlag country={currentCountry} />
               ) : (
@@ -342,7 +343,7 @@ const SignupStep2: React.FC<SignupStep2Props> = ({
             <button
               type="button"
               onClick={() => setManualCountryMode(true)}
-              className="mt-2 text-sm font-semibold text-kin-teal hover:text-kin-teal-700 underline"
+              className="mt-2 text-sm font-semibold text-muted hover:text-kin-teal-700 underline"
               aria-label="Pick country and province manually"
             >
               Change country or province manually
@@ -364,7 +365,7 @@ const SignupStep2: React.FC<SignupStep2Props> = ({
             <button
               type="button"
               onClick={() => setManualCountryMode(false)}
-              className="text-sm font-semibold text-kin-teal hover:text-kin-teal-700 underline"
+              className="text-sm font-semibold text-muted hover:text-kin-teal-700 underline"
               aria-label="Use worldwide province list instead"
             >
               Use worldwide province list instead
@@ -397,14 +398,14 @@ const SignupStep2: React.FC<SignupStep2Props> = ({
         <button
           type="button"
           onClick={onBack}
-          className="flex-1 bg-kin-stone-200 text-kin-navy py-4 px-4 rounded-kin-sm font-bold font-montserrat text-lg hover:bg-kin-stone-300 transition-all duration-200 shadow-kin-soft hover:shadow-kin-medium"
+          className={`${secondaryActionClass} flex-1 py-4 px-4 rounded-kin-sm font-bold font-montserrat text-lg transition-all duration-200 shadow-kin-soft hover:shadow-kin-medium`}
         >
           Back
         </button>
         <button
           type="button"
           onClick={handleNext}
-          className="flex-1 bg-kin-coral text-white py-4 px-4 rounded-kin-sm font-bold font-montserrat text-lg hover:bg-kin-coral-600 focus:ring-4 focus:ring-kin-coral-300 shadow-kin-medium hover:shadow-kin-strong transition-all duration-200"
+          className={`${primaryActionClass} flex-1 py-4 px-4 rounded-kin-sm font-bold font-montserrat text-lg focus:ring-4 focus:ring-ring shadow-kin-medium hover:shadow-kin-strong transition-all duration-200`}
         >
           Next
         </button>

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 
 const mockSocket = {
   on: vi.fn(),
@@ -12,6 +12,13 @@ vi.mock('../../services/socketService', () => ({
   socketService: {
     connect: vi.fn(() => mockSocket),
     disconnect: vi.fn(),
+  },
+}));
+
+const mockGetProfile = vi.fn(() => Promise.resolve({ success: true }));
+vi.mock('../../services/api', () => ({
+  profileAPI: {
+    getProfile: () => mockGetProfile(),
   },
 }));
 
@@ -62,6 +69,28 @@ describe('SocketContext', () => {
     await waitFor(() => {
       expect(screen.getByTestId('socket').textContent).toBe('present');
     });
+  });
+
+  const disconnectWith = async (reason: string) => {
+    mockAuthValue = { user: { id: '1' }, isLoading: false };
+    localStorage.setItem('token', 'test-token');
+    renderWithSocket();
+    await waitFor(() => expect(screen.getByTestId('socket').textContent).toBe('present'));
+
+    const onDisconnect = mockSocket.on.mock.calls.find(([event]) => event === 'disconnect')?.[1];
+    act(() => onDisconnect(reason));
+  };
+
+  it('checks the session when the server drops the socket', async () => {
+    mockGetProfile.mockClear();
+    await disconnectWith('io server disconnect');
+    expect(mockGetProfile).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not check the session after a network drop', async () => {
+    mockGetProfile.mockClear();
+    await disconnectWith('transport close');
+    expect(mockGetProfile).not.toHaveBeenCalled();
   });
 
   it('throws when useSocket is used outside provider', () => {

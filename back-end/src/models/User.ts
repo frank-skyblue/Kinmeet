@@ -3,6 +3,23 @@ import bcrypt from 'bcryptjs';
 
 type LookingForType = 'Friendship' | 'Networking' | 'Support';
 
+export const ACCOUNT_STATUSES = ['active', 'deactivated'] as const;
+
+export type AccountStatus = typeof ACCOUNT_STATUSES[number];
+
+export interface ChannelPreferences {
+    email: boolean;
+    push: boolean;
+}
+
+export interface NotificationPreferences {
+    /** Alerts when someone with the same home and current country joins. */
+    newPeopleNearby: ChannelPreferences & {
+        /** When alerts were last turned on from fully off. Earlier arrivals are not "new". */
+        since?: Date;
+    };
+}
+
 export interface IUser extends Document {
     email: string;
     username?: string;
@@ -28,6 +45,14 @@ export interface IUser extends Document {
     gender?: string;
     profileComplete: boolean;
     blockedUsers: Types.ObjectId[];
+    accountStatus: AccountStatus;
+    deactivatedAt?: Date;
+    tokenVersion: number;
+    /** When the user joined their current Discover group (signup, profile completion, or a country change). */
+    groupJoinedAt?: Date;
+    notificationPreferences: NotificationPreferences;
+    /** Last "new people nearby" alert; email and push share one cooldown. */
+    lastNewPeopleAlertAt?: Date;
     _id: Types.ObjectId;
     createdAt: Date;
     updatedAt: Date;
@@ -83,9 +108,33 @@ const UserSchema: Schema<IUser> = new Schema({
     },
     profileComplete: { type: Boolean, default: false },
     blockedUsers: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+    accountStatus: { type: String, enum: ACCOUNT_STATUSES, default: 'active', index: true },
+    deactivatedAt: { type: Date },
+    tokenVersion: { type: Number, default: 0, select: false },
+    groupJoinedAt: { type: Date, select: false },
+    notificationPreferences: {
+        type: new Schema({
+            newPeopleNearby: {
+                type: new Schema({
+                    email: { type: Boolean, default: false },
+                    push: { type: Boolean, default: false },
+                    since: { type: Date },
+                }, { _id: false }),
+                default: () => ({}),
+            },
+        }, { _id: false }),
+        default: () => ({}),
+        select: false,
+    },
+    lastNewPeopleAlertAt: { type: Date, select: false },
 }, {
     timestamps: true
 });
+
+// Discover reads one group (home + current country) newest first.
+UserSchema.index({ homeCountry: 1, currentCountry: 1, createdAt: -1 });
+// The alert sweep looks for groups with recent arrivals. Sparse: older accounts never set it.
+UserSchema.index({ groupJoinedAt: 1 }, { sparse: true });
 
 UserSchema.pre('save', async function () {
     if (!this.isModified('password')) return;
@@ -101,4 +150,10 @@ UserSchema.methods.comparePassword = async function (candidatePassword: string) 
     return bcrypt.compare(candidatePassword, this.password);
 };
 
-export const User = mongoose.model<IUser>('User', UserSchema); 
+export const User = mongoose.model<IUser>('User', UserSchema);
+
+// $ne rather than 'active' so users created before accountStatus existed still match.
+export const ACTIVE_ACCOUNT_FILTER = { accountStatus: { $ne: 'deactivated' } } as const;
+
+export const isAccountDeactivated = async (userId: string): Promise<boolean> =>
+    Boolean(await User.exists({ _id: userId, accountStatus: 'deactivated' }));

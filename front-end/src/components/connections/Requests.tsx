@@ -5,8 +5,10 @@ import { blockAPI, connectionsAPI, getPhotoUrl } from "../../services/api";
 import { getErrorMessage } from "../../utils/error";
 import ActionMenu from "../common/ActionMenu";
 import ReportUserModal from "../common/ReportUserModal";
-import type { ConnectionRequestItem } from "../../types";
+import type { ConnectionRequestItem, ConnectionRequestSender } from "../../types";
 import ConnectionsPaginationNav from "./ConnectionsPaginationNav";
+import { primaryActionClass, secondaryActionClass } from "../../constants/ui"
+import CountryFlag from "../common/CountryFlag";
 
 export type RequestsProps = {
   /** When true, used inside ConnectionsHub: no page chrome, no outer padding/bg. */
@@ -50,6 +52,29 @@ const useRequestsPageSize = (): number => {
   }, []);
 
   return pageSize;
+};
+
+/** Whole years since birth, or undefined if the date is missing or can't be read. */
+const getAge = (dateOfBirth?: string): number | undefined => {
+  if (!dateOfBirth) return undefined;
+
+  const birth = new Date(dateOfBirth);
+  if (Number.isNaN(birth.getTime())) return undefined;
+
+  // The stored UTC date is the birth date; in local time, some timezones would see a different day.
+  const today = new Date();
+  const age = today.getFullYear() - birth.getUTCFullYear();
+  const hadBirthdayThisYear =
+    today.getMonth() > birth.getUTCMonth() ||
+    (today.getMonth() === birth.getUTCMonth() && today.getDate() >= birth.getUTCDate());
+
+  return hadBirthdayThisYear ? age : age - 1;
+};
+
+/** "Marie, 30", or just "Marie" without an age. Last names stay hidden until people connect. */
+const formatSenderName = ({ firstName, dateOfBirth }: ConnectionRequestSender): string => {
+  const age = getAge(dateOfBirth);
+  return age === undefined ? firstName : `${firstName}, ${age}`;
 };
 
 const Requests: React.FC<RequestsProps> = ({ embedded = false }) => {
@@ -161,12 +186,12 @@ const Requests: React.FC<RequestsProps> = ({ embedded = false }) => {
         className={
           embedded
             ? "flex min-h-48 flex-1 flex-col items-center justify-center"
-            : "flex h-full items-center justify-center bg-kin-beige"
+            : "flex h-full items-center justify-center bg-canvas"
         }
       >
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-kin-coral mx-auto mb-4"></div>
-          <p className="text-kin-navy font-inter">Loading requests...</p>
+          <p className="text-foreground font-inter">Loading requests...</p>
         </div>
       </div>
     );
@@ -174,7 +199,7 @@ const Requests: React.FC<RequestsProps> = ({ embedded = false }) => {
 
   const outerClass = embedded
     ? "flex min-h-0 min-w-0 flex-1 flex-col"
-    : "flex min-h-0 min-w-0 flex-1 flex-col bg-kin-beige px-4 py-4";
+    : "flex min-h-0 min-w-0 flex-1 flex-col bg-canvas px-4 py-4";
   const innerClass = embedded
     ? "mx-auto flex w-full max-w-4xl min-h-0 flex-1 flex-col"
     : "mx-auto flex min-h-0 w-full max-w-4xl min-w-0 flex-1 flex-col";
@@ -184,15 +209,15 @@ const Requests: React.FC<RequestsProps> = ({ embedded = false }) => {
       <div className={innerClass}>
         <div className="mb-3 shrink-0 flex min-w-0 flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
           {embedded ? (
-            <h2 className="font-montserrat text-base font-semibold text-kin-navy md:text-lg">
+            <h2 className="font-montserrat text-base font-semibold text-foreground md:text-lg">
               Connection requests
             </h2>
           ) : (
-            <h1 className="font-montserrat text-base font-semibold text-kin-navy md:text-lg">
+            <h1 className="font-montserrat text-base font-semibold text-foreground md:text-lg">
               Connection requests
             </h1>
           )}
-          <span className="shrink-0 text-sm text-kin-teal font-inter">
+          <span className="shrink-0 text-sm text-muted font-inter">
             {requests.length} pending
           </span>
         </div>
@@ -206,10 +231,10 @@ const Requests: React.FC<RequestsProps> = ({ embedded = false }) => {
         {requests.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center py-8 text-center">
             <div className="mb-4 text-5xl">👋</div>
-            <h2 className="mb-2 font-montserrat text-xl font-bold text-kin-navy">
+            <h2 className="mb-2 font-montserrat text-xl font-bold text-foreground">
               No Pending Requests
             </h2>
-            <p className="text-sm text-kin-teal font-inter">
+            <p className="text-sm text-muted font-inter">
               When someone sends you a Meet request, it will appear here
             </p>
           </div>
@@ -220,113 +245,87 @@ const Requests: React.FC<RequestsProps> = ({ embedded = false }) => {
               {paginatedRequests.map((request) => (
                 <article
                   key={request._id}
-                  className="flex min-h-0 min-w-0 flex-col gap-3 rounded-kin-lg bg-white p-3 shadow-kin-soft transition hover:shadow-kin-medium sm:p-3.5"
+                  onClick={() => handleViewProfile(request.sender._id)}
+                  className="flex min-h-0 min-w-0 flex-col gap-3 rounded-kin-lg bg-surface p-3 shadow-kin-soft transition hover:shadow-kin-medium sm:p-3.5 cursor-pointer [&:hover:not(:has(.inner:hover))]:bg-surface-hover"
                 >
-                  <div className="flex min-w-0 shrink-0 gap-3 border-b border-kin-stone-200 pb-3">
-                    {request.sender.photo ? (
-                      <img
-                        src={getPhotoUrl(request.sender.photo)}
-                        alt=""
-                        className="h-12 w-12 shrink-0 rounded-full object-cover ring-1 ring-kin-stone-200 sm:h-14 sm:w-14"
-                      />
-                    ) : (
-                      <div
-                        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-kin-coral to-kin-teal text-base font-bold font-montserrat text-white ring-1 ring-kin-coral-200/50 sm:h-14 sm:w-14"
-                        aria-hidden
-                      >
-                        {request.sender.firstName.charAt(0)}
+                  <div className="min-w-0 shrink-0 gap-3 border-b border-border pb-3">
+                    <div className="relative">
+                      <div className="flex flex-col items-center justify-center gap-3">
+                        {request.sender.photo ? (
+                            <img
+                              src={getPhotoUrl(request.sender.photo)}
+                              alt=""
+                              className="h-12 w-12 shrink-0 rounded-full object-cover ring-1 ring-border sm:h-14 sm:w-14"
+                            />
+                          ) : (
+                            <div
+                              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-kin-coral to-kin-teal text-base font-bold font-montserrat text-white ring-1 ring-kin-coral-200/50 sm:h-14 sm:w-14"
+                              aria-hidden
+                            >
+                              {request.sender.firstName.charAt(0)}
+                            </div>
+                          )}
+                          <div className="w-full min-w-0 text-center">
+                            <h3 className="wrap-break-word font-montserrat text-sm font-bold text-foreground sm:text-base">
+                              {formatSenderName(request.sender)}{" "}
+                              <CountryFlag country={request.sender.homeCountry} />
+                            </h3>
+                          </div>
                       </div>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <h3 className="truncate font-montserrat text-sm font-bold text-kin-navy sm:text-base">
-                        {request.sender.firstName}
-                      </h3>
-                      <p className="mt-0.5 text-xs text-kin-teal font-inter">
-                        Meet request
-                      </p>
-                    </div>
+                      <ActionMenu
+                        size="sm"
+                        className="top-0 right-0 inner self-start"
+                        label={`More actions for ${request.sender.firstName}`}
+                        items={[
+                          {
+                            label: "View Profile",
+                            onSelect: () => handleViewProfile(request.sender._id),
+                          },
+                          {
+                            label: "Report",
+                            onSelect: () =>
+                              setReportTarget({
+                                userId: request.sender._id,
+                                requestId: request._id,
+                                name: request.sender.firstName,
+                              }),
+                            variant: "destructive",
+                          },
+                          {
+                            label:
+                              blockingUserId === request.sender._id
+                                ? "Blocking…"
+                                : "Block",
+                            onSelect: () =>
+                              void handleBlock(
+                                request.sender._id,
+                                request._id,
+                                request.sender.firstName,
+                              ),
+                            variant: "destructive",
+                            disabled: blockingUserId === request.sender._id,
+                          },
+                        ]}
+                      />
 
-                    <ActionMenu
-                      size="sm"
-                      className="self-start"
-                      label={`More actions for ${request.sender.firstName}`}
-                      items={[
-                        {
-                          label: "View Profile",
-                          onSelect: () => handleViewProfile(request.sender._id),
-                        },
-                        {
-                          label: "Report",
-                          onSelect: () =>
-                            setReportTarget({
-                              userId: request.sender._id,
-                              requestId: request._id,
-                              name: request.sender.firstName,
-                            }),
-                          variant: "destructive",
-                        },
-                        {
-                          label:
-                            blockingUserId === request.sender._id
-                              ? "Blocking…"
-                              : "Block",
-                          onSelect: () =>
-                            void handleBlock(
-                              request.sender._id,
-                              request._id,
-                              request.sender.firstName,
-                            ),
-                          variant: "destructive",
-                          disabled: blockingUserId === request.sender._id,
-                        },
-                      ]}
-                    />
+                    </div>
                   </div>
 
                   <div className="flex min-w-0 flex-1 flex-col gap-2.5 text-left">
-                    <p className="flex min-w-0 gap-2 text-xs leading-snug text-kin-navy/85 font-inter">
-                      <span
-                        className="mt-0.5 shrink-0 text-kin-teal"
-                        aria-hidden
-                      >
-                        <svg
-                          className="h-3.5 w-3.5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                          />
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                          />
-                        </svg>
-                      </span>
-                      <span className="min-w-0 wrap-break-word">
-                        {request.sender.homeCountry}
-                        <span className="text-kin-navy/40"> · </span>
-                        {request.sender.currentProvince},{" "}
-                        {request.sender.currentCountry}
-                      </span>
+                    <p className="flex min-w-0 gap-2 text-sm leading-snug text-foreground/85 font-bold">
+                      <span aria-hidden="true">📍</span> {request.sender.currentProvince}, {request.sender.currentCountry} <CountryFlag country={request.sender.currentCountry}/>
                     </p>
 
                     <div className="space-y-2">
                       <div>
-                        <span className="mb-1 block text-xs text-kin-navy/55 font-inter">
+                        <span className="mb-1 block text-xs text-foreground/55 font-inter">
                           Speaks
                         </span>
                         <div className="flex min-w-0 flex-wrap gap-1">
                           {request.sender.languages.map((lang, index) => (
                             <span
                               key={index}
-                              className="rounded-full bg-kin-stone-100 px-2 py-0.5 text-[11px] font-medium leading-none text-kin-navy font-inter"
+                              className="rounded-full bg-surface-muted px-2 py-0.5 text-[11px] font-medium leading-none text-foreground font-inter"
                             >
                               {lang}
                             </span>
@@ -334,7 +333,7 @@ const Requests: React.FC<RequestsProps> = ({ embedded = false }) => {
                         </div>
                       </div>
                       <div>
-                        <span className="mb-1 block text-xs text-kin-navy/55 font-inter">
+                        <span className="mb-1 block text-xs text-foreground/55 font-inter">
                           Looking for
                         </span>
                         <div className="flex min-w-0 flex-wrap gap-1">
@@ -351,11 +350,15 @@ const Requests: React.FC<RequestsProps> = ({ embedded = false }) => {
                     </div>
                   </div>
 
-                  <div className="mt-auto flex w-full shrink-0 items-stretch justify-center gap-2 border-t border-kin-stone-200 pt-3">
+                  <div className="mt-auto flex w-full shrink-0 items-stretch justify-center gap-2 border-t border-border pt-3">
                     <button
                       type="button"
-                      onClick={() => handleAccept(request._id)}
-                      className="flex min-h-10 min-w-0 flex-1 items-center justify-center gap-0 rounded-kin-sm bg-kin-coral px-2 py-2 text-center text-xs font-semibold leading-none font-montserrat text-white shadow-kin-soft transition hover:bg-kin-coral-600 hover:shadow-kin-medium cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral sm:gap-1.5 sm:px-3"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAccept(request._id);
+                        }
+                      }
+                      className={`${primaryActionClass} inner flex min-h-10 min-w-0 flex-1 items-center justify-center gap-0 rounded-kin-sm bg-kin-coral px-2 py-2 text-center text-xs font-semibold leading-none font-montserrat text-white shadow-kin-soft transition hover:bg-kin-coral-600 hover:shadow-kin-medium cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral sm:gap-1.5 sm:px-3`}
                       aria-label="Accept kin request"
                     >
                       <svg
@@ -376,8 +379,12 @@ const Requests: React.FC<RequestsProps> = ({ embedded = false }) => {
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleIgnore(request._id)}
-                      className="flex min-h-10 min-w-0 flex-1 items-center justify-center gap-0 rounded-kin-sm bg-kin-stone-200 px-2 py-2 text-center text-xs font-semibold leading-none font-montserrat text-kin-navy shadow-kin-soft transition hover:bg-kin-stone-300 hover:shadow-kin-medium cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral sm:gap-1.5 sm:px-3"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleIgnore(request._id);
+                        }
+                      }
+                      className={`${secondaryActionClass} inner flex min-h-10 min-w-0 flex-1 items-center justify-center gap-0 rounded-kin-sm bg-kin-stone-200 px-2 py-2 text-center text-xs font-semibold leading-none font-montserrat text-kin-navy shadow-kin-soft transition hover:bg-kin-stone-300 hover:shadow-kin-medium cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kin-coral sm:gap-1.5 sm:px-3`}
                       aria-label="Ignore kin request"
                     >
                       <svg

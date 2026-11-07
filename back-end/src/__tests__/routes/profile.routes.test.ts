@@ -237,4 +237,22 @@ describe('Profile Routes', () => {
       expect(res.body.success).toBe(true);
     });
   });
+
+  describe('PUT /api/profile/me rate limit', () => {
+    it('caps profile updates per user, since country changes alert a whole group', async () => {
+      const user = await createTestUser({ email: 'hopper@test.com' });
+      const token = getAuthToken(user);
+      const update = (i: number) => request(app)
+        .put('/api/profile/me')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ about: `Edit ${i}` });
+
+      for (let i = 0; i < 20; i += 1) {
+        expect((await update(i)).status).toBe(200);
+      }
+      const limited = await update(20);
+
+      expect(limited.status).toBe(429);
+    });
+  });
 });
