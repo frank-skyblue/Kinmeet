@@ -25,7 +25,7 @@ Use **two terminals** from the repo root (after `back-end/.env` and `front-end/.
 | 2        | `front-end/` | `npm run dev` | App `http://localhost:5173` |
 | 3 (optional) | `mobile/` | `npm start` | Expo dev server. Open it on an iPhone from the QR code. See [mobile/README.md](mobile/README.md) |
 
-The front-end expects the API (see `VITE_API_URL` in the README — typically `http://localhost:8080/api`). The mobile app uses `EXPO_PUBLIC_API_URL` (see [mobile/README.md](mobile/README.md)). iOS is the first release target. A physical iPhone needs this Mac's LAN address in that URL. `npm run ios` opens the Simulator.
+The front-end expects the API (see `VITE_API_URL` in the README — typically `http://localhost:8080/api`). The mobile app uses `EXPO_PUBLIC_API_URL`. iOS is the first release target. Day-to-day development uses Expo Go on an iPhone: install the App Store app, sign in to the same Expo account in the terminal and on the phone, and point `EXPO_PUBLIC_API_URL` at this Mac's LAN address. The full steps, including logs and the Network Error when the phone still has `localhost`, are in [mobile/README.md](mobile/README.md). `npm run ios` opens the Simulator.
 
 ---
 

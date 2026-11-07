@@ -147,7 +147,7 @@ Copy `mobile/.env.example` to `mobile/.env`:
 EXPO_PUBLIC_API_URL=http://localhost:8080/api
 ```
 
-On an iPhone, install Expo Go from the App Store, set `EXPO_PUBLIC_API_URL` to this Mac's LAN address, and follow [mobile/README.md](mobile/README.md). `npm run ios` opens the Simulator. The Android emulator uses `http://10.0.2.2:8080/api`.
+On an iPhone, install Expo Go and follow [mobile/README.md](mobile/README.md). `npm start` serves the JavaScript bundle. Set `EXPO_PUBLIC_API_URL` to the LAN address Metro prints (`exp://<lan-ip>:8081`), on port 8080, then restart Metro. `localhost` on the phone is the phone. `npm run ios` opens the Simulator. The Android emulator uses `http://10.0.2.2:8080/api`.
 
 ### 5. Start MongoDB
 

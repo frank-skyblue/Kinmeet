@@ -21,24 +21,45 @@ Expo SDK 58, React Native, TypeScript, React Navigation, NativeWind (Tailwind), 
 | `npm run test:watch` | Jest watch mode |
 | `npm run typecheck` | `tsc --noEmit` |
 
-## Environment
-
-Copy [`.env.example`](./.env.example) to `mobile/.env`:
-
-```env
-EXPO_PUBLIC_API_URL=http://localhost:8080/api
-```
-
-A physical iPhone cannot use `localhost`. Set `EXPO_PUBLIC_API_URL` to your Mac's LAN address, for example `http://192.168.1.20:8080/api`. The iOS Simulator can keep `localhost`. The Android emulator uses `http://10.0.2.2:8080/api`. Native HTTP clients are not limited by the API's browser CORS list.
-
 ## Run on an iPhone
 
-1. Install [Expo Go](https://apps.apple.com/app/expo-go/id982107779) from the App Store. It matches this project's SDK 58.
-2. Create a free Expo account. From `mobile/`, run `npx expo login`. In Expo Go, tap the account icon and sign in to the same account. A physical iPhone will not open the project until both are signed in.
-3. Put the Mac and the iPhone on the same Wi-Fi. In `mobile/.env`, set `EXPO_PUBLIC_API_URL` to the Mac's LAN address.
-4. Start the API, then from `mobile/` run `npm start` and scan the QR code with the iPhone Camera.
+`npm start` runs Metro on the Mac. Metro turns this project's TypeScript into a JavaScript bundle and serves it, usually on port 8081. [Expo Go](https://apps.apple.com/app/expo-go/id982107779) on the iPhone downloads that bundle and runs it. Xcode is not required for this. `npm run ios` opens the Simulator instead, and it is the wrong command for a phone.
 
-`npm run ios` opens the Simulator and is the wrong command for a phone.
+Login and the Profile tab call the API on port 8080. The other screens are placeholders and open with only Metro running.
+
+### One-time setup
+
+1. From the repo root, `nvm use`, then in `mobile/` run `npm ci`.
+2. Install Expo Go from the App Store. The store app matches this project's SDK 58.
+3. Create a free Expo account. From `mobile/`, run `npx expo login`. In Expo Go, tap the account icon and sign in to the same account. A physical iPhone will not open the project until both are signed in.
+4. Copy [`.env.example`](./.env.example) to `mobile/.env`.
+
+### Each session
+
+1. Put the Mac and the iPhone on the same Wi-Fi.
+2. Start the API from `back-end/` with `npm run dev`. It listens on `0.0.0.0:8080`.
+3. From `mobile/`, run `npm start`.
+4. Scan the QR code with the iPhone Camera. Metro prints the bundle address as `exp://<lan-ip>:8081`. That address is how the phone reaches Metro.
+5. For login, set `EXPO_PUBLIC_API_URL` to `http://<lan-ip>:8080/api`, using the same address Metro printed. `localhost` on the phone is the phone, so login shows **Network Error** and the API terminal stays quiet.
+6. `EXPO_PUBLIC_*` values are read when Metro starts. Stop `npm start` and start it again after changing `.env`, then reload the app in Expo Go.
+
+An `Unable to run simctl` line means the iOS Simulator tools are not ready. Expo Go still runs.
+
+Seeded logins are in [onboard.md](../onboard.md). Every seed user uses the password `Password123`.
+
+### Logs
+
+| Where | What shows up |
+| --- | --- |
+| Metro terminal, under "Logs for your project will appear below" | `console` output from the app, and bundle warnings. Press `j` in that terminal to open the JavaScript debugger. |
+| The phone screen | The login error text. The login screen does not print it. |
+| API terminal (`back-end/`) | A request only after the phone reaches the Mac. No new line means the phone never connected. |
+
+### Simulator and a shipped binary
+
+The iOS Simulator can keep `EXPO_PUBLIC_API_URL=http://localhost:8080/api`. Install an iOS Simulator runtime in Xcode (**Settings → Components**), then run `npm run ios`.
+
+A KinMeet app installed on its own, outside Expo Go, is a native binary with this same JavaScript bundle inside it. `npx expo run:ios` compiles that binary with Xcode on this Mac. `eas build --platform ios` compiles it on Expo's servers. The Android emulator reaches the Mac at `http://10.0.2.2:8080/api`. Native HTTP clients are not limited by the API's browser CORS list.
 
 ## Layout
 
