@@ -25,6 +25,13 @@ type ProfileLocationFieldsProps = {
   applyProvinceFromComposite: (composite: string) => void;
 };
 
+const toggleLinkClass =
+  'cursor-pointer font-inter text-sm font-medium text-foreground underline decoration-primary underline-offset-4 transition hover:text-primary-hover';
+
+/**
+ * Where the user lives now. By default one worldwide province search sets both province and
+ * country; "Choose country and province separately" switches to picking them one at a time.
+ */
 const ProfileLocationFields: React.FC<ProfileLocationFieldsProps> = ({
   currentCity,
   setCurrentCity,
@@ -55,62 +62,26 @@ const ProfileLocationFields: React.FC<ProfileLocationFieldsProps> = ({
   };
 
   return (
-    <div className="space-y-4 border-t border-border pt-4">
-      <p className="text-sm font-semibold font-montserrat text-foreground">
-        Where you live now
-      </p>
+    <div className="space-y-5">
+      <div>
+        <h3 className="font-montserrat text-lg font-bold text-foreground">Where You Live Now</h3>
+        <p className="mt-1 font-inter text-sm text-muted">Enter the location where you currently live.</p>
+      </div>
+
       <CitySearchInput
         id="profileCurrentCity"
-        label="City or town (optional)"
+        label="Current City or Town (Optional)"
         currentCity={currentCity}
         setCurrentCity={setCurrentCity}
         onPickCity={onPickCityResolved}
-        helperText="Type a few letters and choose a match to fill country and province"
+        helperText="Choosing your current city fills in your current province and country."
       />
-      <SearchableSelect
-        id="currentProvince"
-        label={
-          manualCountryMode
-            ? 'Province/State'
-            : 'Province/State (search worldwide)'
-        }
-        options={provinceOptions}
-        value={provinceSelectValue}
-        onChange={handleProvinceChange}
-        placeholder={manualCountryMode ? 'e.g., Ontario' : 'e.g., Ontario, Canada'}
-        disabled={manualCountryMode && !currentCountryCode}
-        required
-        searchable="typeahead"
-        helperText={
-          manualCountryMode
-            ? 'Pick your country first if needed, then province'
-            : 'Choosing a row sets your country and province together'
-        }
-      />
-      {!manualCountryMode ? (
-        <div className="rounded-kin-sm border border-border bg-surface-muted px-4 py-3">
-          <p className="text-sm font-medium font-inter text-foreground mb-1">Country</p>
-          <p className="text-foreground font-inter">
-            {currentCountry ? (
-              <CountryWithFlag country={currentCountry} />
-            ) : (
-              '—'
-            )}
-          </p>
-          <button
-            type="button"
-            onClick={() => setManualCountryMode(true)}
-            className="mt-2 text-sm font-semibold text-muted hover:text-kin-teal-700 cursor-pointer underline"
-            aria-label="Pick country and province manually"
-          >
-            Change country or province manually
-          </button>
-        </div>
-      ) : (
-        <div className="space-y-3">
+
+      {manualCountryMode ? (
+        <>
           <SearchableSelect
             id="currentCountry"
-            label="Where You Live Now (Country)"
+            label="Current Country"
             options={COUNTRY_OPTIONS}
             value={currentCountry}
             onChange={onCurrentCountryChange}
@@ -119,15 +90,43 @@ const ProfileLocationFields: React.FC<ProfileLocationFieldsProps> = ({
             searchable="typeahead"
             leadingContent={<CountryFlag country={currentCountry} />}
           />
-          <button
-            type="button"
-            onClick={() => setManualCountryMode(false)}
-            className="text-sm font-semibold text-muted hover:text-kin-teal-700 cursor-pointer underline"
-            aria-label="Use worldwide province list instead"
-          >
-            Use worldwide province list instead
+          <SearchableSelect
+            id="currentProvince"
+            label="Current Province / State"
+            options={provinceOptions}
+            value={provinceSelectValue}
+            onChange={handleProvinceChange}
+            placeholder={currentCountryCode ? 'e.g., Ontario' : 'Choose a country first'}
+            disabled={!currentCountryCode}
+            required
+            searchable="typeahead"
+          />
+          <button type="button" onClick={() => setManualCountryMode(false)} className={toggleLinkClass}>
+            Search provinces worldwide
           </button>
-        </div>
+        </>
+      ) : (
+        <>
+          <SearchableSelect
+            id="currentProvince"
+            label="Current Province / State (Worldwide)"
+            options={provinceOptions}
+            value={provinceSelectValue}
+            onChange={handleProvinceChange}
+            placeholder="e.g., Ontario, Canada"
+            required
+            searchable="typeahead"
+          />
+          <div className="flex items-center justify-between gap-3 rounded-kin-sm bg-surface-muted px-4 py-3 font-inter">
+            <span className="min-w-0 text-foreground">
+              {currentCountry ? <CountryWithFlag country={currentCountry} /> : '—'}
+            </span>
+            <span className="shrink-0 text-sm text-muted">Current Country</span>
+          </div>
+          <button type="button" onClick={() => setManualCountryMode(true)} className={toggleLinkClass}>
+            Choose country and province separately
+          </button>
+        </>
       )}
     </div>
   );
