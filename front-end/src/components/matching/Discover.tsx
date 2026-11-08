@@ -221,21 +221,6 @@ const Discover: React.FC = () => {
               )}
 
               <div className="space-y-1 text-xs md:text-sm font-inter">
-                {(currentMatch.educationLevel || currentMatch.graduationYear) && (
-                  <div className="flex items-center text-muted">
-                    <svg className="w-4 h-4 mr-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5zM12 14v7" />
-                    </svg>
-                    <span className="truncate">
-                      {currentMatch.educationLevel}
-                      {currentMatch.educationLevel && currentMatch.graduationYear && ' · '}
-                      {currentMatch.graduationYear && `Class of ${currentMatch.graduationYear}`}
-                    </span>
-                  </div>
-                )}
-
                 <div className="flex items-center text-muted">
                   <svg className="w-4 h-4 mr-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
