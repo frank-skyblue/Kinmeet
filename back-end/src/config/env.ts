@@ -138,3 +138,54 @@ export const ENABLE_DEVELOPMENT_EMAIL = process.env.ENABLE_DEVELOPMENT_EMAIL?.tr
  * format limits are enforced. Cloudinary must be able to reach it, so it is usually unset locally.
  */
 export const CLOUDINARY_NOTIFICATION_URL = process.env.CLOUDINARY_NOTIFICATION_URL?.trim() || null;
+
+const FIFTEEN_MINUTES_MS = 15 * 60 * 1000;
+
+// express-rate-limit MemoryStore passes the IP window to setInterval.
+// Node treats a delay above 2^31 - 1 ms as 1 ms.
+const MAX_TIMER_DELAY_MS = 2 ** 31 - 1;
+
+// new Date(time) is Invalid Date outside this absolute millisecond range.
+const MAX_JS_TIME_MS = 8_640_000_000_000_000;
+
+// recordFailure sends -maxAttempts to aggregation $slice.
+// This server accepts -2147483648 and rejects -2147483649.
+const MAX_SLICE_COUNT = 2 ** 31;
+
+const maxDateDistanceMs = (): number => MAX_JS_TIME_MS - Date.now();
+
+const parsePositiveInt = (name: string, fallback: number, maximum: number): number => {
+    const raw = process.env[name]?.trim();
+    if (!raw) return fallback;
+    if (!/^[1-9]\d*$/.test(raw)) {
+        throw new Error(`${name} must be a positive integer.`);
+    }
+    const value = Number(raw);
+    // A long digit string can become Infinity, or a nearby safe integer that is not the configured value.
+    if (!Number.isSafeInteger(value) || value <= 0 || String(value) !== raw) {
+        throw new Error(`${name} must be a positive integer in JavaScript's safe range.`);
+    }
+    if (value > maximum) {
+        throw new Error(`${name} must be at most ${maximum}.`);
+    }
+    return value;
+};
+
+// Read on each call so a test can set one threshold without a clock or config framework.
+export const getLoginLockoutConfig = () => {
+    const maxDateDistance = maxDateDistanceMs();
+    return {
+        maxAttempts: parsePositiveInt('LOGIN_LOCKOUT_MAX_ATTEMPTS', 5, MAX_SLICE_COUNT),
+        windowMs: parsePositiveInt('LOGIN_LOCKOUT_WINDOW_MS', FIFTEEN_MINUTES_MS, maxDateDistance),
+        durationMs: parsePositiveInt('LOGIN_LOCKOUT_DURATION_MS', FIFTEEN_MINUTES_MS, maxDateDistance),
+    };
+};
+
+export const getLoginIpLimitConfig = () => ({
+    maxAttempts: parsePositiveInt('LOGIN_IP_MAX_ATTEMPTS', 20, Number.MAX_SAFE_INTEGER),
+    windowMs: parsePositiveInt('LOGIN_IP_WINDOW_MS', FIFTEEN_MINUTES_MS, MAX_TIMER_DELAY_MS),
+});
+
+// Invalid optional values fail at startup instead of on the first sign-in.
+getLoginLockoutConfig();
+getLoginIpLimitConfig();

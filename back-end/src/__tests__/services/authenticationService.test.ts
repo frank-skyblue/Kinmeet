@@ -1,5 +1,8 @@
-import { vi, describe, it, expect } from 'vitest';
-import { authenticationService } from '../../services/authenticationService';
+import { describe, it, expect, vi } from 'vitest';
+import bcrypt from 'bcryptjs';
+import { authenticationService, SIGN_IN_FAILED_MESSAGE, SIGN_IN_LOCKED_MESSAGE } from '../../services/authenticationService';
+import { loginLockoutService } from '../../services/loginLockoutService';
+import { LoginLockout } from '../../models/LoginLockout';
 import { User } from '../../models/User';
 import { createTestUser } from '../helpers';
 import { newPeopleAlertService } from '../../services/newPeopleAlertService';
@@ -375,11 +378,12 @@ describe('authenticationService', () => {
         }),
       ).rejects.toMatchObject({
         statusCode: 401,
-        message: 'Invalid credentials',
+        message: SIGN_IN_FAILED_MESSAGE,
       });
     });
 
     it('rejects nonexistent email', async () => {
+      const compare = vi.spyOn(bcrypt, 'compare');
       await expect(
         authenticationService.login({
           email: 'ghost@test.com',
@@ -387,8 +391,89 @@ describe('authenticationService', () => {
         }),
       ).rejects.toMatchObject({
         statusCode: 401,
-        message: 'Invalid credentials',
+        message: SIGN_IN_FAILED_MESSAGE,
       });
+      expect(compare).toHaveBeenCalled();
+      expect(await User.exists({ email: 'ghost@test.com' })).toBeNull();
+      compare.mockRestore();
+    });
+
+    it('does not sign in when the unknown-email password hash matches', async () => {
+      await expect(
+        authenticationService.login({
+          email: 'ghost-match@test.com',
+          password: 'kinmeet-unknown-email-lockout-dummy-not-a-password',
+        }),
+      ).rejects.toMatchObject({
+        statusCode: 401,
+        message: SIGN_IN_FAILED_MESSAGE,
+      });
+    });
+
+    it('still rejects a wrong password when the security log throws', async () => {
+      await createTestUser({ email: 'log-down@test.com', password: 'TestPass123' });
+      const info = vi.spyOn(console, 'info').mockImplementation(() => {
+        throw new Error('log down');
+      });
+
+      await expect(
+        authenticationService.login({
+          email: 'log-down@test.com',
+          password: 'WrongPass1',
+        }),
+      ).rejects.toMatchObject({
+        statusCode: 401,
+        message: SIGN_IN_FAILED_MESSAGE,
+      });
+      info.mockRestore();
+    });
+
+    it('does not issue a token when a lock lands during the password check', async () => {
+      const email = 'race@test.com';
+      await createTestUser({ email, password: 'TestPass123' });
+
+      let releaseCompare: (value: boolean) => void = () => undefined;
+      const gate = new Promise<boolean>((resolve) => {
+        releaseCompare = resolve;
+      });
+      let markStarted: () => void = () => undefined;
+      const started = new Promise<void>((resolve) => {
+        markStarted = resolve;
+      });
+      let opened = false;
+      const compare = vi.spyOn(bcrypt, 'compare').mockImplementation(() => {
+        if (!opened) {
+          opened = true;
+          markStarted();
+        }
+        return gate;
+      });
+
+      try {
+        const pending = authenticationService.login({ email, password: 'TestPass123' });
+        await started;
+
+        for (let attempt = 0; attempt < 5; attempt += 1) {
+          await loginLockoutService.recordFailure(email);
+        }
+        const locked = await LoginLockout.findOne({ email });
+        expect(locked?.lockedUntil).toBeInstanceOf(Date);
+
+        releaseCompare(true);
+        await expect(pending).rejects.toMatchObject({
+          statusCode: 401,
+          message: SIGN_IN_LOCKED_MESSAGE,
+        });
+
+        const after = await LoginLockout.findOne({ email });
+        expect(after?.failedAt.map((at) => at.getTime())).toEqual(
+          locked?.failedAt.map((at) => at.getTime()),
+        );
+        expect(after?.lockedUntil?.getTime()).toBe(locked?.lockedUntil?.getTime());
+        expect(after?.expiresAt.getTime()).toBe(locked?.expiresAt.getTime());
+      } finally {
+        compare.mockRestore();
+      }
     });
   });
 
