@@ -28,7 +28,18 @@ const config: ExpoConfig = {
     favicon: './assets/favicon.png',
     bundler: 'metro',
   },
-  plugins: ['expo-secure-store', 'expo-status-bar'],
+  plugins: [
+    'expo-secure-store',
+    'expo-status-bar',
+    [
+      'expo-image-picker',
+      {
+        photosPermission: 'Allow KinMeet to access your photos so you can add a profile photo.',
+        cameraPermission: false,
+        microphonePermission: false,
+      },
+    ],
+  ],
 };
 
 export default config;
