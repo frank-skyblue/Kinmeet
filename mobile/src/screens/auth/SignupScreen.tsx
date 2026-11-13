@@ -49,6 +49,9 @@ export const SignupScreen = ({ navigation }: SignupScreenProps) => {
 
   const handleFormChange = (changes: Partial<SignupForm>) => {
     setForm((prev) => ({ ...prev, ...changes }));
+    // An edit invalidates this step's earlier checks, so later steps can't be reached from the
+    // indicator until Next re-runs them. Answers on later steps are kept.
+    setMaxReachedStep(step);
   };
 
   /** Errors show above the form, so scroll up to them (the button that caused one is at the bottom). */

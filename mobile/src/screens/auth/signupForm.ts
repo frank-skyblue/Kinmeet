@@ -13,12 +13,11 @@ export type SignupForm = {
   lastName: string;
   about: string;
   homeCountry: string;
-  currentCity: string;
+  /** Asked first: the city search and province list only cover this country. */
   currentCountry: string;
   currentCountryCode: string;
+  currentCity: string;
   currentProvince: string;
-  /** false: pick province from a worldwide list (sets the country too); true: country first, then province. */
-  manualCountryMode: boolean;
   dateOfBirth: string;
   gender: string;
   // Step 3
@@ -40,11 +39,10 @@ export const INITIAL_SIGNUP_FORM: SignupForm = {
   lastName: '',
   about: '',
   homeCountry: '',
-  currentCity: '',
   currentCountry: '',
   currentCountryCode: '',
+  currentCity: '',
   currentProvince: '',
-  manualCountryMode: false,
   dateOfBirth: '',
   gender: '',
   industry: '',

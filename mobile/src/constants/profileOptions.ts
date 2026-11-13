@@ -206,80 +206,18 @@ export const getCountryCode = (countryName: string): string => {
   return country?.isoCode ?? '';
 };
 
+/** Saved as the province for countries with no subdivisions in the data (same value the web uses). */
+export const NO_PROVINCE = 'N/A';
+
+/** Provinces/states of one country, or a single "no subdivision" option if it has none. */
 export const getProvinceOptions = (countryCode: string): SelectOption[] => {
   if (!countryCode) return [];
   const states = State.getStatesOfCountry(countryCode);
   if (states.length > 0) {
     return states.map((s) => ({ value: s.name, label: s.name }));
   }
-  const country = Country.getAllCountries().find((c) => c.isoCode === countryCode);
-  return [{ value: 'N/A', label: `${country?.name ?? 'This country'} (no subdivision)` }];
-};
-
-const PROVINCE_COMPOSITE_NONE = '__NONE__';
-
-let globalProvinceOptionsCache: SelectOption[] | null = null;
-
-/** All states worldwide for signup: value `countryIso|stateIso`, label `State, Country`. */
-export const getGlobalProvinceOptions = (): SelectOption[] => {
-  if (globalProvinceOptionsCache) return globalProvinceOptionsCache;
-  const options: SelectOption[] = [];
-  for (const c of Country.getAllCountries()) {
-    const states = State.getStatesOfCountry(c.isoCode);
-    if (states.length > 0) {
-      for (const s of states) {
-        options.push({
-          value: `${c.isoCode}|${s.isoCode}`,
-          label: `${s.name}, ${c.name}`,
-        });
-      }
-    } else {
-      options.push({
-        value: `${c.isoCode}|${PROVINCE_COMPOSITE_NONE}`,
-        label: `${c.name} (no subdivision)`,
-      });
-    }
-  }
-  options.sort((a, b) => a.label.localeCompare(b.label));
-  globalProvinceOptionsCache = options;
-  return globalProvinceOptionsCache;
-};
-
-export type ParsedProvinceComposite = {
-  countryCode: string;
-  countryName: string;
-  provinceName: string;
-};
-
-/** Parse SearchableSelect value from getGlobalProvinceOptions. */
-export const parseProvinceComposite = (composite: string): ParsedProvinceComposite | null => {
-  const pipe = composite.indexOf('|');
-  if (pipe <= 0) return null;
-  const countryCode = composite.slice(0, pipe);
-  const statePart = composite.slice(pipe + 1);
   const country = Country.getCountryByCode(countryCode);
-  if (!country) return null;
-  if (statePart === PROVINCE_COMPOSITE_NONE) {
-    return { countryCode, countryName: country.name, provinceName: 'N/A' };
-  }
-  const state = State.getStateByCodeAndCountry(statePart, countryCode);
-  if (!state) return null;
-  return { countryCode, countryName: country.name, provinceName: state.name };
-};
-
-/** Value for SearchableSelect given stored country code + province display name. */
-export const findProvinceCompositeValue = (
-  countryCode: string,
-  provinceName: string,
-): string => {
-  if (!countryCode) return '';
-  if (provinceName === 'N/A') {
-    return `${countryCode}|${PROVINCE_COMPOSITE_NONE}`;
-  }
-  const states = State.getStatesOfCountry(countryCode);
-  const s = states.find((x) => x.name === provinceName);
-  if (!s) return '';
-  return `${countryCode}|${s.isoCode}`;
+  return [{ value: NO_PROVINCE, label: `${country?.name ?? 'This country'} (no subdivision)` }];
 };
 
 /** Flag emoji for a country name from the list above, or '' if unknown. */

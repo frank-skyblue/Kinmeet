@@ -9,7 +9,8 @@ import {
 import { PLACEHOLDER_COLOR, fieldBoxClass } from './FormField';
 import { FieldLabel } from './FieldLabel';
 
-const SEARCH_DELAY_MS = 250;
+// Short pause so a fast typist doesn't trigger a search per letter.
+const SEARCH_DELAY_MS = 150;
 const MAX_SUGGESTIONS = 8;
 
 type Suggestion = { key: string; label: string; resolved: ResolvedCityLocation };
@@ -17,23 +18,23 @@ type Suggestion = { key: string; label: string; resolved: ResolvedCityLocation }
 type CityFieldProps = {
   label: string;
   required?: boolean;
+  /** ISO code of the chosen country; suggestions only come from it. Empty disables the field. */
+  countryCode: string;
   value: string;
   onChangeText: (value: string) => void;
-  /** The user picked a suggestion: fills country and province too. */
+  /** The user picked a suggestion: fills the province too. */
   onPickCity: (resolved: ResolvedCityLocation) => void;
-  /** The user typed instead of picking, so any previously filled country/province no longer applies. */
-  onManualEdit?: () => void;
   helperText?: string;
 };
 
-/** City text field with suggestions from the country-state-city list (port of the web CitySearchInput). */
+/** City text field with suggestions from the chosen country's cities (country-state-city). */
 export const CityField = ({
   label,
   required = false,
+  countryCode,
   value,
   onChangeText,
   onPickCity,
-  onManualEdit,
   helperText,
 }: CityFieldProps) => {
   const [isFocused, setIsFocused] = useState(false);
@@ -42,18 +43,17 @@ export const CityField = ({
   const [justPicked, setJustPicked] = useState(false);
 
   useEffect(() => {
-    if (justPicked || !isFocused) {
+    if (justPicked || !isFocused || !countryCode) {
       setSuggestions([]);
       return;
     }
-    // Searching ~150k cities is too slow to run on every keystroke.
     const timer = setTimeout(() => {
       const next: Suggestion[] = [];
-      for (const city of searchCities(value, MAX_SUGGESTIONS)) {
+      for (const city of searchCities(value, countryCode, MAX_SUGGESTIONS)) {
         const resolved = resolveCityLocation(city);
         if (resolved) {
           next.push({
-            key: `${city.name}|${city.countryCode}|${city.stateCode}`,
+            key: `${city.name}|${city.stateCode}`,
             label: formatCityOptionLabel(city),
             resolved,
           });
@@ -62,12 +62,11 @@ export const CityField = ({
       setSuggestions(next);
     }, SEARCH_DELAY_MS);
     return () => clearTimeout(timer);
-  }, [value, isFocused, justPicked]);
+  }, [value, isFocused, justPicked, countryCode]);
 
   const handleChangeText = (text: string) => {
     setJustPicked(false);
     onChangeText(text);
-    onManualEdit?.();
   };
 
   const handlePick = (suggestion: Suggestion) => {
@@ -81,15 +80,19 @@ export const CityField = ({
       <FieldLabel label={label} required={required} />
       <TextInput
         accessibilityLabel={label}
+        accessibilityState={{ disabled: !countryCode }}
+        editable={Boolean(countryCode)}
         value={value}
         onChangeText={handleChangeText}
-        placeholder="e.g., Toronto"
+        placeholder={countryCode ? 'e.g., Toronto' : 'Choose a country first'}
         placeholderTextColor={PLACEHOLDER_COLOR}
         autoCorrect={false}
         autoComplete="off"
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
-        className={`h-12 ${fieldBoxClass(isFocused)} text-[16px] text-kin-navy`}
+        className={`h-12 ${fieldBoxClass(isFocused)} text-[16px] text-kin-navy ${
+          countryCode ? '' : 'opacity-50'
+        }`}
       />
       {suggestions.length > 0 ? (
         <View className="mt-1 overflow-hidden rounded-xl border border-kin-stone-300 bg-white">

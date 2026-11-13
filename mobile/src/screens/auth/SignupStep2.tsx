@@ -1,24 +1,23 @@
+import { useMemo } from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { BirthdayField } from '../../components/common/BirthdayField';
 import { Button } from '../../components/common/Button';
 import { CityField } from '../../components/common/CityField';
-import { CountryFlag, CountryWithFlag } from '../../components/common/CountryFlag';
+import { CountryFlag } from '../../components/common/CountryFlag';
 import { FormField } from '../../components/common/FormField';
 import { SelectField } from '../../components/common/SelectField';
 import {
   COUNTRY_OPTIONS,
   HOME_COUNTRY_OPTIONS,
+  NO_PROVINCE,
   SIGNUP_GENDER_OPTIONS,
-  findProvinceCompositeValue,
   getCountryCode,
-  getGlobalProvinceOptions,
   getProvinceOptions,
-  parseProvinceComposite,
 } from '../../constants/profileOptions';
 import { ABOUT_MAX_LENGTH, ALLOWED_IMAGE_TYPES, MAX_PHOTO_SIZE } from '../../constants/validation';
 import { dobIsoBoundsUtc } from '../../utils/age';
-import type { ResolvedCityLocation } from '../../utils/citySearch';
+import { getCityProvinces, type ResolvedCityLocation } from '../../utils/citySearch';
 import { getErrorMessage } from '../../utils/error';
 import type { SignupStepProps } from './signupForm';
 
@@ -30,13 +29,20 @@ type SignupStep2Props = SignupStepProps & {
 export const SignupStep2 = ({ form, onChange, setError, onNext, onBack }: SignupStep2Props) => {
   const { minIsoUtc, todayIsoUtc } = dobIsoBoundsUtc();
 
-  const provinceOptions = form.manualCountryMode
-    ? getProvinceOptions(form.currentCountryCode)
-    : getGlobalProvinceOptions();
+  const countryProvinceOptions = getProvinceOptions(form.currentCountryCode);
+  // Countries without subdivisions in the data (e.g. Aruba) get a single "no subdivision" option.
+  const countryHasProvinces = countryProvinceOptions.some((option) => option.value !== NO_PROVINCE);
 
-  const provinceValue = form.manualCountryMode
-    ? form.currentProvince
-    : findProvinceCompositeValue(form.currentCountryCode, form.currentProvince);
+  // A known city limits the province to the one(s) it's actually in: Toronto → Ontario only.
+  const cityProvinces = useMemo(
+    () => (countryHasProvinces ? getCityProvinces(form.currentCity, form.currentCountryCode) : []),
+    [countryHasProvinces, form.currentCity, form.currentCountryCode],
+  );
+  const provinceOptions =
+    cityProvinces.length > 0
+      ? countryProvinceOptions.filter((option) => cityProvinces.includes(option.value))
+      : countryProvinceOptions;
+  const isProvinceSetByCity = cityProvinces.length === 1;
 
   // ---- Photo ----
 
@@ -75,42 +81,43 @@ export const SignupStep2 = ({ form, onChange, setError, onNext, onBack }: Signup
 
   // ---- Location ----
 
-  const handlePickCity = (resolved: ResolvedCityLocation) => {
-    onChange({
-      currentCity: resolved.cityName,
-      currentCountry: resolved.countryName,
-      currentCountryCode: resolved.countryCode,
-      currentProvince: resolved.provinceName,
-      manualCountryMode: false,
-    });
-  };
-
-  const handleCityTyped = () => {
-    // A typed city no longer matches the country/province a picked suggestion filled in.
-    if (!form.manualCountryMode) {
-      onChange({ currentCountry: '', currentCountryCode: '', currentProvince: '' });
-    }
-  };
-
-  const handleProvinceChange = (value: string) => {
-    if (form.manualCountryMode) {
-      onChange({ currentProvince: value });
-      return;
-    }
-    const parsed = parseProvinceComposite(value);
-    if (!parsed) return;
-    onChange({
-      currentCountry: parsed.countryName,
-      currentCountryCode: parsed.countryCode,
-      currentProvince: parsed.provinceName,
-    });
-  };
-
   const handleCountryChange = (countryName: string) => {
+    if (countryName === form.currentCountry) return;
+    const countryCode = getCountryCode(countryName);
+    const hasProvinces = getProvinceOptions(countryCode).some((option) => option.value !== NO_PROVINCE);
+    // City and province belonged to the previous country.
     onChange({
       currentCountry: countryName,
-      currentCountryCode: getCountryCode(countryName),
-      currentProvince: '',
+      currentCountryCode: countryCode,
+      currentCity: '',
+      currentProvince: hasProvinces ? '' : NO_PROVINCE,
+    });
+  };
+
+  /** Keeps the province consistent with a typed city: fills it in, or clears one the city isn't in. */
+  const handleCityChange = (currentCity: string) => {
+    if (!countryHasProvinces) {
+      onChange({ currentCity });
+      return;
+    }
+    const provinces = getCityProvinces(currentCity, form.currentCountryCode);
+    if (provinces.length === 1) {
+      onChange({ currentCity, currentProvince: provinces[0] });
+    } else if (provinces.length > 1 && !provinces.includes(form.currentProvince)) {
+      onChange({ currentCity, currentProvince: '' });
+    } else {
+      onChange({ currentCity });
+    }
+  };
+
+  const handlePickCity = (resolved: ResolvedCityLocation) => {
+    // Only fill the province if it's one the picker knows, so the field never shows a value it can't list.
+    const isKnownProvince = countryProvinceOptions.some(
+      (option) => option.value === resolved.provinceName,
+    );
+    onChange({
+      currentCity: resolved.cityName,
+      ...(isKnownProvince ? { currentProvince: resolved.provinceName } : {}),
     });
   };
 
@@ -124,12 +131,17 @@ export const SignupStep2 = ({ form, onChange, setError, onNext, onBack }: Signup
     if (!form.dateOfBirth.trim()) missing.push('date of birth');
     if (!form.gender.trim()) missing.push('gender');
 
-    if (!form.currentCity.trim()) {
-      missing.push('city');
-    } else if (!form.currentCountry || !form.currentProvince) {
-      setError(
-        'Pick your city from the suggestions to fill country and province, or choose them manually below',
-      );
+    if (!form.currentCountry) missing.push('country you live in');
+    if (!form.currentCity.trim()) missing.push('city');
+    if (!form.currentProvince) missing.push('province/state');
+
+    // Backstop for the UI rule above: a known city must be in the chosen province.
+    if (
+      form.currentProvince &&
+      cityProvinces.length > 0 &&
+      !cityProvinces.includes(form.currentProvince)
+    ) {
+      setError(`${form.currentCity.trim()} is not in ${form.currentProvince}. Choose ${cityProvinces.join(' or ')}.`);
       return false;
     }
 
@@ -237,78 +249,53 @@ export const SignupStep2 = ({ form, onChange, setError, onNext, onBack }: Signup
         onChange={(homeCountry) => onChange({ homeCountry })}
         placeholder="e.g., Nigeria"
         helperText="The country where you were born or raised"
+        renderOptionLeading={(option) => <CountryFlag country={option.value}/>}
       />
 
       {/* Current location */}
       <View className="mb-4 border-t border-kin-stone-300 pt-6">
         <Text className="mb-4 text-base font-semibold text-kin-navy">Where you live now</Text>
 
+        <SelectField
+          label="Country"
+          required
+          options={COUNTRY_OPTIONS}
+          value={form.currentCountry}
+          onChange={handleCountryChange}
+          placeholder="e.g., Canada"
+          leading={<CountryFlag country={form.currentCountry} />}
+          renderOptionLeading={(option) => <CountryFlag country={option.value} />}
+        />
+
         <CityField
           label="City or town"
           required
+          countryCode={form.currentCountryCode}
           value={form.currentCity}
-          onChangeText={(currentCity) => onChange({ currentCity })}
+          onChangeText={handleCityChange}
           onPickCity={handlePickCity}
-          onManualEdit={handleCityTyped}
-          helperText="Type a few letters and choose a match to fill country and province below"
+          helperText="Type a few letters and choose a match to fill in your province"
         />
 
-        <SelectField
-          label={form.manualCountryMode ? 'Province/State' : 'Province/State (search worldwide)'}
-          required
-          options={provinceOptions}
-          value={provinceValue}
-          onChange={handleProvinceChange}
-          placeholder={form.manualCountryMode ? 'e.g., Ontario' : 'e.g., Ontario, Canada'}
-          disabled={form.manualCountryMode && !form.currentCountryCode}
-          helperText={
-            form.manualCountryMode
-              ? 'Pick your country first if needed, then province'
-              : 'Choosing a row sets your country and province together'
-          }
-        />
-
-        {form.manualCountryMode ? (
-          <>
-            <SelectField
-              label="Country"
-              required
-              leading={<CountryFlag country={form.currentCountry} />}
-              options={COUNTRY_OPTIONS}
-              value={form.currentCountry}
-              onChange={handleCountryChange}
-              placeholder="e.g., Canada"
-            />
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => onChange({ manualCountryMode: false })}
-              className="self-start active:opacity-70"
-            >
-              <Text className="text-sm font-semibold text-kin-teal underline">
-                Use worldwide province list instead
-              </Text>
-            </Pressable>
-          </>
-        ) : (
-          <View className="rounded-xl border border-kin-stone-300 bg-kin-beige px-4 py-3">
-            <Text className="mb-1 text-sm font-medium text-kin-navy">Country</Text>
-            {form.currentCountry ? (
-              <CountryWithFlag country={form.currentCountry} />
-            ) : (
-              <Text className="text-[16px] text-kin-navy">—</Text>
-            )}
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Pick country and province manually"
-              onPress={() => onChange({ manualCountryMode: true })}
-              className="mt-2 self-start active:opacity-70"
-            >
-              <Text className="text-sm font-semibold text-kin-teal underline">
-                Change country or province manually
-              </Text>
-            </Pressable>
-          </View>
-        )}
+        {/* Hidden for countries without provinces; their province is saved as "N/A". */}
+        {!form.currentCountryCode || countryHasProvinces ? (
+          <SelectField
+            label="Province/State"
+            required
+            options={provinceOptions}
+            value={form.currentProvince}
+            onChange={(currentProvince) => onChange({ currentProvince })}
+            placeholder={form.currentCountryCode ? 'e.g., Ontario' : 'Choose a country first'}
+            disabled={!form.currentCountryCode || isProvinceSetByCity}
+            helperText={
+              isProvinceSetByCity
+                ? `Set from your city. ${form.currentCity.trim()} is only in ${cityProvinces[0]}.`
+                : cityProvinces.length > 1
+                  ? `${form.currentCity.trim()} is in more than one province/state. Choose yours.`
+                  : undefined
+            }
+          />
+        ) : null}
       </View>
 
       <BirthdayField

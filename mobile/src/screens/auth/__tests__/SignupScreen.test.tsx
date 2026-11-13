@@ -83,10 +83,8 @@ const fillStep2 = async () => {
   await type('First name', 'Marie');
   await type('Last name', 'Curie');
   await choose('Your home country', 'Poland');
-  // Manual mode avoids the debounced city search: country, then province, then city.
-  await press('Pick country and province manually');
+  // Country first; typing a known city fills in its province (Toronto → Ontario).
   await choose('Country', 'Canada');
-  await choose('Province/State', 'Ontario');
   await type('City or town', 'Toronto');
   await choose('Month', 'March');
   await choose('Day', '15');
@@ -261,6 +259,54 @@ describe('SignupScreen', () => {
       expect(screen.getByLabelText('Email').props.value).toBe('marie@example.com');
     });
 
+    test('editing an earlier step locks later steps until Next re-checks it', async () => {
+      await renderSignup();
+      await goToStep4();
+      await press('Go to signup step 1');
+
+      await type('Confirm password', 'Different123');
+
+      expect(screen.getByLabelText('Go to signup step 4').props.accessibilityState).toMatchObject({
+        disabled: true,
+      });
+      await press('Go to signup step 4');
+      expect(screen.getByText('Create account')).toBeTruthy();
+
+      await press('Next');
+
+      expect(await screen.findByText('Passwords do not match')).toBeTruthy();
+      expect(mockRegister).not.toHaveBeenCalled();
+    });
+
+    test('after an edit, Next re-checks and later answers are kept', async () => {
+      await renderSignup();
+      await goToStep4();
+      await choose('Language', 'English');
+      await press('Go to signup step 1');
+      await type('Email', 'marie.curie@example.com');
+
+      await press('Next');
+      await screen.findByText('Profile information');
+
+      expect(authAPI.checkEmail).toHaveBeenLastCalledWith('marie.curie@example.com');
+      expect(screen.getByLabelText('First name').props.value).toBe('Marie');
+      await press('Next');
+      await screen.findByText('Work & education');
+      await press('Next');
+      expect(await screen.findByText('Languages & interests')).toBeTruthy();
+      expect(screen.getByLabelText('Language').props.accessibilityValue).toEqual({ text: 'English' });
+    });
+
+    test('revisiting a step without editing keeps later steps reachable', async () => {
+      await renderSignup();
+      await goToStep4();
+
+      await press('Go to signup step 1');
+      await press('Go to signup step 4');
+
+      expect(screen.getByText('Languages & interests')).toBeTruthy();
+    });
+
     test('Back keeps the values of the step being left', async () => {
       await renderSignup();
       await goToStep2();
@@ -283,48 +329,160 @@ describe('SignupScreen', () => {
 
       expect(
         await screen.findByText(
-          'Please fill in: first name, last name, home country, date of birth, gender, city',
+          'Please fill in: first name, last name, home country, date of birth, gender, country you live in, city, province/state',
         ),
       ).toBeTruthy();
     });
 
-    test('asks for province and country when only a city is typed', async () => {
+    test('city and province wait until a country is chosen', async () => {
       await renderSignup();
       await goToStep2();
-      await type('City or town', 'Toronto');
 
-      await press('Next');
+      expect(screen.getByLabelText('City or town').props.editable).toBe(false);
+      expect(screen.getByLabelText('Province/State').props.accessibilityState).toMatchObject({
+        disabled: true,
+      });
 
-      expect(
-        await screen.findByText(
-          'Pick your city from the suggestions to fill country and province, or choose them manually below',
-        ),
-      ).toBeTruthy();
+      await choose('Country', 'Canada');
+
+      expect(screen.getByLabelText('City or town').props.editable).toBe(true);
+      expect(screen.getByLabelText('Province/State').props.accessibilityState).toMatchObject({
+        disabled: false,
+      });
     });
 
-    test('a picked worldwide province fills in the country', async () => {
+    test('shows the chosen country with its flag', async () => {
       await renderSignup();
       await goToStep2();
 
-      await choose('Province/State (search worldwide)', 'Ontario, Canada');
+      await choose('Country', 'Canada');
 
-      // The read-only Country box shows the flag and name.
-      expect(screen.getByText(`${getCountryFlag('Canada')} Canada`)).toBeTruthy();
+      expect(screen.getByText(getCountryFlag('Canada'))).toBeTruthy();
     });
 
-    test('picking a city suggestion fills in province and country', async () => {
+    test('suggests only cities in the chosen country, and fills in the province', async () => {
       await renderSignup();
       await goToStep2();
+      await choose('Country', 'Canada');
       const city = screen.getByLabelText('City or town');
 
       await fireEvent(city, 'focus');
-      await fireEvent.changeText(city, 'Toronto');
-      const suggestion = await screen.findByLabelText('Toronto, Ontario, Canada', {}, { timeout: 5000 });
+      await fireEvent.changeText(city, 'London');
+      const suggestion = await screen.findByLabelText('London, Ontario');
+      // London, England is not in Canada.
+      expect(screen.queryByLabelText(/England/)).toBeNull();
       await fireEvent.press(suggestion);
 
-      expect(screen.getByLabelText('City or town').props.value).toBe('Toronto');
-      // The read-only Country box shows the flag and name.
-      expect(screen.getByText(`${getCountryFlag('Canada')} Canada`)).toBeTruthy();
+      expect(screen.getByLabelText('City or town').props.value).toBe('London');
+      expect(screen.getByLabelText('Province/State').props.accessibilityValue).toEqual({
+        text: 'Ontario',
+      });
+    });
+
+    test('lists only the provinces of the chosen country', async () => {
+      await renderSignup();
+      await goToStep2();
+      await choose('Country', 'Canada');
+
+      await press('Province/State');
+
+      expect(screen.getByText('Ontario')).toBeTruthy();
+      await fireEvent.changeText(screen.getByLabelText('Search Province/State'), 'California');
+      expect(screen.getByText('No matches')).toBeTruthy();
+    });
+
+    test('changing the country clears the city and province', async () => {
+      await renderSignup();
+      await goToStep2();
+      await choose('Country', 'Canada');
+      await type('City or town', 'Toronto');
+
+      await choose('Country', 'Mexico');
+
+      expect(screen.getByLabelText('City or town').props.value).toBe('');
+      expect(screen.getByLabelText('Province/State').props.accessibilityValue).toEqual({
+        text: 'Not selected',
+      });
+    });
+
+    describe('province must match the city', () => {
+      const provinceField = () => screen.getByLabelText('Province/State');
+
+      test('a city in only one province sets and locks it', async () => {
+        await renderSignup();
+        await goToStep2();
+        await choose('Country', 'Canada');
+
+        await type('City or town', 'Toronto');
+
+        expect(provinceField().props.accessibilityValue).toEqual({ text: 'Ontario' });
+        expect(provinceField().props.accessibilityState).toMatchObject({ disabled: true });
+        expect(screen.getByText('Set from your city. Toronto is only in Ontario.')).toBeTruthy();
+      });
+
+      test('typing the city replaces a province it is not in', async () => {
+        await renderSignup();
+        await goToStep2();
+        await choose('Country', 'Canada');
+        await choose('Province/State', 'Nova Scotia');
+
+        await type('City or town', 'Toronto');
+
+        expect(provinceField().props.accessibilityValue).toEqual({ text: 'Ontario' });
+      });
+
+      test('a city in several provinces only offers those', async () => {
+        await renderSignup();
+        await goToStep2();
+        await choose('Country', 'Canada');
+        await choose('Province/State', 'Nova Scotia');
+
+        await type('City or town', 'Richmond');
+
+        // Nova Scotia has no Richmond, so it is cleared and no longer offered.
+        expect(provinceField().props.accessibilityValue).toEqual({ text: 'Not selected' });
+        expect(provinceField().props.accessibilityState).toMatchObject({ disabled: false });
+        await press('Province/State');
+        expect(screen.getByText('British Columbia')).toBeTruthy();
+        expect(screen.getByText('Ontario')).toBeTruthy();
+        expect(screen.getByText('Quebec')).toBeTruthy();
+        expect(screen.queryByText('Nova Scotia')).toBeNull();
+      });
+
+      test('a city not in the data allows any province', async () => {
+        await renderSignup();
+        await goToStep2();
+        await choose('Country', 'Canada');
+
+        await type('City or town', 'Smallville');
+        await choose('Province/State', 'Nova Scotia');
+
+        expect(provinceField().props.accessibilityValue).toEqual({ text: 'Nova Scotia' });
+      });
+
+      test('registers Toronto with Ontario', async () => {
+        await renderSignup();
+        await goToStep4();
+        await fillStep4();
+
+        await press('Complete signup');
+
+        await waitFor(() => expect(mockRegister).toHaveBeenCalledTimes(1));
+        expect(mockRegister.mock.calls[0][0].currentLocation).toEqual({
+          province: 'Ontario',
+          country: 'Canada',
+          city: 'Toronto',
+        });
+      });
+    });
+
+    test('hides the province for a country without provinces', async () => {
+      await renderSignup();
+      await goToStep2();
+
+      await choose('Country', 'Aruba');
+
+      expect(screen.queryByLabelText('Province/State')).toBeNull();
     });
 
     test('adds the picked photo as a preview', async () => {
@@ -360,8 +518,8 @@ describe('SignupScreen', () => {
       await goToStep2();
 
       const asterisks = screen.getAllByLabelText('required');
-      // First name, last name, home country, city, province, date of birth, gender.
-      expect(asterisks).toHaveLength(7);
+      // First name, last name, home country, country, city, province, date of birth, gender.
+      expect(asterisks).toHaveLength(8);
       expect(asterisks[0].props.className).toContain('text-red-600');
     });
 

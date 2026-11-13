@@ -24,6 +24,7 @@ type SelectFieldProps = {
   leading?: ReactNode;
   /** Spacing/size for the outer wrapper, e.g. "flex-1" in a row. Defaults to the standard field gap. */
   className?: string;
+  renderOptionLeading?: (option: SelectOption) => ReactNode;
 };
 
 /** Mobile replacement for the web SearchableSelect: a field that opens a searchable bottom sheet. */
@@ -39,6 +40,7 @@ export const SelectField = ({
   disabled = false,
   leading,
   className = 'mb-4',
+  renderOptionLeading
 }: SelectFieldProps) => {
   const insets = useSafeAreaInsets();
   const [isOpen, setIsOpen] = useState(false);
@@ -138,6 +140,7 @@ export const SelectField = ({
                   style={{ height: OPTION_HEIGHT }}
                   className="flex-row items-center justify-between border-b border-kin-stone-300/50 active:bg-kin-beige"
                 >
+                    {renderOptionLeading ? <View className="mr-2">{renderOptionLeading(item)}</View> : null}
                   <Text
                     numberOfLines={1}
                     className={`flex-1 text-[16px] ${

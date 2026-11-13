@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 import { PLACEHOLDER_COLOR, fieldBoxClass } from './FormField';
 import { FieldLabel } from './FieldLabel';
@@ -11,6 +11,8 @@ type PasswordFieldProps = {
   helperText?: string;
   /** "new-password" lets iOS suggest a strong password on sign-up. */
   autoComplete?: 'password' | 'new-password';
+  /** Shown at the right end of the label row, e.g. a "Forgot password?" link. */
+  labelAccessory?: ReactNode;
 };
 
 export const PasswordField = ({
@@ -20,13 +22,21 @@ export const PasswordField = ({
   onChangeText,
   helperText,
   autoComplete = 'password',
+  labelAccessory,
 }: PasswordFieldProps) => {
   const [isFocused, setIsFocused] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
 
   return (
     <View className="mb-4">
-      <FieldLabel label={label} required={required} />
+      {labelAccessory ? (
+        <View className="mb-2 flex-row items-center justify-between">
+          <FieldLabel label={label} required={required} className="" />
+          {labelAccessory}
+        </View>
+      ) : (
+        <FieldLabel label={label} required={required} />
+      )}
       <View className={`h-12 flex-row items-center ${fieldBoxClass(isFocused)}`}>
         <TextInput
           accessibilityLabel={label}

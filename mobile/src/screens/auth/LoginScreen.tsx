@@ -6,16 +6,15 @@ import {
   Pressable,
   ScrollView,
   Text,
-  TextInput,
   View,
 } from 'react-native';
+import { FormField } from '../../components/common/FormField';
+import { PasswordField } from '../../components/common/PasswordField';
 import { useAuth } from '../../contexts/useAuth';
 import type { AuthStackParamList } from '../../navigation/types';
 import { getErrorMessage } from '../../utils/error';
 
 type LoginScreenProps = NativeStackScreenProps<AuthStackParamList, 'Login'>;
-
-const PLACEHOLDER_COLOR = '#A79F97';
 
 export const LoginScreen = ({ navigation }: LoginScreenProps) => {
   const { login } = useAuth();
@@ -82,40 +81,32 @@ export const LoginScreen = ({ navigation }: LoginScreenProps) => {
             </Text>
           ) : null}
 
-          <Text className="mb-2 text-sm font-medium text-kin-navy">Email</Text>
-          <TextInput
-            accessibilityLabel="Email"
-            autoCapitalize="none"
-            autoComplete="email"
-            autoCorrect={false}
-            keyboardType="email-address"
-            placeholder="you@example.com"
-            placeholderTextColor={PLACEHOLDER_COLOR}
+          <FormField
+            label="Email"
             value={email}
             onChangeText={handleEmailChange}
-            className="mb-6 rounded-xl border border-kin-stone-300 px-4 py-3 text-base text-kin-navy"
+            placeholder="you@example.com"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+            autoComplete="email"
+            textContentType="emailAddress"
           />
 
-          <View className="mb-2 flex-row items-center justify-between">
-            <Text className="text-sm font-medium text-kin-navy">Password</Text>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Forgot password"
-              onPress={handleOpenForgotPassword}
-            >
-              <Text className="text-xs text-kin-coral">Forgot password?</Text>
-            </Pressable>
-          </View>
-          <TextInput
-            accessibilityLabel="Password"
-            autoCapitalize="none"
-            autoComplete="password"
-            secureTextEntry
-            placeholder="••••••••"
-            placeholderTextColor={PLACEHOLDER_COLOR}
+          <PasswordField
+            label="Password"
             value={password}
             onChangeText={handlePasswordChange}
-            className="rounded-xl border border-kin-stone-300 px-4 py-3 text-base text-kin-navy"
+            labelAccessory={
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Forgot password"
+                hitSlop={8}
+                onPress={handleOpenForgotPassword}
+              >
+                <Text className="text-xs text-kin-coral">Forgot password?</Text>
+              </Pressable>
+            }
           />
 
           <Pressable
@@ -124,7 +115,7 @@ export const LoginScreen = ({ navigation }: LoginScreenProps) => {
             accessibilityState={{ disabled: !canSubmit }}
             disabled={!canSubmit}
             onPress={handleSignIn}
-            className="mt-8 rounded-xl bg-kin-coral px-6 py-4 disabled:opacity-50"
+            className="mt-4 rounded-xl bg-kin-coral px-6 py-4 disabled:opacity-50"
           >
             <Text className="text-center text-lg font-bold text-white">
               {isSubmitting ? 'Signing in...' : 'Sign In'}
