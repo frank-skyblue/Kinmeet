@@ -5,7 +5,7 @@ import { useAuth } from '../../contexts/useAuth';
 import { getErrorMessage } from '../../utils/error';
 import type { UserProfile } from '../../types';
 import ReportUserModal from '../common/ReportUserModal';
-import ProfileView from './ProfileView';
+import FullProfileView from './FullProfileView';
 import ProfileEditForm from './ProfileEditForm';
 import ProfilePictureModal from '../common/ProfilePictureModal';
 
@@ -136,7 +136,7 @@ const Profile: React.FC = () => {
 				/>
 			)}
 
-			<ProfileView
+			<FullProfileView
 				profile={profile}
 				onEdit={() => setIsEditing(true)}
 				showManageActions={showManageActions}
