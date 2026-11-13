@@ -76,3 +76,14 @@ export interface MessageResponse {
   success: boolean;
   message: string;
 }
+
+export interface SelectOption {
+  value: string;
+  label: string;
+}
+
+export interface AvailabilityResponse {
+  success: boolean;
+  available?: boolean;
+  message?: string;
+}

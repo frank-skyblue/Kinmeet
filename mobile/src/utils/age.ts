@@ -61,3 +61,14 @@ export const calculateAgeFromDateOfBirth = (value: string | undefined): number |
 
   return age;
 };
+
+/** Oldest and newest allowed date of birth (120 years ago … today), as UTC YYYY-MM-DD. */
+export const dobIsoBoundsUtc = (now = new Date()): { minIsoUtc: string; todayIsoUtc: string } => {
+  const pad = (value: number) => String(value).padStart(2, '0');
+  const todayIsoUtc = `${now.getUTCFullYear()}-${pad(now.getUTCMonth() + 1)}-${pad(now.getUTCDate())}`;
+  const maxDobUtc = new Date(
+    Date.UTC(now.getUTCFullYear() - 120, now.getUTCMonth(), now.getUTCDate(), 12, 0, 0, 0),
+  );
+  const minIsoUtc = `${maxDobUtc.getUTCFullYear()}-${pad(maxDobUtc.getUTCMonth() + 1)}-${pad(maxDobUtc.getUTCDate())}`;
+  return { minIsoUtc, todayIsoUtc };
+};

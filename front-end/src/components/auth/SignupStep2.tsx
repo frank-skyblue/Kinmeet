@@ -187,7 +187,7 @@ const SignupStep2: React.FC<SignupStep2Props> = ({
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="px-4 py-2 text-sm font-semibold font-inter text-muted border border-kin-teal rounded-kin-sm hover:bg-kin-teal hover:text-white transition"
+            className="px-4 py-2 text-sm font-semibold font-inter text-muted border border-kin-teal rounded-kin-sm hover:bg-kin-teal hover:text-white transition cursor-pointer"
             aria-label="Upload profile photo"
           >
             {photoPreview ? "Change Photo" : "Add Photo"}
@@ -398,14 +398,14 @@ const SignupStep2: React.FC<SignupStep2Props> = ({
         <button
           type="button"
           onClick={onBack}
-          className={`${secondaryActionClass} flex-1 py-4 px-4 rounded-kin-sm font-bold font-montserrat text-lg transition-all duration-200 shadow-kin-soft hover:shadow-kin-medium`}
+          className={`${secondaryActionClass} flex-1 py-4 px-4 rounded-kin-sm font-bold font-montserrat text-lg transition-all duration-200 shadow-kin-soft hover:shadow-kin-medium cursor-pointer`}
         >
           Back
         </button>
         <button
           type="button"
           onClick={handleNext}
-          className={`${primaryActionClass} flex-1 py-4 px-4 rounded-kin-sm font-bold font-montserrat text-lg focus:ring-4 focus:ring-ring shadow-kin-medium hover:shadow-kin-strong transition-all duration-200`}
+          className={`${primaryActionClass} flex-1 py-4 px-4 rounded-kin-sm font-bold font-montserrat text-lg focus:ring-4 focus:ring-ring shadow-kin-medium hover:shadow-kin-strong transition-all duration-200 cursor-pointer`}
         >
           Next
         </button>

@@ -196,7 +196,7 @@ const SignupStep1: React.FC<SignupStep1Props> = ({
       <button
         type="button"
         onClick={handleNext}
-        className={`${primaryActionClass} w-full py-4 px-6 rounded-kin-sm font-bold font-montserrat text-lg focus:ring-4 focus:ring-ring shadow-kin-medium hover:shadow-kin-strong transition-all duration-200 mt-4`}
+        className={`${primaryActionClass} w-full py-4 px-6 rounded-kin-sm font-bold font-montserrat text-lg focus:ring-4 focus:ring-ring shadow-kin-medium hover:shadow-kin-strong transition-all duration-200 mt-4 cursor-pointer`}
       >
         Next
       </button>
