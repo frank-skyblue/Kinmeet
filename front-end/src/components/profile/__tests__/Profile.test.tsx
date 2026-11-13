@@ -3,6 +3,7 @@ import { screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { render } from '@testing-library/react';
 import Profile from '../Profile';
+import { ThemeContext } from '../../../contexts/theme-context';
 import type { UserProfile } from '../../../types';
 
 const fullProfile: UserProfile = {
@@ -58,14 +59,27 @@ vi.mock('../../../contexts/useAuth', () => ({
 import { profileAPI } from '../../../services/api';
 import { calculateAgeFromDateOfBirth } from '../../../utils/age';
 
+/**
+ * Placeholder theme context: the page only reads `isDark()`, so a light-theme
+ * stub satisfies the hook without localStorage or document side effects.
+ */
+const themeStub = {
+  theme: 'light' as const,
+  setTheme: vi.fn(),
+  isDark: () => false,
+  isLight: () => true,
+};
+
 const renderProfileAt = (path: string) =>
   render(
-    <MemoryRouter initialEntries={[path]}>
-      <Routes>
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/profile/:userId" element={<Profile />} />
-      </Routes>
-    </MemoryRouter>,
+    <ThemeContext.Provider value={themeStub}>
+      <MemoryRouter initialEntries={[path]}>
+        <Routes>
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/profile/:userId" element={<Profile />} />
+        </Routes>
+      </MemoryRouter>
+    </ThemeContext.Provider>,
   );
 
 describe('Profile', () => {
@@ -115,7 +129,7 @@ describe('Profile', () => {
     renderProfileAt('/profile');
     const expectedAge = calculateAgeFromDateOfBirth(fullProfile.dateOfBirth);
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /^age$/i })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /alex rivera/i })).toBeInTheDocument();
     });
     expect(screen.getByText(String(expectedAge))).toBeInTheDocument();
     expect(screen.queryByText('1990-06-15')).not.toBeInTheDocument();
@@ -147,7 +161,7 @@ describe('Profile', () => {
     renderProfileAt('/profile/other-9');
     const expectedAge = calculateAgeFromDateOfBirth(userWithDob.dateOfBirth);
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /^age$/i })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /sam lee/i })).toBeInTheDocument();
     });
     expect(screen.getByText(String(expectedAge))).toBeInTheDocument();
     expect(screen.queryByText('1990-06-15')).not.toBeInTheDocument();
