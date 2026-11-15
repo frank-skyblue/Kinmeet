@@ -95,14 +95,14 @@ const SignupStep3: React.FC<SignupStep3Props> = ({
         <button
           type="button"
           onClick={onBack}
-          className={`${secondaryActionClass} flex-1 py-4 px-4 rounded-kin-sm font-bold font-montserrat text-lg transition-all duration-200 shadow-kin-soft hover:shadow-kin-medium`}
+          className={`${secondaryActionClass} flex-1 py-4 px-4 rounded-kin-sm font-bold font-montserrat text-lg transition-all duration-200 shadow-kin-soft hover:shadow-kin-medium cursor-pointer`}
         >
           Back
         </button>
         <button
           type="button"
           onClick={handleNext}
-          className={`${primaryActionClass} flex-1 py-4 px-4 rounded-kin-sm font-bold font-montserrat text-lg focus:ring-4 focus:ring-ring shadow-kin-medium hover:shadow-kin-strong transition-all duration-200`}
+          className={`${primaryActionClass} flex-1 py-4 px-4 rounded-kin-sm font-bold font-montserrat text-lg focus:ring-4 focus:ring-ring shadow-kin-medium hover:shadow-kin-strong transition-all duration-200 cursor-pointer`}
         >
           Next
         </button>
