@@ -2,6 +2,7 @@ import { Server, Socket } from 'socket.io';
 import { ZodSchema } from 'zod';
 import { chatService } from '../services/chatService';
 import { notificationService } from '../services/notificationService';
+import { AppError } from '../middleware/errorHandler';
 import { CHAT_SOCKET_EVENTS } from './chatSocketEvents';
 import {
   chatMarkReadSchema,
@@ -44,6 +45,7 @@ const schedulePushIfReceiverOffline = (io: Server, receiverId: string, message: 
     senderUserId: sender._id.toString(),
     messageId: (message._id as { toString(): string }).toString(),
     senderDisplayName: `${sender.firstName} ${sender.lastName}`.trim(),
+    messageType: message.type,
   });
 };
 
@@ -55,7 +57,10 @@ export const registerChatHandlers = (io: Server, socket: Socket) => {
     if (!payload) return;
 
     try {
-      const message = await chatService.sendMessage(userId, payload.receiverId, payload.content);
+      const message = await chatService.sendMessage(userId, payload.receiverId, payload.content, {
+        attachment: payload.attachment,
+        clientMessageId: payload.clientMessageId,
+      });
 
       io.to(`user:${payload.receiverId}`).emit(CHAT_SOCKET_EVENTS.NEW_MESSAGE, message);
       schedulePushIfReceiverOffline(io, payload.receiverId, message);
@@ -63,7 +68,11 @@ export const registerChatHandlers = (io: Server, socket: Socket) => {
       callback({ success: true, message });
     } catch (error) {
       console.error('Send message error:', error);
-      callback({ success: false, message: 'Failed to send message' });
+      // AppErrors are user-facing (e.g. "Upload expired, please try again"); hide the rest.
+      callback({
+        success: false,
+        message: error instanceof AppError ? error.message : 'Failed to send message',
+      });
     }
   });
 

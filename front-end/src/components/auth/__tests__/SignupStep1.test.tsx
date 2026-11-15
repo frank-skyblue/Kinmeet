@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import SignupStep1 from '../SignupStep1';
 import { authAPI } from '../../../services/api';
@@ -8,10 +8,12 @@ import { PASSWORD_HINT } from '../../../constants/validation';
 vi.mock('../../../services/api', () => ({
   authAPI: {
     checkEmail: vi.fn(),
+    checkUsername: vi.fn(),
   },
 }));
 
 const mockCheckEmail = vi.mocked(authAPI.checkEmail);
+const mockCheckUsername = vi.mocked(authAPI.checkUsername);
 
 const defaultProps = {
   email: 'test@example.com',
@@ -187,8 +189,129 @@ describe('SignupStep1', () => {
     await user.click(screen.getByRole('button', { name: 'Next' }));
 
     expect(defaultProps.setError).toHaveBeenCalledWith(
-      'Username must be 3-30 characters using lowercase letters, numbers, or underscores',
+      'Username can only contain letters, numbers, and underscores.',
     );
     expect(mockCheckEmail).not.toHaveBeenCalled();
+    expect(mockCheckUsername).not.toHaveBeenCalled();
+  });
+
+  it('turns typed uppercase letters into lowercase', async () => {
+    const user = userEvent.setup();
+    render(<SignupStep1 {...defaultProps} username="" />);
+
+    await user.type(screen.getByLabelText('Username'), 'A');
+
+    expect(defaultProps.setUsername).toHaveBeenCalledWith('a');
+  });
+
+  it('turns off mobile auto-capitalisation for the username', () => {
+    render(<SignupStep1 {...defaultProps} />);
+
+    expect(screen.getByLabelText('Username')).toHaveAttribute('autocapitalize', 'none');
+  });
+
+  describe('username availability', () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    const status = () => screen.queryByTestId('username-status')?.textContent;
+
+    it('explains each formatting rule without asking the server', () => {
+      const { rerender } = render(<SignupStep1 {...defaultProps} username="al" />);
+      expect(status()).toBe('Username must be at least 3 characters.');
+
+      rerender(<SignupStep1 {...defaultProps} username={'a'.repeat(31)} />);
+      expect(status()).toBe('Username must be at most 30 characters.');
+
+      rerender(<SignupStep1 {...defaultProps} username="al-bert" />);
+      expect(status()).toBe('Username can only contain letters, numbers, and underscores.');
+
+      expect(mockCheckUsername).not.toHaveBeenCalled();
+    });
+
+    it('does nothing for an empty username, and still allows Next', async () => {
+      mockCheckEmail.mockResolvedValueOnce({ success: true, available: true });
+      const user = userEvent.setup();
+      render(<SignupStep1 {...defaultProps} username="" />);
+
+      await user.click(screen.getByRole('button', { name: 'Next' }));
+
+      expect(status()).toBeUndefined();
+      expect(mockCheckUsername).not.toHaveBeenCalled();
+      expect(defaultProps.onNext).toHaveBeenCalledTimes(1);
+    });
+
+    it('checks once after typing stops, case-insensitively, and reports it available', async () => {
+      vi.useFakeTimers();
+      mockCheckUsername.mockResolvedValue({ success: true, available: true });
+      const { rerender } = render(<SignupStep1 {...defaultProps} username="Al" />);
+      rerender(<SignupStep1 {...defaultProps} username="Alb" />);
+      rerender(<SignupStep1 {...defaultProps} username="Albert" />);
+
+      expect(status()).toBe('Checking availability...');
+      await act(() => vi.advanceTimersByTimeAsync(400));
+
+      expect(mockCheckUsername).toHaveBeenCalledTimes(1);
+      expect(mockCheckUsername).toHaveBeenCalledWith('albert');
+      expect(status()).toBe('Username available');
+    });
+
+    it('reports a taken username and blocks Next', async () => {
+      mockCheckUsername.mockResolvedValue({ success: true, available: false });
+      const user = userEvent.setup();
+      render(<SignupStep1 {...defaultProps} username="albert" />);
+
+      await waitFor(() => expect(status()).toBe('This username is already taken.'));
+      await user.click(screen.getByRole('button', { name: 'Next' }));
+
+      expect(defaultProps.setError).toHaveBeenCalledWith('This username is already taken.');
+      expect(defaultProps.onNext).not.toHaveBeenCalled();
+      expect(mockCheckEmail).not.toHaveBeenCalled();
+    });
+
+    it('never treats a failed check as available, and blocks Next until a check succeeds', async () => {
+      mockCheckUsername.mockRejectedValue(new Error('Network Error'));
+      const user = userEvent.setup();
+      render(<SignupStep1 {...defaultProps} username="albert" />);
+
+      await waitFor(() => expect(status()).toBe('Unable to check availability. Please try again.'));
+      await user.click(screen.getByRole('button', { name: 'Next' }));
+
+      expect(defaultProps.setError).toHaveBeenCalledWith('Unable to check availability. Please try again.');
+      expect(defaultProps.onNext).not.toHaveBeenCalled();
+    });
+
+    it('re-checks on Next after a failed check, and continues once it succeeds', async () => {
+      mockCheckUsername
+        .mockRejectedValueOnce(new Error('Network Error'))
+        .mockResolvedValueOnce({ success: true, available: true });
+      mockCheckEmail.mockResolvedValueOnce({ success: true, available: true });
+      const user = userEvent.setup();
+      render(<SignupStep1 {...defaultProps} username="albert" />);
+
+      await waitFor(() => expect(status()).toBe('Unable to check availability. Please try again.'));
+      await user.click(screen.getByRole('button', { name: 'Next' }));
+
+      expect(mockCheckUsername).toHaveBeenCalledTimes(2);
+      expect(defaultProps.onNext).toHaveBeenCalledTimes(1);
+    });
+
+    it('ignores a slow response for a username the user has already changed', async () => {
+      vi.useFakeTimers();
+      let resolveFirst: (value: { success: boolean; available: boolean }) => void = () => {};
+      mockCheckUsername
+        .mockImplementationOnce(() => new Promise((resolve) => { resolveFirst = resolve; }))
+        .mockResolvedValueOnce({ success: true, available: true });
+      const { rerender } = render(<SignupStep1 {...defaultProps} username="alice" />);
+      await act(() => vi.advanceTimersByTimeAsync(400));
+
+      rerender(<SignupStep1 {...defaultProps} username="bobby" />);
+      await act(async () => resolveFirst({ success: true, available: false }));
+      expect(status()).toBe('Checking availability...');
+
+      await act(() => vi.advanceTimersByTimeAsync(400));
+      expect(status()).toBe('Username available');
+    });
   });
 });

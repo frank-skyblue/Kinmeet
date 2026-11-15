@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../config/env';
 import { User, type AccountStatus } from '../models/User';
+import { applyUserRateLimit } from './rateLimitMiddleware';
 
 export const ACCOUNT_DEACTIVATED_CODE = 'ACCOUNT_DEACTIVATED';
 export const INVALID_TOKEN_CODE = 'INVALID_TOKEN';
@@ -36,6 +37,10 @@ export const verifyAuthToken = async (token: string): Promise<AuthTokenCheck> =>
         return { valid: false };
     }
 
+    if (typeof payload?.id !== 'string' || payload.id.length === 0) {
+        return { valid: false };
+    }
+
     const account = await User.findById(payload.id).select('+tokenVersion accountStatus').lean();
     if (!account) return { valid: false };
 
@@ -49,8 +54,15 @@ export const verifyAuthToken = async (token: string): Promise<AuthTokenCheck> =>
 };
 
 // A deactivated account may only reactivate, sign out, or delete itself; every other
-// authenticated route rejects it with ACCOUNT_DEACTIVATED.
-const createAuthenticateJWT = ({ allowDeactivated }: { allowDeactivated: boolean }) =>
+// authenticated route rejects it with ACCOUNT_DEACTIVATED. The shared user token bucket
+// runs only after those checks. skipUserRateLimit is only for push-device unregister.
+const createAuthenticateJWT = ({
+    allowDeactivated,
+    skipUserRateLimit = false,
+}: {
+    allowDeactivated: boolean;
+    skipUserRateLimit?: boolean;
+}) =>
     async (req: AuthRequest, res: Response, next: NextFunction) => {
         const authHeader = req.headers.authorization;
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -92,12 +104,31 @@ const createAuthenticateJWT = ({ allowDeactivated }: { allowDeactivated: boolean
         }
 
         req.user = verified.payload;
+        if (skipUserRateLimit) {
+            return next();
+        }
+
+        try {
+            const allowed = applyUserRateLimit(res, verified.payload.id);
+            if (!allowed) {
+                return;
+            }
+        } catch (err) {
+            return next(err);
+        }
         next();
     };
 
 export const authenticateJWT = createAuthenticateJWT({ allowDeactivated: false });
 
 export const authenticateJWTAllowDeactivated = createAuthenticateJWT({ allowDeactivated: true });
+
+// Logout of a deactivated account must still delete this device's push subscription,
+// and that delete does not spend the shared user token bucket.
+export const authenticateJWTAllowDeactivatedWithoutUserRateLimit = createAuthenticateJWT({
+    allowDeactivated: true,
+    skipUserRateLimit: true,
+});
 
 // Alias for backward compatibility
 export const authenticateToken = authenticateJWT;

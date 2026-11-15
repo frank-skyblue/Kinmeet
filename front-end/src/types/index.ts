@@ -42,6 +42,39 @@ export interface UserProfile {
     dateOfBirth?: string;
 }
 
+export type ChatMessageType = 'text' | 'image' | 'voice';
+
+export type ChatMediaKind = 'image' | 'voice';
+
+/** Signed viewing links, built by the server each time messages are loaded. */
+export interface ChatMediaUrls {
+    display?: string;
+    full?: string;
+    audio?: string;
+}
+
+export interface ChatAttachment {
+    /** Absent when the media was removed. */
+    urls?: ChatMediaUrls;
+    format?: string;
+    bytes?: number;
+    width?: number;
+    height?: number;
+    /** Tiny data-URL preview shown while the image loads. */
+    thumbnail?: string;
+    durationMs?: number;
+    /** Bar heights, 0–255. */
+    waveform?: number[];
+    removed?: boolean;
+}
+
+/** Client-only: progress of a media message that hasn't been confirmed by the server yet. */
+export interface ChatUploadState {
+    status: 'uploading' | 'failed';
+    progress: number;
+    error?: string;
+}
+
 export interface ChatMessage {
     _id: string;
     sender: {
@@ -54,9 +87,36 @@ export interface ChatMessage {
         firstName: string;
         lastName: string;
     };
-    content: string;
+    /** Absent on messages created before media existed; treat as text. */
+    type?: ChatMessageType;
+    /** The text, or an image's optional caption. */
+    content?: string;
+    attachment?: ChatAttachment;
+    clientMessageId?: string;
     read: boolean;
     createdAt: string;
+    upload?: ChatUploadState;
+}
+
+/** A one-file upload pass: the browser sends `fields` and the file straight to `uploadUrl`. */
+export interface ChatUploadPass {
+    attachmentId: string;
+    kind: ChatMediaKind;
+    uploadUrl: string;
+    fields: Record<string, string>;
+    expiresAt: string;
+}
+
+/** What the server needs to accept an upload: Cloudinary's signed receipt plus display details. */
+export interface ChatAttachmentReceipt {
+    id: string;
+    version: number;
+    signature: string;
+    width?: number;
+    height?: number;
+    thumbnail?: string;
+    durationMs?: number;
+    waveform?: number[];
 }
 
 export interface ChatConversationUser {
@@ -74,6 +134,14 @@ export interface ChatConversationSummary {
     user: ChatConversationUser | null;
     lastMessage: ChatMessage | null;
     unreadCount: number;
+}
+
+/** One page of a conversation, oldest message first. */
+export interface GetConversationResponse {
+    success: boolean;
+    messages: ChatMessage[];
+    /** Pass back to get the page before this one; missing or null when this is the start of the conversation. */
+    nextCursor?: string | null;
 }
 
 export interface GetConversationsResponse {
@@ -100,9 +168,17 @@ export interface Match {
     photo?: string;
 }
 
+/**
+ * Why Discover is empty: no one else shares both of the user's countries, or the user has
+ * already seen everyone who does.
+ */
+export type DiscoverEmptyState = 'community_growing' | 'all_caught_up';
+
 export interface GetMatchesResponse {
     success: boolean;
     matches: Match[];
+    /** Present only when `matches` is empty. */
+    emptyState?: DiscoverEmptyState;
 }
 
 export interface Connection {
@@ -145,6 +221,7 @@ export interface GetBlockedUsersResponse {
 export interface ConnectionRequestSender {
     _id: string;
     firstName: string;
+    dateOfBirth: string;
     homeCountry: string;
     currentProvince: string;
     currentCountry: string;
@@ -320,6 +397,24 @@ export type NotificationDeviceChannel = 'web_push';
 export interface RegisterNotificationDevicePayload {
     channel: NotificationDeviceChannel;
     token: string;
+}
+
+export type AlertChannel = 'email' | 'push';
+
+export type ChannelPreferences = Record<AlertChannel, boolean>;
+
+/** Shared by Discover's Manage alerts panel and Settings → Notifications. */
+export interface NotificationPreferences {
+    newPeopleNearby: ChannelPreferences;
+}
+
+export interface NotificationPreferencesResponse {
+    success: boolean;
+    preferences: NotificationPreferences;
+}
+
+export interface UpdateNotificationPreferencesPayload {
+    newPeopleNearby: Partial<ChannelPreferences>;
 }
 
 export type {

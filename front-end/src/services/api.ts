@@ -2,6 +2,8 @@ import axios from 'axios';
 import { normalizeEmail } from '../utils/email';
 import type {
   AccountStatus,
+  ChatMediaKind,
+  ChatUploadPass,
   ChangeEmailPayload,
   ChangePasswordPayload,
   ChangeUsernamePayload,
@@ -17,6 +19,9 @@ import type {
   SubmitSupportRequestResponse,
   UpdateProfilePayload,
   RegisterNotificationDevicePayload,
+  NotificationPreferencesResponse,
+  GetConversationResponse,
+  UpdateNotificationPreferencesPayload,
   AdminAuthResponse,
   AdminFeedbackListResponse,
   AdminReportListResponse,
@@ -131,6 +136,11 @@ export const authAPI = {
     return response.data as { success: boolean; available?: boolean; message?: string };
   },
 
+  checkUsername: async (username: string) => {
+    const response = await api.post('/auth/check-username', { username });
+    return response.data as { success: boolean; available?: boolean; message?: string };
+  },
+
   logout: async () => {
     const response = await api.post('/auth/logout');
     return response.data;
@@ -194,8 +204,8 @@ export const matchingAPI = {
     return response.data;
   },
 
-  passUser: async () => {
-    const response = await api.post('/matching/pass');
+  passUser: async (userId: string) => {
+    const response = await api.post('/matching/pass', { userId });
     return response.data;
   },
 };
@@ -233,14 +243,22 @@ export const chatAPI = {
     return response.data;
   },
 
-  getConversation: async (userId: string) => {
-    const response = await api.get(`/chat/conversations/${userId}`);
+  /** With no cursor, the newest page; with the previous page's `nextCursor`, the page before it. */
+  getConversation: async (userId: string, cursor: string | null): Promise<GetConversationResponse> => {
+    const response = await api.get<GetConversationResponse>(`/chat/conversations/${userId}`, {
+      params: cursor ? { cursor } : {},
+    });
     return response.data;
   },
 
   markAsRead: async (senderId: string) => {
     const response = await api.post('/chat/messages/read', { senderId });
     return response.data;
+  },
+
+  requestUploadPass: async (receiverId: string, kind: ChatMediaKind) => {
+    const response = await api.post('/chat/attachments/sign', { receiverId, kind });
+    return response.data as { success: boolean; pass: ChatUploadPass };
   },
 };
 
@@ -252,6 +270,19 @@ export const notificationsAPI = {
 
   unregisterDevice: async (payload: RegisterNotificationDevicePayload) => {
     const response = await api.delete('/notifications/devices', { data: payload });
+    return response.data;
+  },
+
+  getPreferences: async (): Promise<NotificationPreferencesResponse> => {
+    const response = await api.get<NotificationPreferencesResponse>('/notifications/preferences');
+    return response.data;
+  },
+
+  /** Saves only the channels given; the others keep their saved value. */
+  updatePreferences: async (
+    payload: UpdateNotificationPreferencesPayload,
+  ): Promise<NotificationPreferencesResponse> => {
+    const response = await api.patch<NotificationPreferencesResponse>('/notifications/preferences', payload);
     return response.data;
   },
 };

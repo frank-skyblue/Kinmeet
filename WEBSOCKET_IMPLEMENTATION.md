@@ -102,7 +102,7 @@ Typing dots disappear
 
 | Event | Payload | Description |
 |-------|---------|-------------|
-| `chat:send_message` | `{ receiverId, content }` | Send a new message |
+| `chat:send_message` | `{ receiverId, content?, attachment?, clientMessageId? }` | Send a text message, an image (optional caption), or a voice message. `attachment` is the Cloudinary upload receipt (`id`, `version`, `signature`) plus display details; `clientMessageId` makes retries safe |
 | `chat:typing_start` | `{ receiverId }` | User started typing |
 | `chat:typing_stop` | `{ receiverId }` | User stopped typing |
 | `chat:mark_read` | `{ senderId }` | Mark messages as read |

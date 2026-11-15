@@ -18,6 +18,8 @@ const BlockSchema: Schema<IBlock> = new Schema({
 
 // Ensure unique blocks
 BlockSchema.index({ blocker: 1, blocked: 1 }, { unique: true });
+// "Who blocked me": the compound index above only serves lookups by blocker.
+BlockSchema.index({ blocked: 1 });
 
 export const Block = mongoose.model<IBlock>('Block', BlockSchema);
 

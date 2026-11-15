@@ -1,7 +1,11 @@
-import { describe, it, expect } from 'vitest';
-import { authenticationService } from '../../services/authenticationService';
+import { describe, it, expect, vi } from 'vitest';
+import bcrypt from 'bcryptjs';
+import { authenticationService, SIGN_IN_FAILED_MESSAGE, SIGN_IN_LOCKED_MESSAGE } from '../../services/authenticationService';
+import { loginLockoutService } from '../../services/loginLockoutService';
+import { LoginLockout } from '../../models/LoginLockout';
 import { User } from '../../models/User';
 import { createTestUser } from '../helpers';
+import { newPeopleAlertService } from '../../services/newPeopleAlertService';
 import jwt from 'jsonwebtoken';
 
 describe('authenticationService', () => {
@@ -20,6 +24,17 @@ describe('authenticationService', () => {
       dateOfBirth: '1990-06-15',
       gender: 'female',
     };
+
+    it('joins the Discover group and alerts it in the background', async () => {
+      const notify = vi.spyOn(newPeopleAlertService, 'notifyGroup').mockResolvedValue(0);
+
+      await authenticationService.register(validData);
+
+      const saved = await User.findOne({ email: 'new@example.com' }).select('groupJoinedAt').lean();
+      expect(saved!.groupJoinedAt).toBeInstanceOf(Date);
+      expect(notify).toHaveBeenCalledWith({ homeCountry: 'France', currentCountry: 'Canada' });
+      notify.mockRestore();
+    });
 
     it('registers a new user and returns a token', async () => {
       const result = await authenticationService.register(validData);
@@ -241,9 +256,52 @@ describe('authenticationService', () => {
           username: 'taken_name',
         }),
       ).rejects.toMatchObject({
-        statusCode: 400,
-        message: 'Username is already taken',
+        statusCode: 409,
+        message: 'This username is already taken.',
       });
+    });
+
+    it('treats usernames as case-insensitive', async () => {
+      await authenticationService.register({ ...validData, username: 'albert' });
+
+      await expect(
+        authenticationService.register({ ...validData, email: 'second@example.com', username: 'Albert' }),
+      ).rejects.toMatchObject({ statusCode: 409, message: 'This username is already taken.' });
+    });
+
+    it('generates a username when the field is empty', async () => {
+      const result = await authenticationService.register({ ...validData, username: '' });
+
+      expect(result.user?.username).toMatch(/^[a-z0-9_]{3,30}$/);
+    });
+
+    it('lets only one of two simultaneous sign-ups claim the same username', async () => {
+      await User.init(); // make sure the unique index exists in the in-memory database
+
+      const results = await Promise.allSettled([
+        authenticationService.register({ ...validData, email: 'one@example.com', username: 'race_name' }),
+        authenticationService.register({ ...validData, email: 'two@example.com', username: 'race_name' }),
+      ]);
+
+      expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
+      const rejected = results.find((r): r is PromiseRejectedResult => r.status === 'rejected');
+      expect(rejected?.reason).toMatchObject({ statusCode: 409, message: 'This username is already taken.' });
+      expect(await User.countDocuments({ username: 'race_name' })).toBe(1);
+    });
+
+    it('picks another generated username when two sign-ups generate the same one at once', async () => {
+      await User.init();
+      vi.spyOn(Math, 'random').mockReturnValue(0.5); // both sign-ups generate the same candidate
+
+      const results = await Promise.allSettled([
+        authenticationService.register({ ...validData, email: 'gen1@example.com', username: undefined }),
+        authenticationService.register({ ...validData, email: 'gen2@example.com', username: undefined }),
+      ]);
+
+      expect(results.every((r) => r.status === 'fulfilled')).toBe(true);
+      const usernames = (await User.find({ email: /^gen/ })).map((u) => u.username);
+      expect(new Set(usernames).size).toBe(2);
+      vi.restoreAllMocks();
     });
   });
 
@@ -320,11 +378,12 @@ describe('authenticationService', () => {
         }),
       ).rejects.toMatchObject({
         statusCode: 401,
-        message: 'Invalid credentials',
+        message: SIGN_IN_FAILED_MESSAGE,
       });
     });
 
     it('rejects nonexistent email', async () => {
+      const compare = vi.spyOn(bcrypt, 'compare');
       await expect(
         authenticationService.login({
           email: 'ghost@test.com',
@@ -332,8 +391,89 @@ describe('authenticationService', () => {
         }),
       ).rejects.toMatchObject({
         statusCode: 401,
-        message: 'Invalid credentials',
+        message: SIGN_IN_FAILED_MESSAGE,
       });
+      expect(compare).toHaveBeenCalled();
+      expect(await User.exists({ email: 'ghost@test.com' })).toBeNull();
+      compare.mockRestore();
+    });
+
+    it('does not sign in when the unknown-email password hash matches', async () => {
+      await expect(
+        authenticationService.login({
+          email: 'ghost-match@test.com',
+          password: 'kinmeet-unknown-email-lockout-dummy-not-a-password',
+        }),
+      ).rejects.toMatchObject({
+        statusCode: 401,
+        message: SIGN_IN_FAILED_MESSAGE,
+      });
+    });
+
+    it('still rejects a wrong password when the security log throws', async () => {
+      await createTestUser({ email: 'log-down@test.com', password: 'TestPass123' });
+      const info = vi.spyOn(console, 'info').mockImplementation(() => {
+        throw new Error('log down');
+      });
+
+      await expect(
+        authenticationService.login({
+          email: 'log-down@test.com',
+          password: 'WrongPass1',
+        }),
+      ).rejects.toMatchObject({
+        statusCode: 401,
+        message: SIGN_IN_FAILED_MESSAGE,
+      });
+      info.mockRestore();
+    });
+
+    it('does not issue a token when a lock lands during the password check', async () => {
+      const email = 'race@test.com';
+      await createTestUser({ email, password: 'TestPass123' });
+
+      let releaseCompare: (value: boolean) => void = () => undefined;
+      const gate = new Promise<boolean>((resolve) => {
+        releaseCompare = resolve;
+      });
+      let markStarted: () => void = () => undefined;
+      const started = new Promise<void>((resolve) => {
+        markStarted = resolve;
+      });
+      let opened = false;
+      const compare = vi.spyOn(bcrypt, 'compare').mockImplementation(() => {
+        if (!opened) {
+          opened = true;
+          markStarted();
+        }
+        return gate;
+      });
+
+      try {
+        const pending = authenticationService.login({ email, password: 'TestPass123' });
+        await started;
+
+        for (let attempt = 0; attempt < 5; attempt += 1) {
+          await loginLockoutService.recordFailure(email);
+        }
+        const locked = await LoginLockout.findOne({ email });
+        expect(locked?.lockedUntil).toBeInstanceOf(Date);
+
+        releaseCompare(true);
+        await expect(pending).rejects.toMatchObject({
+          statusCode: 401,
+          message: SIGN_IN_LOCKED_MESSAGE,
+        });
+
+        const after = await LoginLockout.findOne({ email });
+        expect(after?.failedAt.map((at) => at.getTime())).toEqual(
+          locked?.failedAt.map((at) => at.getTime()),
+        );
+        expect(after?.lockedUntil?.getTime()).toBe(locked?.lockedUntil?.getTime());
+        expect(after?.expiresAt.getTime()).toBe(locked?.expiresAt.getTime());
+      } finally {
+        compare.mockRestore();
+      }
     });
   });
 

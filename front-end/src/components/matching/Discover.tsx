@@ -1,39 +1,55 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { blockAPI, matchingAPI, getPhotoUrl } from '../../services/api';
 import { getErrorMessage } from '../../utils/error';
 import ActionMenu from '../common/ActionMenu';
 import ReportUserModal from '../common/ReportUserModal';
-import type { Match } from '../../types';
+import type { DiscoverEmptyState as EmptyStateKind, Match } from '../../types';
 import { primaryActionClass, secondaryActionClass, surfaceCardClass } from '../../constants/ui';
+import DiscoverEmptyState from './DiscoverEmptyState';
 
 const Discover: React.FC = () => {
   const [matches, setMatches] = useState<Match[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [emptyState, setEmptyState] = useState<EmptyStateKind>();
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [error, setError] = useState('');
   const [isBlocking, setIsBlocking] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    loadMatches();
-  }, []);
-
-  const loadMatches = async () => {
+  const loadMatches = useCallback(async () => {
     try {
       setIsLoading(true);
+      setLoadError('');
       const response = await matchingAPI.getMatches();
       if (response.success) {
         setMatches(response.matches);
+        setCurrentIndex(0);
+        setEmptyState(response.matches.length === 0 ? response.emptyState ?? 'all_caught_up' : undefined);
+      } else {
+        // Without this, the "load more" effect below would retry forever.
+        setLoadError('Failed to load matches');
       }
     } catch (err: unknown) {
-      setError('Failed to load matches');
+      setLoadError('Failed to load matches');
       console.error(err);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    void loadMatches();
+  }, [loadMatches]);
+
+  // Discover loads profiles in pages. At the end of one, ask the server for more; only it can
+  // say whether the group is empty or the user has seen everyone.
+  const needsMore = !isLoading && !loadError && !emptyState && currentIndex >= matches.length;
+  useEffect(() => {
+    if (needsMore) void loadMatches();
+  }, [needsMore, loadMatches]);
 
   const handleMeet = async () => {
     const currentMatch = matches[currentIndex];
@@ -71,7 +87,7 @@ const Discover: React.FC = () => {
 
   const handlePass = async () => {
     try {
-      await matchingAPI.passUser();
+      await matchingAPI.passUser(matches[currentIndex]._id);
       moveToNext();
     } catch (err: unknown) {
       setError(getErrorMessage(err, 'Failed to pass'));
@@ -98,21 +114,21 @@ const Discover: React.FC = () => {
     );
   }
 
-  if (matches.length === 0 || currentIndex >= matches.length) {
+  if (currentIndex >= matches.length) {
+    if (emptyState) return <DiscoverEmptyState kind={emptyState} />;
+
     return (
       <div className="h-full flex items-center justify-center bg-canvas px-4">
-        <div className="text-center max-w-md">
-          <div className="text-6xl mb-4">🌍</div>
-          <h2 className="text-2xl font-bold font-montserrat text-foreground mb-2">No More Matches</h2>
-          <p className="text-muted font-inter mb-6">
-            Check back later for more people from your homeland!
-          </p>
-          <button
-            onClick={loadMatches}
-            className={`${primaryActionClass} px-6 py-3 rounded-kin-sm font-semibold font-montserrat shadow-kin-soft hover:shadow-kin-medium cursor-pointer transition`}
-          >
-            Refresh
-          </button>
+        <div role="alert" className="text-center max-w-md">
+          <p className="text-foreground font-inter mb-4">{loadError || 'Loading matches...'}</p>
+          {loadError && (
+            <button
+              onClick={() => void loadMatches()}
+              className={`${primaryActionClass} px-6 py-3 rounded-kin-sm font-semibold font-montserrat shadow-kin-soft hover:shadow-kin-medium cursor-pointer transition`}
+            >
+              Try again
+            </button>
+          )}
         </div>
       </div>
     );
@@ -205,21 +221,6 @@ const Discover: React.FC = () => {
               )}
 
               <div className="space-y-1 text-xs md:text-sm font-inter">
-                {(currentMatch.educationLevel || currentMatch.graduationYear) && (
-                  <div className="flex items-center text-muted">
-                    <svg className="w-4 h-4 mr-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5zM12 14v7" />
-                    </svg>
-                    <span className="truncate">
-                      {currentMatch.educationLevel}
-                      {currentMatch.educationLevel && currentMatch.graduationYear && ' · '}
-                      {currentMatch.graduationYear && `Class of ${currentMatch.graduationYear}`}
-                    </span>
-                  </div>
-                )}
-
                 <div className="flex items-center text-muted">
                   <svg className="w-4 h-4 mr-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />

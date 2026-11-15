@@ -1,9 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { getMatches, sendMeetRequest } from '../../services/matchingService';
+import { getDiscoverEmptyState, getMatches, sendMeetRequest } from '../../services/matchingService';
 import { createTestUser } from '../helpers';
 import { Connection } from '../../models/Connection';
 import { ConnectionRequest } from '../../models/ConnectionRequest';
 import { Block } from '../../models/Block';
+import { DiscoverPass } from '../../models/DiscoverPass';
+import { User } from '../../models/User';
 
 describe('matchingService', () => {
   describe('getMatches', () => {
@@ -84,6 +86,70 @@ describe('matchingService', () => {
 
       const matches = await getMatches(userA._id.toString());
       expect(matches).toHaveLength(0);
+    });
+  });
+
+  describe('getMatches with passes', () => {
+    it('excludes people the user passed on, but not people who passed on the user', async () => {
+      const userA = await createTestUser({ email: 'a@test.com' });
+      const userB = await createTestUser({ email: 'b@test.com', firstName: 'Passed' });
+      const userC = await createTestUser({ email: 'c@test.com', firstName: 'PassedOnA' });
+      await DiscoverPass.create({ viewer: userA._id, viewed: userB._id });
+      await DiscoverPass.create({ viewer: userC._id, viewed: userA._id });
+
+      const matches = await getMatches(userA._id.toString());
+      expect(matches.map((m) => m.firstName)).toEqual(['PassedOnA']);
+    });
+
+    it('does not expose alert settings or join time of other users', async () => {
+      const userA = await createTestUser({ email: 'a@test.com' });
+      await createTestUser({ email: 'b@test.com' });
+
+      const [match] = await getMatches(userA._id.toString());
+      const json = match.toObject() as unknown as Record<string, unknown>;
+      expect(json.notificationPreferences).toBeUndefined();
+      expect(json.lastNewPeopleAlertAt).toBeUndefined();
+      expect(json.groupJoinedAt).toBeUndefined();
+    });
+  });
+
+  describe('getDiscoverEmptyState', () => {
+    it('is community_growing when no one else shares both countries', async () => {
+      const userA = await createTestUser({ email: 'a@test.com', homeCountry: 'Ukraine' });
+      await createTestUser({ email: 'b@test.com', homeCountry: 'Ukraine', currentCountry: 'Poland' });
+      await createTestUser({ email: 'c@test.com', homeCountry: 'Vietnam' });
+
+      expect(await getDiscoverEmptyState(userA._id.toString())).toBe('community_growing');
+    });
+
+    it('is all_caught_up when the group has people the user has already seen', async () => {
+      const userA = await createTestUser({ email: 'a@test.com' });
+      const passed = await createTestUser({ email: 'b@test.com' });
+      const connected = await createTestUser({ email: 'c@test.com' });
+      await DiscoverPass.create({ viewer: userA._id, viewed: passed._id });
+      await Connection.create({ user1: connected._id, user2: userA._id });
+
+      expect(await getMatches(userA._id.toString())).toHaveLength(0);
+      expect(await getDiscoverEmptyState(userA._id.toString())).toBe('all_caught_up');
+    });
+
+    it('treats blocked and deactivated people as absent from the group', async () => {
+      const userA = await createTestUser({ email: 'a@test.com' });
+      const blockedByA = await createTestUser({ email: 'b@test.com' });
+      const blockedA = await createTestUser({ email: 'c@test.com' });
+      const deactivated = await createTestUser({ email: 'd@test.com' });
+      await Block.create({ blocker: userA._id, blocked: blockedByA._id });
+      await Block.create({ blocker: blockedA._id, blocked: userA._id });
+      await User.updateOne({ _id: deactivated._id }, { accountStatus: 'deactivated' });
+
+      expect(await getDiscoverEmptyState(userA._id.toString())).toBe('community_growing');
+    });
+
+    it('ignores incomplete profiles', async () => {
+      const userA = await createTestUser({ email: 'a@test.com' });
+      await createTestUser({ email: 'b@test.com', profileComplete: false });
+
+      expect(await getDiscoverEmptyState(userA._id.toString())).toBe('community_growing');
     });
   });
 

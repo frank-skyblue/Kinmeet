@@ -51,6 +51,16 @@ KinMeet is a social networking application that connects people from the same ho
 - **Axios** for API calls
 - **Socket.io** client for real-time updates
 
+### Mobile
+- **Expo** (SDK 58) with **React Native** and **TypeScript**
+- **React Navigation** for native stacks and tabs
+- **NativeWind** (Tailwind) for styling
+- **Axios** for API calls
+- **expo-secure-store** for the session
+- **Socket.io** client for real-time updates (not connected on launch yet)
+
+iOS is the first release target. The Android package is already set in `mobile/app.config.ts`.
+
 ## 📋 Prerequisites
 
 - **Node.js 22** (managed via `.nvmrc` — see below)
@@ -101,6 +111,8 @@ ADMIN_PASS_KEY=replace_with_15+_admin_password
 CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
+# Optional: Cloudinary upload notifications for chat media (must be publicly reachable)
+# CLOUDINARY_NOTIFICATION_URL=https://api.example.com/api/chat/attachments/upload-notification
 ```
 
 > `ADMIN_PASS_KEY` is required at backend startup. It must be at least 15 characters and must not be blank or whitespace-only. The configured value is used as-is (not trimmed). Do not commit real values.
@@ -121,6 +133,21 @@ Create a `front-end/.env` file (optional):
 ```env
 VITE_API_URL=http://localhost:8080/api
 ```
+
+### Mobile app (iOS first)
+
+```bash
+cd mobile
+npm ci
+```
+
+Copy `mobile/.env.example` to `mobile/.env`:
+
+```env
+EXPO_PUBLIC_API_URL=http://localhost:8080/api
+```
+
+On an iPhone, install Expo Go and follow [mobile/README.md](mobile/README.md). `npm start` serves the JavaScript bundle. Set `EXPO_PUBLIC_API_URL` to the LAN address Metro prints (`exp://<lan-ip>:8081`), on port 8080, then restart Metro. `localhost` on the phone is the phone. `npm run ios` opens the Simulator. The Android emulator uses `http://10.0.2.2:8080/api`.
 
 ### 5. Start MongoDB
 
@@ -180,6 +207,15 @@ cd front-end
 npm test              # single run
 npm run test:watch    # watch mode
 npm run test:coverage # with coverage report
+```
+
+### Mobile Tests (Jest + React Native Testing Library)
+
+```bash
+cd mobile
+npm test              # single run
+npm run test:watch    # watch mode
+npm run typecheck
 ```
 
 ### E2E Tests (Playwright)
@@ -280,7 +316,9 @@ Kinmeet/
 ## 🔌 API Endpoints
 
 ### Authentication
-- `POST /api/auth/register` - Register a new user
+- `POST /api/auth/register` - Register a new user (`username` optional; one is generated when blank)
+- `POST /api/auth/check-email` - Check whether an email is already registered
+- `POST /api/auth/check-username` - Check whether a username is available (case-insensitive; rate-limited per IP). Returns `{ available, username }` with the lowercase form
 - `POST /api/auth/login` - Login user
 - `POST /api/auth/logout` - Logout user
 
@@ -293,9 +331,16 @@ Kinmeet/
 - `DELETE /api/profile/photo` - Remove profile photo
 
 ### Matching
-- `GET /api/matching` - Get potential matches
+- `GET /api/matching` - Get potential matches. When there are none, `emptyState` says why: `community_growing` (no one else shares your home and current country) or `all_caught_up` (you've seen everyone who does)
 - `POST /api/matching/meet` - Send a Meet request
-- `POST /api/matching/pass` - Pass on a user
+- `POST /api/matching/pass` - Pass on a user (`{ userId }`); passed users are not shown again
+
+### Notifications
+- `POST /api/notifications/devices` / `DELETE /api/notifications/devices` - Register or remove this browser for push
+- `GET /api/notifications/preferences` - "New people nearby" alert settings: `{ newPeopleNearby: { email, push } }` (both off by default)
+- `PATCH /api/notifications/preferences` - Change one or both channels; only the channels sent are saved. Turning push on needs a registered device (409 otherwise)
+
+**New people nearby alerts:** when someone joins your group (same home and current country), you get an email and/or push straight away, on the channels you turned on. After that, one 6-hour cooldown covers both channels; people who join during it are sent together as one "N new people" alert. Alerts never name the person or say exactly where they live, and open Discover. Email is sent through Resend (`RESEND_API_KEY`, `EMAIL_FROM`; in development also `ENABLE_DEVELOPMENT_EMAIL=true`), push through Firebase.
 
 ### Connections
 - `GET /api/connections` - Get all connections
@@ -305,9 +350,13 @@ Kinmeet/
 
 ### Chat
 - `GET /api/chat/conversations` - Get all conversations
-- `GET /api/chat/conversations/:userId` - Get conversation with a user
-- `POST /api/chat/messages` - Send a message
+- `GET /api/chat/conversations/:userId` - Get conversation with a user (media includes signed viewing URLs)
+- `POST /api/chat/messages` - Send a message: text, an image (optional caption), or a voice message
 - `POST /api/chat/messages/read` - Mark messages as read
+- `POST /api/chat/attachments/sign` - Get a one-file upload pass (`kind: image | voice`); the browser then uploads straight to Cloudinary and sends the message with Cloudinary's receipt
+- `POST /api/chat/attachments/upload-notification` - Called by Cloudinary (signed), not the app: confirms each upload's real size and duration
+
+**Chat media flow:** the server never handles the file. It signs a pass for one private (`authenticated`) file; the browser uploads to Cloudinary and forwards the signed receipt with the message; the server verifies the receipt and returns signed viewing links. Limits: images up to 5 MB (resized to 2048 px before upload), voice messages up to 2 minutes.
 
 ### Settings
 - `PATCH /api/settings/email` - Change email (requires current password)
@@ -327,6 +376,8 @@ Kinmeet/
 - Password hashing with bcryptjs
 - JWT-based authentication with server-side revocation: each token carries the user's `tokenVersion`, and incrementing it (on account deactivation) signs out every device
 - Protected API routes
+- Per-user token bucket on protected routes (60 tokens, 1 per second, shared, in-process)
+- Push-device unregister does not consume that quota
 - CORS configuration
 - Privacy-first design (no city-level location sharing)
 

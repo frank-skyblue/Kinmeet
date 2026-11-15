@@ -1,0 +1,46 @@
+---
+description: Mobile architecture conventions
+globs: mobile/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Mobile Architecture
+
+**System map:** When you change navigation, the provider tree, global contexts, or how `services/api.ts` is organized, also update **`mobile/docs/ARCHITECTURE.md`**.
+
+## Structure
+
+- **`types/`** — shared interfaces. Never define domain types inline.
+- **`utils/`** — shared helpers (e.g. `getErrorMessage`).
+- **`constants/`** — static data and validation. Must not import from screens or components.
+- **`services/`** — API client with typed payloads. No `any`.
+- **`contexts/`** — Auth provider. Split context value and provider when a file would export both.
+- **`screens/`** — feature screens (`auth/`, `matching/`, `connections/`, `chat/`, `profile/`, `settings/`).
+- **`components/`** — shared UI (`common/`). Feature widgets land here during a port.
+- **`navigation/`** — React Navigation stacks, tabs, and param lists.
+
+## Conventions
+
+- `catch (err: unknown)` + `getErrorMessage(err)` — never `catch (err: any)`.
+- Functional state updates in async handlers: `setState(prev => ...)` to avoid stale closures.
+- Split screens over ~300 lines into smaller components with a thin screen.
+- No `any` — type payloads, catch blocks, and context values.
+- Style with NativeWind `className`. Do not add StyleSheet blocks or CSS files per screen.
+- Prefix event handlers with `handle` (e.g. `handlePress`, `handleSubmit`).
+- Add `accessibilityLabel` and `accessibilityRole` on interactive elements.
+- Don't use unnecessary `useCallback` and `useMemo`.
+- Keep Android and iOS on one Expo project. Do not add a dependency that cannot ship on both.
+- Store the session in `expo-secure-store`. Do not use `localStorage` or `AsyncStorage` for the JWT.
+
+## New Feature Checklist
+
+1. Types in `types/index.ts`
+2. API functions in `services/api.ts`
+3. Screen in the appropriate `screens/` subdirectory
+4. Route registered in `navigation/`
+
+## Testing
+
+- Always write tests for new features.
+- Always rewrite existing tests if the feature is changed.
+- Jest and React Native Testing Library. Colocate tests in `__tests__` next to the code they cover.

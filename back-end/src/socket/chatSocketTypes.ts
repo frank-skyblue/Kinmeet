@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { objectId, sendMessageSchema } from '../middleware/schemas';
 import type { chatService } from '../services/chatService';
+import type { AttachmentReceipt } from '../services/attachmentService';
 
 export const chatSendMessageSchema = sendMessageSchema;
 
@@ -12,10 +13,12 @@ export const chatMarkReadSchema = z.object({
   senderId: objectId,
 });
 
-/** Client → server: send a chat message */
+/** Client → server: send a chat message (text, an image with optional caption, or a voice message) */
 export interface ChatSendMessagePayload {
   receiverId: string;
-  content: string;
+  content?: string;
+  attachment?: AttachmentReceipt;
+  clientMessageId?: string;
 }
 
 /** Client → server: typing indicators */

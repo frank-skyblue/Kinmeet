@@ -8,7 +8,11 @@ import { connectToDatabase } from './services/mongooseService';
 import { initializeSocket } from './socket/socketServer';
 import { errorHandler } from './middleware/errorHandler';
 import { corsConfig } from './config/cors';
-import authRoutes from './routes/authRoutes';
+import { jsonBody } from './middleware/jsonBody';
+import { attachmentService } from './services/attachmentService';
+import { LoginLockout } from './models/LoginLockout';
+import { createAuthRouter } from './routes/authRoutes';
+import { NEW_PEOPLE_SWEEP_INTERVAL_MS, newPeopleAlertService } from './services/newPeopleAlertService';
 import profileRoutes from './routes/profileRoutes';
 import matchingRoutes from './routes/matchingRoutes';
 import connectionsRoutes from './routes/connectionsRoutes';
@@ -26,7 +30,7 @@ if (TRUST_PROXY_HOPS > 0) {
     app.set('trust proxy', TRUST_PROXY_HOPS);
 }
 app.use(cors(corsConfig))
-app.use(express.json())
+app.use(jsonBody)
 app.use(cookieParser())
 
 // Request logging middleware
@@ -62,7 +66,7 @@ app.head('/', (req, res) => {
 });
 
 // Routes
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', createAuthRouter());
 app.use('/api/profile', profileRoutes);
 app.use('/api/matching', matchingRoutes);
 app.use('/api/connections', connectionsRoutes);
@@ -84,10 +88,26 @@ const start = async () => {
         console.log(`   - PORT: ${PORT}`);
 
         await connectToDatabase();
+        // The unique index is part of duplicate-key retry. Do not accept traffic before it exists.
+        await LoginLockout.createIndexes();
 
         // Initialize Socket.io
         initializeSocket(httpServer);
         console.log('✅ Socket.io server initialized');
+
+        // Hourly: delete chat uploads that were never attached to a message.
+        setInterval(() => {
+            attachmentService.cleanupOrphans()
+                .then((count) => { if (count > 0) console.log(`🧹 Removed ${count} unsent chat uploads`); })
+                .catch((err) => console.error('Chat upload cleanup failed:', err));
+        }, 60 * 60 * 1000).unref();
+
+        // Every few minutes: send "new people nearby" alerts held back by a cooldown.
+        setInterval(() => {
+            newPeopleAlertService.sweep()
+                .then((count) => { if (count > 0) console.log(`🔔 Sent ${count} new people nearby alerts`); })
+                .catch((err) => console.error('New people alert sweep failed:', err));
+        }, NEW_PEOPLE_SWEEP_INTERVAL_MS).unref();
 
         // Listen with HTTP server instead of Express app
         // Render requires binding to 0.0.0.0 (all interfaces), not localhost

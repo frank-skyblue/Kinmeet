@@ -95,7 +95,7 @@ Real-time chat, connection requests, and blocking need **two logged-in users at 
 | Connections list & remove kin | **Lucia** | 9 kins |
 | Existing chats + unread badge | **Lucia** | 4 threads; **2 unread** (from Mateo & Valentina) |
 | Empty states everywhere | **Patricia** | No kins/requests/messages |
-| "No More Matches" empty state | **Lucia** | Only 1 candidate left (Patricia); Meet/Pass her → empty |
+| "You're all caught up" empty state | **Lucia** | Only 1 candidate left (Patricia); Meet/Pass her → empty |
 | Two-way chat / real-time | **Lucia** + **Mateo** | Connected + existing thread |
 | Blocked-side behavior | **Tomas** (blocked by Mateo) | Connection to Mateo was removed |
 | Sender of a pending request | any of **Alejandro…Diego (10–18)** | Each has 1 pending request to Lucia |
@@ -204,7 +204,12 @@ graph TD
 - [ ] **Password too short** (`Pass1`) → client blocks (< 8 chars).
 - [ ] **Password mismatch** (confirm differs) → client blocks.
 - [ ] **Weak-but-8-char password** on client (e.g. `password` all lowercase): client **only checks length** so it may pass Step 1 — but the **server** enforces upper+lower+digit and should reject on final submit. Verify the error surfaces. *(Known client/server mismatch — see §12.)*
-- [ ] **Username format:** enter `AB` → too short (min 3); enter `Bad-Name!` → invalid (only `a-z 0-9 _`); enter `Valid_Name` → accepted, lowercased.
+- [ ] **Username, typed:** letters appear in **lowercase** as you type (`Valid_Name` → `valid_name`); on a phone, the keyboard doesn't capitalise the first letter.
+- [ ] **Username format, explained:** `ab` → "Username must be at least 3 characters."; `bad-name!` → "Username can only contain letters, numbers, and underscores." No availability request is sent for these (check the Network tab).
+- [ ] **Username availability:** a moment after you stop typing → "Checking availability..." then "Username available" or "This username is already taken." (try a seed username, in any case: `LUCIA` finds `lucia`). Typing quickly sends **one** request, not one per letter.
+- [ ] **Username check fails:** stop the back-end and type a username → "Unable to check availability. Please try again." — never "available". **Next** stays blocked until a check succeeds or the field is cleared.
+- [ ] **Username empty:** leave it blank → no message, **Next** works, and a username is generated on registration.
+- [ ] **Taken after checking (race):** pick an available username, and before finishing sign-up claim the same name from another account (Settings) → **Create Account** returns you to **step 1** with "This username is already taken."
 - [ ] **DOB boundaries:** date input min = today−120y, max = today. Future date and >120y should be blocked.
 - [ ] **No minimum age:** a DOB making the user < 18 is **accepted** (no 18+ gate). *(Known gap — see §12.)*
 - [ ] **Required-field guards:** try to advance each step with a required field empty (first name, last name, home country, city/province, DOB, gender, ≥1 language, ≥1 looking-for) → advance is blocked with inline messaging.
@@ -215,21 +220,23 @@ graph TD
 
 ### 3.3 Login
 - [ ] Valid credentials (`lucia.martinez@example.com` / `Password123`) → `/discover`.
-- [ ] Wrong password → coral error banner "Invalid credentials".
-- [ ] Non-existent email → same generic "Invalid credentials" (no distinction between wrong email vs wrong password).
+- [ ] Wrong password → coral error banner "Unable to sign in. Please check your details and try again."
+- [ ] Non-existent email → the same message (no distinction between wrong email and wrong password).
+- [ ] Five wrong passwords within 15 minutes → "Too many unsuccessful sign-in attempts. Please try again later or reset your password." A correct password does not bypass the lock. "Forgot password?" still opens.
+- [ ] Too many failed sign-in attempts from one address → "Too many sign-in attempts from this network. Try again later." This does not say the account is locked and does not suggest a password reset.
 - [ ] Empty email / password → HTML5 required validation.
 - [ ] Email case-insensitivity: `LUCIA.MARTINEZ@EXAMPLE.COM` logs in (email is normalized/lowercased).
 - [ ] "Forgot password?" link navigates to `/forgot-password`.
 
 ### 3.4 Forgot / reset password
 **Precondition:** Logged out; back-end console visible (dev email logging) or real inbox configured.
-- [ ] `/forgot-password` → submit **known** email → success message replaces form ("check your email"), "Back to Sign In" shown.
-- [ ] Submit **unknown** email → **404 "No account found with this email."** *(Reveals whether email is registered — known privacy gap, §12.)*
+- [ ] `/forgot-password` → submit a **known or unknown** email → the same 200 and message: "If an account exists for this email, we'll send password reset instructions." "Back to Sign In" stays available. A real account can still respond more slowly because it stores a token and sends mail. That timing gap remains.
+
 - [ ] Grab the reset link: from Resend inbox, or from the back-end console log (`{WEB_APP_URL}/reset-password?token=...`).
-- [ ] Open reset link → set new password `NewPass123` (must satisfy 8+/upper/lower/digit) + confirm → success → redirected to `/login` with **green flash** "Password reset successful…".
+- [ ] Open reset link → set new password `NewPass123` (must satisfy 8+/upper/lower/digit) + confirm → success → redirected to `/login` with **green flash** "Password reset successful. You can now sign in with your new password." A completed reset saves the new password, then clears an active sign-in lock, then marks the reset token used. Those steps are separate writes.
 - [ ] Log in with the **new** password → succeeds; old password → fails.
-- [ ] **Edge:** open `/reset-password` with **no token** → "Invalid Link" + link to request a new one.
-- [ ] **Edge:** reuse a **used** token, or wait > **1 hour** for expiry → reset fails with an appropriate error (link to request a new one may appear).
+- [ ] **Edge:** open `/reset-password` with **no token** → "Invalid Link" and "This password reset link is missing or malformed." plus "Request a new link".
+- [ ] **Edge:** reuse a **used** token, or wait > **1 hour** for expiry → "This reset link has expired or is invalid." and "Request a new link".
 - [ ] **Edge:** reset-password with mismatched confirm → client blocks; weak password → client regex blocks.
 
 ### 3.5 Logout & session
@@ -279,18 +286,32 @@ graph TD
 **Precondition:** logged in as **Patricia** (clean account, many candidates). Go to `/discover`.
 - [ ] A single profile **card** shows with a remaining-count indicator.
 - [ ] Card shows photo/first name only, industry, about, education, home + current location, languages, interests, looking-for. **No last name.**
-- [ ] **Pass** → advances to next card (nothing is persisted server-side — passing is a no-op).
+- [ ] **Pass** → advances to next card and is saved server-side.
 - [ ] **Meet** → sends a connection request and advances to next card.
-- [ ] Passed users **reappear** on reload/refresh (Pass isn't remembered). *(Known — §12.)*
+- [ ] Passed users **do not reappear** on reload (Pass is remembered permanently). *(Known — §12.)*
 
-### 5.2 "No More Matches" empty state
+### 5.2 Empty states and "Notify me"
 **Precondition:** logged in as **Lucia** (she is connected to 1–9 and has requests from 10–18, leaving only Patricia).
 - [ ] `/discover` shows **exactly one** candidate (Patricia).
-- [ ] **Meet** or **Pass** her → **"No More Matches"** empty state with a **Refresh** button appears.
-- [ ] Click **Refresh** → still empty (no eligible candidates remain).
+- [ ] **Meet** or **Pass** her → **"You're all caught up"** (compass illustration) with a **Notify me** button. Reload → still caught up.
+- [ ] A user whose home + current country no one else shares → **"Your community is still growing"** (globe illustration) instead. Blocked and deactivated users don't count as "someone else".
+- [ ] **Notify me** opens the **Manage alerts** panel over Discover (no page change): back arrow, Email and Push toggles (both **off** for a new user, grey), helper text.
+- [ ] Toggle **Email** on → turns coral, **"Preferences updated."** appears, panel stays open. Back arrow → button reads **Manage alerts** with **"Email on · Push off"** under it.
+- [ ] Reopen → toggles show what was saved. Reload the page → still saved. Turn both off → button goes back to **Notify me**.
+- [ ] Toggle **Push** on → the browser asks for permission. **Block** → toggle stays off with a "blocked in this browser" message. **Allow** → turns on. *(Needs Firebase env; in dev also `VITE_ENABLE_WEB_PUSH=true`.)*
+- [ ] Stop the backend, flip a toggle → it goes back to its previous position with **"Couldn't save your change."** and **Retry**.
+- [ ] Escape also closes the panel; focus returns to the button. Check both light and dark themes.
+
+### 5.2a New people nearby alerts
+**Precondition:** user A has Email (and/or Push) on in Manage alerts. In development set `ENABLE_DEVELOPMENT_EMAIL=true` to really send email (otherwise it's logged).
+- [ ] Register user B with the **same home and current country** → A gets an email/push right away: "1 new person from {country} joined near you". It doesn't contain B's name, email or province/city. Clicking it opens `/discover`.
+- [ ] Register users C and D within the next 6 hours → no alert at once; after A's 6-hour cooldown, one alert says "2 new people…".
+- [ ] Only the channels A turned on are used. With both off, nothing is sent.
+- [ ] A user registering in a **different** group, or one A has already passed/blocked, is not counted.
+- [ ] Changing your current country in Edit Profile counts as joining the new group.
 
 ### 5.3 Matching filter edge cases
-- [ ] Register a brand-new user with **Home country ≠ Argentina** (or **Current country ≠ Canada**) → `/discover` shows **"No More Matches"** immediately (no one shares both countries).
+- [ ] Register a brand-new user with **Home country ≠ Argentina** (or **Current country ≠ Canada**) → `/discover` shows **"Your community is still growing"** immediately (no one shares both countries).
 - [ ] After you **Meet** someone, they no longer appear as a candidate (request now exists).
 - [ ] A user you've **blocked** or been **blocked by** never appears (verify with API-created blocks, §9).
 
@@ -373,6 +394,31 @@ graph TD
 - [ ] While in a thread, stop the back-end (or kill network) → header shows **"Reconnecting…"** and the input/send are **disabled**.
 - [ ] Restart back-end → indicator returns to **"Connected"** and sending re-enables.
 
+### 8.7 Photos
+**Precondition:** two connected users in two browsers (as in §8.4). Cloudinary keys configured.
+- [ ] Photo button → pick a JPEG/PNG → the photo appears at once with a progress bar, then B receives it within a few seconds. The inbox shows **"📷 Photo"**.
+- [ ] Click the photo → full-size viewer; Escape or the backdrop closes it.
+- [ ] iPhone (Safari): a HEIC photo sends and displays as a normal image.
+- [ ] **Privacy:** right-click → copy image address. The URL contains `/authenticated/s--…--/` (signed). Remove the `s--…--` part and open it → Cloudinary refuses it.
+- [ ] **GPS stripped:** send a phone photo with location data, download the delivered image, and check with `exiftool` (or an online EXIF viewer) → no GPS fields.
+- [ ] **Edge:** a file over 5 MB → "Photos must be under 5 MB", nothing uploaded. A PDF → "Please choose an image file".
+- [ ] **Edge:** turn off the network during the upload → the bubble shows **Retry / Remove**; Retry after reconnecting sends it once (no duplicate for B).
+- [ ] Refresh the page → the photo still shows (links are signed again on every load).
+
+### 8.8 Voice messages
+- [ ] Microphone button → allow the microphone → "Recording 0:03 / 2:00" → **Send** → B receives a voice bubble with waveform and length; **Play** works. The inbox shows **"🎤 Voice message · 0:03"**.
+- [ ] Record in **Chrome** and play in **Safari** (and the reverse) → plays in both (delivered as MP3).
+- [ ] **Cancel** during recording → nothing sent. A tap shorter than 1 second → "Voice message is too short".
+- [ ] Recording stops and sends by itself at **2:00**.
+- [ ] **Edge:** deny microphone permission → "Microphone access was denied…".
+- [ ] **Offline push:** with B closed, A sends a photo / voice message → B's push says "sent you a photo" / "sent you a voice message" (requires web push config).
+
+### 8.9 Media cleanup and limits (API / server)
+- [ ] `POST /api/chat/attachments/sign` for a **non-connected** user → 403. More than 30 requests in a minute → 429.
+- [ ] Sending a message with a made-up `attachment.signature` → 400 "Invalid upload receipt"; with an attachment older than 15 minutes → 410.
+- [ ] **With `CLOUDINARY_NOTIFICATION_URL` set** (public URL or tunnel): after sending, the message's `bytes`/`width`/`height` (or `durationMs`) match Cloudinary's values. A file over the limits is removed and shows "Photo unavailable" / "Voice message unavailable".
+- [ ] Delete an account that sent and received media → its chat files are gone from Cloudinary (`kinmeet-dev/chat/…` in the Media Library).
+
 ---
 
 ## 9. Blocking & reporting
@@ -409,8 +455,10 @@ Get a token by logging in via `POST /api/auth/login`, then set `Authorization: B
 - [ ] **Edge:** wrong current password → error. Email already in use → **409** conflict error. New email equal to current → rejected.
 
 ### 10.3 Change username
-- [ ] Edit → new username matching `^[a-z0-9_]{3,30}$` → save → success.
-- [ ] **Edge:** taken username → 409; invalid format → error; same as current → rejected.
+- [ ] **Edit** → the field shows your current username with "This is your current username", and **Save is disabled**.
+- [ ] Type a new name → lowercase as you type → "Checking availability..." → "Username available" → **Save** → "Username updated successfully."
+- [ ] **Edge:** a taken name (any case) → "This username is already taken.", Save disabled. A badly formatted name → the specific rule message, Save disabled. Back-end stopped → "Unable to check availability. Please try again.", Save disabled.
+- [ ] **Edge (race, API):** two accounts send `PATCH /api/settings/username` with the same new name at the same time → one 200, one **409** "This username is already taken." — never two owners.
 
 ### 10.4 Change password
 - [ ] Edit → current password + new + confirm → save → success.
@@ -453,7 +501,7 @@ Get a token by logging in via `POST /api/auth/login`, then set `Authorization: B
 
 ### 11.3 Loading, empty & error states
 - [ ] Full-screen spinner appears briefly on protected pages during auth hydration and on data-loading pages (Discover, Profile, Connections, Requests, Chat).
-- [ ] Empty states verified: Discover "No More Matches", Kins "No Kins Yet", Requests "No Pending Requests", Chat inbox "No conversations yet", Chat thread "Start the conversation".
+- [ ] Empty states verified: Discover "Your community is still growing" / "You're all caught up", Kins "No Kins Yet", Requests "No Pending Requests", Chat inbox "No conversations yet", Chat thread "Start the conversation".
 - [ ] Error feedback: form/API errors show a **coral** banner (`role="alert"`); successes show a **green** banner (`role="status"`). **No toast pop-ups** are used anywhere.
 
 ### 11.4 Accessibility spot-checks
@@ -472,9 +520,9 @@ These are **current, intended/known** behaviors — verify them, but they are **
 | 1 | **No email verification** — account is active and logged in immediately after signup. | Auth |
 | 2 | **No minimum age** — DOB under 18 is accepted. | Signup / Profile |
 | 3 | **Signup Step 1 & password-change client validation only check length / confirm-match**; strength (upper/lower/digit) is enforced by the **server**. | Auth / Settings |
-| 4 | **Forgot-password & signup email check reveal whether an email is registered** (404 vs 200 / availability). | Auth |
+| 4 | **Forgot-password returns the same 200 and message** whether or not the email is registered. A real account can still be slower (token write and email). **Signup email check** still reveals whether an email is available. | Auth |
 | 5 | **Sign Out does not invalidate the JWT** server-side (valid ~7 days); it only clears this device. Deactivation is the one action that revokes every session, by incrementing the user's `tokenVersion`. | Auth |
-| 6 | **Pass is a no-op** — passed users reappear on refresh; no server-side "passed" list. | Discovery |
+| 6 | **Pass is permanent** — passed users never return to Discover; there is no undo. | Discovery |
 | 7 | **Ignored requests are permanent** — the row is kept, so the sender can't re-request (and the pair won't re-match) until a connection removal/block clears it. | Requests |
 | 8 | **No sender "cancel request"** and **no outgoing-requests UI**. | Requests |
 | 9 | **No block/report UI** — API only. | Blocking |
@@ -484,7 +532,7 @@ These are **current, intended/known** behaviors — verify them, but they are **
 | 13 | **Messages icon is not in the mobile bottom nav** (top bar only). | Nav |
 | 14 | **No `profileComplete` gate** in the UI — seed users and new signups are all `profileComplete: true`. | Onboarding |
 | 15 | **No notification-preferences page**; web push is silent/background and requires Firebase config. | Settings |
-| 16 | **No rate limiting** on auth, messaging, or requests. | Backend-wide |
+| 16 | **User login** has a temporary account lock in MongoDB (default 5 failures / 15 minutes, then locked for 15 minutes) and a per-process IP limit (default 20 failures / 15 minutes). Instances that share the database share the lock. Each Node process counts the IP limit on its own. Existing limits on other endpoints are unchanged. | Auth |
 
 ---
 
@@ -500,12 +548,16 @@ Copy this into your run sheet and mark **Pass / Fail / N/A**.
 [ ] Forgot → reset via link → login with new password
 [ ] Reset edge (no token / used token / expired)
 [ ] Logout + protected-route redirect + refresh persistence
+[ ] Chat photo + voice message: send, receive live, play/view, survive refresh; retry after a failed upload
 [ ] Deactivate (wrong pw blocked) → second browser signed out → hidden from others → sign in → reactivate restores
+[ ] Deactivated kin: past photos/voice still visible as "Unavailable"; photo, mic and text all disabled; upload pass refused (403)
 [ ] Own profile shows age + gender + full name + Edit button
 [ ] Other profile: last name hidden until connected; shown after accept
 [ ] Profile edit save + validations; photo add/replace/remove
 [ ] Discover card stack: Meet, Pass, remaining count
-[ ] "No More Matches" (Lucia) + non-matching-country new user
+[ ] "You're all caught up" (Lucia) + "Your community is still growing" (non-matching-country new user)
+[ ] Notify me / Manage alerts: toggles save, summary, push permission, failure + Retry
+[ ] New people nearby alert on signup in the same group; grouped after the 6h cooldown
 [ ] Requests: 9 pending for Lucia; Accept → becomes kin; Ignore → gone; badges
 [ ] Re-request blocked after ignore
 [ ] Kins list (9), pagination, Message link, Remove Kin (confirm)

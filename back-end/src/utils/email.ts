@@ -26,3 +26,16 @@ export const findUserByEmail = async (email: string, select?: string): Promise<I
         email: { $regex: new RegExp(`^${escapeRegExp(normalized)}$`, 'i') },
     });
 };
+
+/** Usernames are case-insensitive: "Albert" finds the account stored as "albert". */
+export const findUserByUsername = async (username: string): Promise<IUser | null> => {
+    const normalized = normalizeEmail(username);
+    if (!normalized) return null;
+
+    const exact = await User.findOne({ username: normalized });
+    if (exact) return exact;
+
+    return User.findOne({
+        username: { $regex: new RegExp(`^${escapeRegExp(normalized)}$`, 'i') },
+    });
+}
