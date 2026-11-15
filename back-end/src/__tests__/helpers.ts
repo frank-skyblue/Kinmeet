@@ -7,7 +7,7 @@ import { errorHandler } from '../middleware/errorHandler';
 import { corsConfig } from '../config/cors';
 import { jsonBody } from '../middleware/jsonBody';
 import cors from 'cors';
-import authRoutes from '../routes/authRoutes';
+import { createAuthRouter } from '../routes/authRoutes';
 import profileRoutes from '../routes/profileRoutes';
 import matchingRoutes from '../routes/matchingRoutes';
 import connectionsRoutes from '../routes/connectionsRoutes';
@@ -25,7 +25,7 @@ export const createTestApp = () => {
   app.use(jsonBody);
   app.use(cookieParser());
 
-  app.use('/api/auth', authRoutes);
+  app.use('/api/auth', createAuthRouter());
   app.use('/api/profile', profileRoutes);
   app.use('/api/matching', matchingRoutes);
   app.use('/api/connections', connectionsRoutes);

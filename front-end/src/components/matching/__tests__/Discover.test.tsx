@@ -70,6 +70,7 @@ describe('Discover', () => {
       expect(screen.getByText('Marie')).toBeInTheDocument();
     });
     expect(screen.getByText('France')).toBeInTheDocument();
+    expect(screen.getByText(/Ontario, Canada/)).toBeInTheDocument();
   });
 
   it('shows "Your community is still growing" when no one else is in the group', async () => {

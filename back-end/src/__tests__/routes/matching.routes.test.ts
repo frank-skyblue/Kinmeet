@@ -1,9 +1,26 @@
-import { describe, it, expect } from 'vitest';
+import { afterEach, beforeEach, describe, it, expect } from 'vitest';
 import request from 'supertest';
 import { createTestApp, createTestUser, getAuthToken } from '../helpers';
 import { DiscoverPass } from '../../models/DiscoverPass';
+import {
+    createUserRateLimiter,
+    setUserRateLimiterForTests,
+} from '../../middleware/rateLimitMiddleware';
 
 const app = createTestApp();
+
+// The shared per-user bucket (60 tokens, 1/s refill) is spent inside authenticateJWT, before any
+// route-level limiter, so it would trip first in these tests. Stub it generously so each test
+// exercises the route's own limit, and restore the production limiter afterwards.
+beforeEach(() => {
+    setUserRateLimiterForTests(
+        createUserRateLimiter({ capacity: 1000, refillPerSecond: 1000 }),
+    );
+});
+
+afterEach(() => {
+    setUserRateLimiterForTests(null);
+});
 
 describe('Matching Routes', () => {
   describe('GET /api/matching', () => {
@@ -173,7 +190,10 @@ describe('Matching Routes', () => {
         expect((await pass()).status).toBe(200);
       }
 
-      expect((await pass()).status).toBe(429);
+      const blocked = await pass();
+      expect(blocked.status).toBe(429);
+      // Pin the message to the passes limiter, so a 429 from another layer cannot pass this test.
+      expect(blocked.body.message).toBe('Too many passes, please wait a moment');
     });
   });
 });

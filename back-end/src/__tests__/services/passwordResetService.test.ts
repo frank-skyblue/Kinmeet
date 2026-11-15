@@ -28,14 +28,20 @@ vi.mock('../../services/emailService', () => ({
 
 vi.mock('../../config/env', () => ({
     WEB_APP_URL: 'https://kinmeet.ca',
+    getLoginLockoutConfig: () => ({
+        maxAttempts: 5,
+        windowMs: 15 * 60 * 1000,
+        durationMs: 15 * 60 * 1000,
+    }),
 }));
 
 // ─── Import after mocks ───────────────────────────────────────────────────────
 
 import { passwordResetService } from '../../services/passwordResetService';
+import { loginLockoutService } from '../../services/loginLockoutService';
 import { User } from '../../models/User';
 import { PasswordResetToken } from '../../models/PasswordResetToken';
-import { AppError } from '../../middleware/errorHandler';
+import { LoginLockout } from '../../models/LoginLockout';
 
 // ─── Typed helpers ────────────────────────────────────────────────────────────
 
@@ -72,16 +78,61 @@ describe('passwordResetService.requestPasswordReset', () => {
         sendPasswordResetEmailMock.mockResolvedValue(undefined);
     });
 
-    it('throws AppError 404 when no user is found', async () => {
+    it('resolves without creating a token when no user is found', async () => {
         mockUser.findOne.mockResolvedValue(null);
 
         await expect(
             passwordResetService.requestPasswordReset('unknown@example.com'),
-        ).rejects.toThrow(AppError);
+        ).resolves.toBeUndefined();
+
+        expect(mockToken.deleteMany).not.toHaveBeenCalled();
+        expect(mockToken.create).not.toHaveBeenCalled();
+        expect(sendPasswordResetEmailMock).not.toHaveBeenCalled();
+    });
+
+    it('lets a failed user lookup surface as a system error', async () => {
+        mockUser.findOne.mockRejectedValue(new Error('db down'));
 
         await expect(
-            passwordResetService.requestPasswordReset('unknown@example.com'),
-        ).rejects.toMatchObject({ statusCode: 404, message: 'No account found with this email.' });
+            passwordResetService.requestPasswordReset('test@example.com'),
+        ).rejects.toThrow('db down');
+        expect(mockToken.create).not.toHaveBeenCalled();
+    });
+
+    it('resolves when storing the token fails and does not log the email or token', async () => {
+        mockUser.findOne.mockResolvedValue(makeSaveableUser() as never);
+        mockToken.create.mockRejectedValueOnce(new Error('duplicate for test@example.com token=secret-token'));
+        const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+        await expect(
+            passwordResetService.requestPasswordReset('test@example.com'),
+        ).resolves.toBeUndefined();
+
+        const logged = errorSpy.mock.calls.flat().join(' ');
+        expect(logged).toContain('store_token');
+        expect(logged).not.toContain('test@example.com');
+        expect(logged).not.toContain('secret-token');
+        expect(logged).not.toContain('duplicate for');
+        errorSpy.mockRestore();
+    });
+
+    it('resolves when sending the email fails and does not log the provider body', async () => {
+        mockUser.findOne.mockResolvedValue(makeSaveableUser() as never);
+        sendPasswordResetEmailMock.mockRejectedValueOnce(
+            new Error('Resend rejected user@example.com token=raw-token'),
+        );
+        const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+        await expect(
+            passwordResetService.requestPasswordReset('test@example.com'),
+        ).resolves.toBeUndefined();
+
+        const logged = errorSpy.mock.calls.flat().join(' ');
+        expect(logged).toContain('send_email');
+        expect(logged).not.toContain('user@example.com');
+        expect(logged).not.toContain('raw-token');
+        expect(logged).not.toContain('Resend rejected');
+        errorSpy.mockRestore();
     });
 
     it('deletes existing tokens, creates a new one, and sends the email', async () => {
@@ -199,5 +250,97 @@ describe('passwordResetService.resetPassword', () => {
         await expect(
             passwordResetService.resetPassword('any-token', 'ValidPass1'),
         ).rejects.toMatchObject({ statusCode: 404 });
+    });
+
+    it('does not release the lock or mark the token when saving the password fails, then retry completes', async () => {
+        const record = makeSaveableRecord();
+        const user = makeSaveableUser();
+        mockToken.findOne.mockResolvedValue(record as never);
+        mockUser.findById.mockResolvedValue(user as never);
+        user.save.mockRejectedValueOnce(new Error('password save failed'));
+        const release = vi.spyOn(loginLockoutService, 'releaseForPasswordReset');
+
+        await expect(
+            passwordResetService.resetPassword('raw-token', 'NewValidPass1'),
+        ).rejects.toThrow('password save failed');
+        expect(release).not.toHaveBeenCalled();
+        expect(record.save).not.toHaveBeenCalled();
+        expect(record.used).toBe(false);
+
+        user.save.mockResolvedValueOnce(undefined);
+        release.mockResolvedValueOnce(false);
+        await passwordResetService.resetPassword('raw-token', 'NewValidPass1');
+        expect(record.used).toBe(true);
+        expect(record.save).toHaveBeenCalledTimes(1);
+        release.mockRestore();
+    });
+
+    it('does not mark the token when clearing the lock fails, then retry completes', async () => {
+        const record = makeSaveableRecord();
+        const user = makeSaveableUser();
+        mockToken.findOne.mockResolvedValue(record as never);
+        mockUser.findById.mockResolvedValue(user as never);
+        const release = vi.spyOn(loginLockoutService, 'releaseForPasswordReset')
+            .mockRejectedValueOnce(new Error('lockout delete failed'));
+
+        await expect(
+            passwordResetService.resetPassword('raw-token', 'NewValidPass1'),
+        ).rejects.toThrow('lockout delete failed');
+        // The mock rejected before a delete command. This asserts call order, not a database commit.
+        expect(user.save).toHaveBeenCalledTimes(1);
+        expect(record.save).not.toHaveBeenCalled();
+        expect(record.used).toBe(false);
+
+        release.mockResolvedValueOnce(false);
+        await passwordResetService.resetPassword('raw-token', 'NewValidPass1');
+        expect(release).toHaveBeenCalledTimes(2);
+        expect(record.used).toBe(true);
+        release.mockRestore();
+    });
+
+    it('keeps the new password and cleared lock when marking the token fails, then retry marks it', async () => {
+        const record = makeSaveableRecord();
+        const user = makeSaveableUser();
+        mockToken.findOne.mockResolvedValue(record as never);
+        mockUser.findById.mockResolvedValue(user as never);
+        record.save.mockRejectedValueOnce(new Error('token save failed'));
+        const release = vi.spyOn(loginLockoutService, 'releaseForPasswordReset').mockResolvedValue(false);
+
+        await expect(
+            passwordResetService.resetPassword('raw-token', 'NewValidPass1'),
+        ).rejects.toThrow('token save failed');
+        expect(user.save).toHaveBeenCalledTimes(1);
+        expect(release).toHaveBeenCalledTimes(1);
+        expect(record.save).toHaveBeenCalledTimes(1);
+        // The rejected save did not commit the used flag. The in-memory assignment is not that commit.
+        record.used = false;
+
+        await passwordResetService.resetPassword('raw-token', 'NewValidPass1');
+        expect(record.used).toBe(true);
+        expect(record.save).toHaveBeenCalledTimes(2);
+        release.mockRestore();
+    });
+
+    it('removes an active lock and still completes when the security log throws', async () => {
+        const record = makeSaveableRecord();
+        const user = makeSaveableUser();
+        mockToken.findOne.mockResolvedValue(record as never);
+        mockUser.findById.mockResolvedValue(user as never);
+        await LoginLockout.create({
+            email: 'test@example.com',
+            failedAt: [new Date('2026-01-01T00:00:00.000Z')],
+            lockedUntil: new Date(Date.now() + 60_000),
+            justLocked: true,
+            expiresAt: new Date(Date.now() + 60_000),
+        });
+        const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {
+            throw new Error('log down');
+        });
+
+        await passwordResetService.resetPassword('raw-token', 'NewValidPass1');
+
+        expect(await LoginLockout.findOne({ email: 'test@example.com' })).toBeNull();
+        expect(record.used).toBe(true);
+        infoSpy.mockRestore();
     });
 });
