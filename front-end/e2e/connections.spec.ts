@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { calculateAgeFromDateOfBirth } from '../src/utils/age';
 import { seedTestUser, seedMeetRequest, loginAs } from './helpers';
 
 test.describe('Connection Request Flow', () => {
@@ -49,20 +50,11 @@ test.describe('Connection Request Flow', () => {
     await loginAs(page, `profile-age-${ts}@test.com`, password);
     await page.goto('/profile');
 
-    await expect(page.getByRole('heading', { name: /^age$/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('heading', { name: /profile viewer/i })).toBeVisible({ timeout: 10000 });
     await expect(page.getByText('1990-01-15')).toHaveCount(0);
 
-    const now = new Date();
-    const birthYear = 1990;
-    const birthMonth = 1;
-    const birthDay = 15;
-    let expectedAge = now.getUTCFullYear() - birthYear;
-    const todayMonth = now.getUTCMonth() + 1;
-    const todayDay = now.getUTCDate();
-    if (todayMonth < birthMonth || (todayMonth === birthMonth && todayDay < birthDay)) {
-      expectedAge -= 1;
-    }
-
+    const expectedAge = calculateAgeFromDateOfBirth('1990-01-15');
+    expect(expectedAge).not.toBeNull();
     await expect(page.getByText(String(expectedAge), { exact: true })).toBeVisible();
   });
 });
