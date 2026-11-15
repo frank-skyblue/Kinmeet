@@ -95,7 +95,10 @@ test.describe('Auth Flow', () => {
     await page.getByLabel(/^password$/i).fill('WrongPass1');
     await page.getByRole('button', { name: /sign in/i }).click();
 
-    await expect(page.getByText(/invalid|failed/i)).toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole('alert')).toHaveText(
+      'Unable to sign in. Please check your details and try again.',
+    );
+    await expect(page).toHaveURL(/\/login/);
   });
 
   test('unauthenticated user is redirected to login', async ({ page }) => {
