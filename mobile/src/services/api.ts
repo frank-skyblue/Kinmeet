@@ -1,7 +1,13 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { TOKEN_KEY } from '../constants/storage';
-import type { AuthResponse, GetProfileResponse, MessageResponse, RegisterPayload } from '../types';
+import type {
+  AuthResponse,
+  GetMatchesResponse,
+  GetProfileResponse,
+  MessageResponse,
+  RegisterPayload,
+} from '../types';
 
 const INVISIBLE_CHARS = /[\u200B-\u200D\uFEFF]/g;
 
@@ -102,6 +108,35 @@ export const authAPI = {
 export const profileAPI = {
   getProfile: async () => {
     const response = await api.get<GetProfileResponse>('/profile/me');
+    return response.data;
+  },
+};
+
+export const matchingAPI = {
+  getMatches: async () => {
+    const response = await api.get<GetMatchesResponse>('/matching');
+    return response.data;
+  },
+
+  sendMeetRequest: async (receiverId: string) => {
+    const response = await api.post<MessageResponse>('/matching/meet', { receiverId });
+    return response.data;
+  },
+
+  passUser: async (userId: string) => {
+    const response = await api.post<MessageResponse>('/matching/pass', { userId });
+    return response.data;
+  },
+};
+
+export const blockAPI = {
+  blockUser: async (userId: string) => {
+    const response = await api.post<MessageResponse>('/block/block', { userId });
+    return response.data;
+  },
+
+  reportUser: async (userId: string, reason: string, details?: string) => {
+    const response = await api.post<MessageResponse>('/block/report', { userId, reason, details });
     return response.data;
   },
 };

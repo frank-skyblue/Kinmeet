@@ -76,3 +76,36 @@ export interface MessageResponse {
   success: boolean;
   message: string;
 }
+
+// ---- Discover ----
+
+export interface Match {
+  _id: string;
+  firstName: string;
+  about?: string;
+  jobTitle?: string;
+  company?: string;
+  industry?: string;
+  educationLevel?: string;
+  graduationYear?: number;
+  homeCountry: string;
+  currentProvince: string;
+  currentCountry: string;
+  languages: string[];
+  interests: string[];
+  lookingFor: string[];
+  photo?: string;
+}
+
+/**
+ * Why Discover is empty: no one else shares both of the user's countries, or the user has
+ * already seen everyone who does.
+ */
+export type DiscoverEmptyState = 'community_growing' | 'all_caught_up';
+
+export interface GetMatchesResponse {
+  success: boolean;
+  matches: Match[];
+  /** Present only when `matches` is empty. */
+  emptyState?: DiscoverEmptyState;
+}
