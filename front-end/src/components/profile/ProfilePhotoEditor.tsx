@@ -2,7 +2,8 @@ import React from 'react';
 import { getPhotoUrl } from '../../services/api';
 
 type ProfilePhotoEditorProps = {
-  firstName: string;
+  /** Shown in the circle when there is no photo, e.g. "LM". */
+  initials: string;
   existingPhoto?: string;
   photoPreview: string | null;
   pendingPhotoFile: File | null;
@@ -14,7 +15,7 @@ type ProfilePhotoEditorProps = {
 };
 
 const ProfilePhotoEditor: React.FC<ProfilePhotoEditorProps> = ({
-  firstName,
+  initials,
   existingPhoto,
   photoPreview,
   pendingPhotoFile,
@@ -25,10 +26,11 @@ const ProfilePhotoEditor: React.FC<ProfilePhotoEditorProps> = ({
   onRemovePhoto,
 }) => {
   const hasVisiblePhoto = Boolean(photoPreview || (!pendingPhotoRemoval && existingPhoto));
+  const canRemove = Boolean(pendingPhotoFile || (existingPhoto && !pendingPhotoRemoval));
 
   return (
-    <div className="flex flex-col items-center gap-4">
-      <div className="relative group">
+    <div className="flex items-center gap-4 sm:gap-5">
+      <div className="relative shrink-0">
         {hasVisiblePhoto ? (
           <img
             src={
@@ -36,41 +38,51 @@ const ProfilePhotoEditor: React.FC<ProfilePhotoEditorProps> = ({
               (!pendingPhotoRemoval && existingPhoto ? getPhotoUrl(existingPhoto) : '')
             }
             alt="Profile"
-            className="w-28 h-28 rounded-full object-cover border-4 border-border"
+            className="h-20 w-20 rounded-full object-cover ring-1 ring-border"
           />
         ) : (
-          <div className="w-28 h-28 rounded-full border-4 border-border bg-gradient-to-br from-kin-coral to-kin-teal flex items-center justify-center text-white text-4xl font-bold font-montserrat">
-            {firstName.charAt(0)}
+          <div
+            className="flex h-20 w-20 items-center justify-center rounded-full bg-linear-to-br from-kin-coral to-kin-teal font-montserrat text-2xl font-bold text-white"
+            aria-hidden
+          >
+            {initials}
           </div>
         )}
         {isSaving && (
-          <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+          <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40">
+            <div className="h-7 w-7 animate-spin rounded-full border-b-2 border-white" />
           </div>
         )}
       </div>
-      <div className="flex flex-wrap justify-center gap-3">
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={isSaving}
-          className="px-4 py-2 text-sm font-semibold font-inter text-muted border border-kin-teal rounded-kin-sm hover:bg-kin-teal hover:text-white cursor-pointer transition disabled:opacity-50"
-          aria-label="Upload profile photo"
-        >
-          {hasVisiblePhoto ? 'Change Photo' : 'Upload Photo'}
-        </button>
-        {(pendingPhotoFile || (existingPhoto && !pendingPhotoRemoval)) && (
+
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <button
             type="button"
-            onClick={onRemovePhoto}
+            onClick={() => fileInputRef.current?.click()}
             disabled={isSaving}
-            className="px-4 py-2 text-sm font-semibold font-inter text-kin-coral-700 border border-kin-coral-200 rounded-kin-sm hover:bg-kin-coral-50 cursor-pointer transition disabled:opacity-50"
-            aria-label="Remove profile photo"
+            className="cursor-pointer rounded-kin-sm border border-border px-4 py-2 font-inter text-sm font-medium text-foreground transition hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Remove
+            {hasVisiblePhoto ? 'Change Photo' : 'Upload Photo'}
           </button>
-        )}
+          {canRemove && (
+            <button
+              type="button"
+              onClick={onRemovePhoto}
+              disabled={isSaving}
+              className="cursor-pointer font-inter text-sm font-medium text-foreground underline decoration-primary underline-offset-4 transition hover:text-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Remove
+            </button>
+          )}
+        </div>
+        <p className="mt-2 font-inter text-xs text-muted">
+          JPEG, PNG, WebP or GIF · Up to 5 MB
+          <br />
+          Photo changes apply when you save.
+        </p>
       </div>
+
       <input
         ref={fileInputRef}
         type="file"
@@ -79,9 +91,6 @@ const ProfilePhotoEditor: React.FC<ProfilePhotoEditorProps> = ({
         className="hidden"
         aria-hidden="true"
       />
-      <p className="text-xs text-muted font-inter text-center">
-        JPEG, PNG, WebP, or GIF. Max 5 MB. Photo updates apply when you save.
-      </p>
     </div>
   );
 };
