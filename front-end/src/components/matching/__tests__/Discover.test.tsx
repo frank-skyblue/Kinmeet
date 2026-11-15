@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { ThemeContext } from '../../../contexts/theme-context';
 import Discover from '../Discover';
 
 const mockMatches = [
@@ -50,11 +51,24 @@ import { matchingAPI } from '../../../services/api';
 import { render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 
+/**
+ * Placeholder theme context: the card only reads `isDark()`, so a light-theme
+ * stub satisfies the hook without localStorage or document side effects.
+ */
+const themeStub = {
+  theme: 'light' as const,
+  setTheme: vi.fn(),
+  isDark: () => false,
+  isLight: () => true,
+};
+
 const renderDiscover = () =>
   render(
-    <MemoryRouter>
-      <Discover />
-    </MemoryRouter>,
+    <ThemeContext.Provider value={themeStub}>
+      <MemoryRouter>
+        <Discover />
+      </MemoryRouter>
+    </ThemeContext.Provider>,
   );
 
 describe('Discover', () => {
@@ -69,7 +83,10 @@ describe('Discover', () => {
     await waitFor(() => {
       expect(screen.getByText('Marie')).toBeInTheDocument();
     });
-    expect(screen.getByText('France')).toBeInTheDocument();
+    // The card shows the home country as a flag plus screen-reader text, and the
+    // current place as "Province, Country".
+    expect(screen.getByText('Home country: France')).toBeInTheDocument();
+    expect(screen.getByText('Ontario, Canada')).toBeInTheDocument();
   });
 
   it('shows "Your community is still growing" when no one else is in the group', async () => {
