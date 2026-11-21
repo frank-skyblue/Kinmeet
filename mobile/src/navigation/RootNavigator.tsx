@@ -1,4 +1,5 @@
 import { ActivityIndicator, View } from 'react-native';
+import { ConnectionRequestsProvider } from '../contexts/ConnectionRequestsProvider';
 import { useAuth } from '../contexts/useAuth';
 import { AuthStack } from './AuthStack';
 import { MainTabs } from './MainTabs';
@@ -18,5 +19,9 @@ export const RootNavigator = () => {
     return <AuthStack />;
   }
 
-  return <MainTabs />;
+  return (
+    <ConnectionRequestsProvider>
+      <MainTabs />
+    </ConnectionRequestsProvider>
+  );
 };

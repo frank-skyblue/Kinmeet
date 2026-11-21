@@ -1,7 +1,8 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@react-native-vector-icons/ionicons';
 import { COLORS } from '../constants/colors';
-import { ConnectionsScreen } from '../screens/connections/ConnectionsScreen';
+import { useConnectionRequests } from '../contexts/useConnectionRequests';
+import { ConnectionsScreen, formatBadgeCount } from '../screens/connections/ConnectionsScreen';
 import { DiscoverScreen } from '../screens/matching/DiscoverScreen';
 import { ChatStack } from './ChatStack';
 import { ProfileStack } from './ProfileStack';
@@ -10,6 +11,8 @@ import type { MainTabParamList } from './types';
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
 export const MainTabs = () => {
+  const { pendingRequestCount } = useConnectionRequests();
+
   return (
     <Tab.Navigator
       screenOptions={{
@@ -28,7 +31,21 @@ export const MainTabs = () => {
           ),
         }}
       />
-      <Tab.Screen name="Connections" component={ConnectionsScreen} />
+      <Tab.Screen
+        name="Connections"
+        component={ConnectionsScreen}
+        options={{
+          // "Kins" like the web nav; the route keeps its name.
+          title: 'Kins',
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'people' : 'people-outline'} size={size} color={color} />
+          ),
+          tabBarBadge: pendingRequestCount > 0 ? formatBadgeCount(pendingRequestCount) : undefined,
+          tabBarBadgeStyle: { backgroundColor: COLORS.coral, color: COLORS.white },
+          tabBarAccessibilityLabel:
+            pendingRequestCount > 0 ? `Kins, ${pendingRequestCount} pending requests` : 'Kins',
+        }}
+      />
       <Tab.Screen name="Chat" component={ChatStack} />
       <Tab.Screen
         name="Profile"

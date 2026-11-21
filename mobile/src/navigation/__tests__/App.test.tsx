@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import App from '../../../App';
-import { authAPI, matchingAPI, profileAPI } from '../../services/api';
+import { authAPI, connectionsAPI, matchingAPI, profileAPI } from '../../services/api';
 import { TOKEN_KEY, USER_KEY } from '../../constants/storage';
 import type { User, UserProfile } from '../../types';
 
@@ -26,6 +26,9 @@ jest.mock('../../services/api', () => ({
   },
   profileAPI: {
     getProfile: jest.fn(),
+  },
+  connectionsAPI: {
+    getConnectionRequests: jest.fn(() => Promise.resolve({ success: true, requests: [] })),
   },
   matchingAPI: {
     getMatches: jest.fn(() =>
@@ -208,5 +211,31 @@ describe('App navigation', () => {
       expect(await screen.findByText('Lucia Martinez')).toBeTruthy();
       expect(screen.queryByText('other-1')).toBeNull();
     });
+  });
+
+  test('the Kins tab shows how many requests are pending', async () => {
+    mockMemory.set(TOKEN_KEY, 'test-token');
+    mockMemory.set(USER_KEY, JSON.stringify(storedUser));
+    const request = (id: string) => ({
+      _id: id,
+      createdAt: '2026-11-01T00:00:00.000Z',
+      sender: {
+        _id: `sender-${id}`,
+        firstName: 'Pierre',
+        homeCountry: 'France',
+        currentProvince: 'Ontario',
+        currentCountry: 'Canada',
+        languages: [],
+        interests: [],
+        lookingFor: [],
+      },
+    });
+    jest
+      .mocked(connectionsAPI.getConnectionRequests)
+      .mockResolvedValue({ success: true, requests: [request('r1'), request('r2'), request('r3')] });
+
+    await render(<App />);
+
+    expect(await screen.findByLabelText('Kins, 3 pending requests')).toBeTruthy();
   });
 });

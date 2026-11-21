@@ -3,6 +3,8 @@ import * as SecureStore from 'expo-secure-store';
 import { TOKEN_KEY } from '../constants/storage';
 import type {
   AuthResponse,
+  GetConnectionRequestsResponse,
+  GetConnectionsResponse,
   GetMatchesResponse,
   GetProfileResponse,
   MessageResponse,
@@ -125,6 +127,33 @@ export const matchingAPI = {
 
   passUser: async (userId: string) => {
     const response = await api.post<MessageResponse>('/matching/pass', { userId });
+    return response.data;
+  },
+};
+
+export const connectionsAPI = {
+  getConnections: async () => {
+    const response = await api.get<GetConnectionsResponse>('/connections');
+    return response.data;
+  },
+
+  getConnectionRequests: async () => {
+    const response = await api.get<GetConnectionRequestsResponse>('/connections/requests');
+    return response.data;
+  },
+
+  acceptRequest: async (requestId: string) => {
+    const response = await api.post<MessageResponse>(`/connections/requests/${requestId}/accept`);
+    return response.data;
+  },
+
+  ignoreRequest: async (requestId: string) => {
+    const response = await api.post<MessageResponse>(`/connections/requests/${requestId}/ignore`);
+    return response.data;
+  },
+
+  removeConnection: async (otherUserId: string) => {
+    const response = await api.delete<MessageResponse>(`/connections/${otherUserId}`);
     return response.data;
   },
 };
