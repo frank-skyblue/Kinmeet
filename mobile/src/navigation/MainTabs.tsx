@@ -1,6 +1,8 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import { Ionicons } from '@react-native-vector-icons/ionicons';
 import { COLORS } from '../constants/colors';
+import { useChatInbox } from '../contexts/useChatInbox';
 import { useConnectionRequests } from '../contexts/useConnectionRequests';
 import { ConnectionsScreen, formatBadgeCount } from '../screens/connections/ConnectionsScreen';
 import { DiscoverScreen } from '../screens/matching/DiscoverScreen';
@@ -12,6 +14,7 @@ const Tab = createBottomTabNavigator<MainTabParamList>();
 
 export const MainTabs = () => {
   const { pendingRequestCount } = useConnectionRequests();
+  const { unreadConversationCount } = useChatInbox();
 
   return (
     <Tab.Navigator
@@ -46,7 +49,29 @@ export const MainTabs = () => {
             pendingRequestCount > 0 ? `Kins, ${pendingRequestCount} pending requests` : 'Kins',
         }}
       />
-      <Tab.Screen name="Chat" component={ChatStack} />
+      <Tab.Screen
+        name="Chat"
+        component={ChatStack}
+        options={({ route }) => ({
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons
+              name={focused ? 'chatbubble-ellipses' : 'chatbubble-ellipses-outline'}
+              size={size}
+              color={color}
+            />
+          ),
+          tabBarBadge:
+            unreadConversationCount > 0 ? formatBadgeCount(unreadConversationCount) : undefined,
+          tabBarBadgeStyle: { backgroundColor: COLORS.coral, color: COLORS.white },
+          tabBarAccessibilityLabel:
+            unreadConversationCount > 0
+              ? `Chat, ${unreadConversationCount} unread conversations`
+              : 'Chat',
+          // A conversation uses the whole screen, with the message box where the tab bar was.
+          tabBarStyle:
+            getFocusedRouteNameFromRoute(route) === 'ChatThread' ? { display: 'none' } : undefined,
+        })}
+      />
       <Tab.Screen
         name="Profile"
         component={ProfileStack}

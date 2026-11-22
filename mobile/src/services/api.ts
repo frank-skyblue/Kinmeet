@@ -7,7 +7,10 @@ import type {
   GetConnectionsResponse,
   GetMatchesResponse,
   AvailabilityResponse,
+  GetConversationResponse,
+  GetConversationsResponse,
   GetProfileResponse,
+  GetUserProfileResponse,
   MessageResponse,
   RegisterPayload,
 } from '../types';
@@ -130,6 +133,11 @@ export const profileAPI = {
     return response.data;
   },
 
+  getUserProfile: async (userId: string) => {
+    const response = await api.get<GetUserProfileResponse>(`/profile/${userId}`);
+    return response.data;
+  },
+
   /** Uploads a local image (e.g. from expo-image-picker) as the profile photo. */
   uploadPhoto: async (photo: LocalPhoto) => {
     const formData = new FormData();
@@ -182,6 +190,27 @@ export const connectionsAPI = {
 
   removeConnection: async (otherUserId: string) => {
     const response = await api.delete<MessageResponse>(`/connections/${otherUserId}`);
+    return response.data;
+  },
+};
+
+export const chatAPI = {
+  getConversations: async () => {
+    const response = await api.get<GetConversationsResponse>('/chat/conversations');
+    return response.data;
+  },
+
+  /** With no cursor, the newest page; with the previous page's `nextCursor`, the page before it. */
+  getConversation: async (userId: string, cursor: string | null) => {
+    const response = await api.get<GetConversationResponse>(`/chat/conversations/${userId}`, {
+      params: cursor ? { cursor } : {},
+    });
+    return response.data;
+  },
+
+  /** Marks the messages `senderId` sent this user as read (clears that conversation's unread count). */
+  markAsRead: async (senderId: string) => {
+    const response = await api.post<MessageResponse>('/chat/messages/read', { senderId });
     return response.data;
   },
 };

@@ -166,3 +166,103 @@ export interface AvailabilityResponse {
   available?: boolean;
   message?: string;
 }
+
+export type ChatMessageType = 'text' | 'image' | 'voice';
+
+/** Signed viewing links, built by the server each time messages are loaded. */
+export interface ChatMediaUrls {
+  display?: string;
+  full?: string;
+  audio?: string;
+}
+
+export interface ChatAttachment {
+  /** Absent when the media was removed. */
+  urls?: ChatMediaUrls;
+  width?: number;
+  height?: number;
+  durationMs?: number;
+  removed?: boolean;
+}
+
+export interface ChatMessageUser {
+  _id: string;
+  firstName: string;
+  lastName: string;
+}
+
+export interface ChatMessage {
+  _id: string;
+  sender: ChatMessageUser;
+  receiver: ChatMessageUser;
+  /** Absent on messages created before media existed; treat as text. */
+  type?: ChatMessageType;
+  /** The text, or an image's optional caption. */
+  content?: string;
+  attachment?: ChatAttachment;
+  read: boolean;
+  createdAt: string;
+}
+
+export interface ChatConversationUser {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  photo?: string;
+  currentProvince?: string;
+  currentCountry?: string;
+  /** Set when the other account is deactivated; its name is replaced with "Unavailable". */
+  unavailable?: boolean;
+}
+
+export interface ChatConversationSummary {
+  user: ChatConversationUser | null;
+  lastMessage: ChatMessage | null;
+  unreadCount: number;
+}
+
+export interface GetConversationsResponse {
+  success: boolean;
+  conversations: ChatConversationSummary[];
+  unreadConversationCount: number;
+}
+
+/** One page of a conversation, oldest message first. */
+export interface GetConversationResponse {
+  success: boolean;
+  messages: ChatMessage[];
+  /** Pass back to get the page before this one; missing or null at the start of the conversation. */
+  nextCursor?: string | null;
+}
+
+export interface GetUserProfileResponse {
+  success: boolean;
+  user: UserProfile;
+}
+
+/** Client → server: send a text message. */
+export interface ChatSendMessagePayload {
+  receiverId: string;
+  content: string;
+}
+
+/** Client → server: typing indicators. */
+export interface ChatTypingPayload {
+  receiverId: string;
+}
+
+/** Client → server: mark the peer's messages as read. */
+export interface ChatMarkReadPayload {
+  senderId: string;
+}
+
+/** Server → client: the peer's typing state. */
+export interface ChatUserTypingPayload {
+  userId: string;
+  isTyping: boolean;
+}
+
+/** Ack from `CHAT_SOCKET_EVENTS.SEND_MESSAGE`. */
+export type ChatSendMessageAck =
+  | { success: true; message: ChatMessage }
+  | { success: false; message: string };

@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import App from '../../../App';
-import { authAPI, connectionsAPI, matchingAPI, profileAPI } from '../../services/api';
+import { authAPI, chatAPI, connectionsAPI, matchingAPI, profileAPI } from '../../services/api';
 import { TOKEN_KEY, USER_KEY } from '../../constants/storage';
 import type { User, UserProfile } from '../../types';
 
@@ -30,6 +30,11 @@ jest.mock('../../services/api', () => ({
   connectionsAPI: {
     getConnectionRequests: jest.fn(() => Promise.resolve({ success: true, requests: [] })),
   },
+  chatAPI: {
+    getConversations: jest.fn(() =>
+      Promise.resolve({ success: true, conversations: [], unreadConversationCount: 0 }),
+    ),
+  },
   matchingAPI: {
     getMatches: jest.fn(() =>
       Promise.resolve({ success: true, matches: [], emptyState: 'all_caught_up' }),
@@ -39,6 +44,18 @@ jest.mock('../../services/api', () => ({
   },
   getPhotoUrl: (photoPath: string) => photoPath,
   API_ORIGIN: 'http://localhost:8080',
+}));
+
+// No real connection in tests: a socket that never connects.
+jest.mock('../../services/socketService', () => ({
+  createChatSocket: () => ({
+    connected: false,
+    on: jest.fn(),
+    off: jest.fn(),
+    emit: jest.fn(),
+    connect: jest.fn(),
+    disconnect: jest.fn(),
+  }),
 }));
 
 const storedUser: User = {
@@ -237,5 +254,19 @@ describe('App navigation', () => {
     await render(<App />);
 
     expect(await screen.findByLabelText('Kins, 3 pending requests')).toBeTruthy();
+  });
+
+  test('the Chat tab shows how many conversations are unread', async () => {
+    mockMemory.set(TOKEN_KEY, 'test-token');
+    mockMemory.set(USER_KEY, JSON.stringify(storedUser));
+    jest.mocked(chatAPI.getConversations).mockResolvedValue({
+      success: true,
+      conversations: [],
+      unreadConversationCount: 2,
+    });
+
+    await render(<App />);
+
+    expect(await screen.findByLabelText('Chat, 2 unread conversations')).toBeTruthy();
   });
 });
