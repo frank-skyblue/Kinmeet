@@ -154,4 +154,13 @@ export interface ConnectionRequestItem {
 export interface GetConnectionRequestsResponse {
   success: boolean;
   requests: ConnectionRequestItem[];
+export interface SelectOption {
+  value: string;
+  label: string;
+}
+
+export interface AvailabilityResponse {
+  success: boolean;
+  available?: boolean;
+  message?: string;
 }

@@ -6,10 +6,17 @@ import type {
   GetConnectionRequestsResponse,
   GetConnectionsResponse,
   GetMatchesResponse,
+  AvailabilityResponse,
   GetProfileResponse,
   MessageResponse,
   RegisterPayload,
 } from '../types';
+
+export type LocalPhoto = {
+  uri: string;
+  name: string;
+  type: string;
+};
 
 const INVISIBLE_CHARS = /[\u200B-\u200D\uFEFF]/g;
 
@@ -86,6 +93,16 @@ export const authAPI = {
     return response.data;
   },
 
+  checkEmail: async (email: string) => {
+    const response = await api.post<AvailabilityResponse>('/auth/check-email', { email });
+    return response.data;
+  },
+
+  checkUsername: async (username: string) => {
+    const response = await api.post<AvailabilityResponse>('/auth/check-username', { username });
+    return response.data;
+  },
+
   register: async (data: RegisterPayload) => {
     const response = await api.post<AuthResponse>('/auth/register', data);
     return response.data;
@@ -110,6 +127,17 @@ export const authAPI = {
 export const profileAPI = {
   getProfile: async () => {
     const response = await api.get<GetProfileResponse>('/profile/me');
+    return response.data;
+  },
+
+  /** Uploads a local image (e.g. from expo-image-picker) as the profile photo. */
+  uploadPhoto: async (photo: LocalPhoto) => {
+    const formData = new FormData();
+    // React Native's FormData takes { uri, name, type } for a file; the DOM types don't know that.
+    formData.append('photo', { uri: photo.uri, name: photo.name, type: photo.type } as unknown as Blob);
+    const response = await api.post<MessageResponse>('/profile/photo', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
     return response.data;
   },
 };

@@ -15,7 +15,6 @@ const formatLongDate = (iso: string): string => {
   return date.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
 };
 
-/** "Ontario, Canada · Polish, English +1" then "From Poland", like the web card. */
 const getSummary = (connection: Connection) => {
   const location = `${connection.currentProvince}, ${connection.currentCountry}`;
   const shown = connection.languages.slice(0, 2).join(', ');
@@ -41,7 +40,6 @@ export const KinsList = ({ refreshKey, onOpenProfile, onMessage, onOpenDiscover 
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [loadError, setLoadError] = useState('');
   const [error, setError] = useState('');
-  // Remove/block in flight for this person; stops a second tap acting twice.
   const [busyUserId, setBusyUserId] = useState<string | null>(null);
   const [reportTarget, setReportTarget] = useState<{ userId: string; name: string } | null>(null);
 
