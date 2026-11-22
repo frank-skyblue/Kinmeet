@@ -10,6 +10,8 @@ import { getErrorMessage } from '../../utils/error';
 import { ActionMenu } from '../common/ActionMenu';
 import { Avatar } from '../common/Avatar';
 import { ReportUserModal } from '../common/ReportUserModal';
+import { CountryFlag } from '../common/CountryFlag';
+import { Country } from 'country-state-city';
 
 /** "Marie, 30", or just "Marie" without an age. Last names stay hidden until people connect. */
 const formatSenderName = ({ firstName, dateOfBirth }: ConnectionRequestSender) => {
@@ -199,9 +201,9 @@ export const RequestsList = ({ refreshKey, onOpenProfile }: RequestsListProps) =
               <View className="flex-row items-center gap-3 border-b border-kin-stone-300/60 pb-3">
                 <Avatar firstName={sender.firstName} photo={sender.photo} size={48} />
                 <View className="min-w-0 flex-1">
-                  <Text className="text-base font-bold text-kin-navy">{displayName}</Text>
+                  <Text className="text-base font-bold text-kin-navy">{displayName} <CountryFlag country={sender.homeCountry}/></Text>
                   <Text className="text-sm font-semibold text-kin-navy/85">
-                    📍 {sender.currentProvince}, {sender.currentCountry}
+                    📍 {sender.currentProvince}, {sender.currentCountry} <CountryFlag country={sender.currentCountry}/>
                   </Text>
                 </View>
                 <ActionMenu
