@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import App from '../../../App';
-import { authAPI, profileAPI } from '../../services/api';
+import { authAPI, connectionsAPI, matchingAPI, profileAPI } from '../../services/api';
 import { TOKEN_KEY, USER_KEY } from '../../constants/storage';
 import type { User, UserProfile } from '../../types';
 
@@ -26,6 +26,16 @@ jest.mock('../../services/api', () => ({
   },
   profileAPI: {
     getProfile: jest.fn(),
+  },
+  connectionsAPI: {
+    getConnectionRequests: jest.fn(() => Promise.resolve({ success: true, requests: [] })),
+  },
+  matchingAPI: {
+    getMatches: jest.fn(() =>
+      Promise.resolve({ success: true, matches: [], emptyState: 'all_caught_up' }),
+    ),
+    passUser: jest.fn(),
+    sendMeetRequest: jest.fn(),
   },
   getPhotoUrl: (photoPath: string) => photoPath,
   API_ORIGIN: 'http://localhost:8080',
@@ -154,5 +164,78 @@ describe('App navigation', () => {
     await waitFor(() => {
       expect(screen.getByLabelText('Email')).toBeTruthy();
     });
+  });
+
+  describe('viewing someone else from Discover', () => {
+    beforeEach(() => {
+      mockMemory.set(TOKEN_KEY, 'test-token');
+      mockMemory.set(USER_KEY, JSON.stringify(storedUser));
+      jest.mocked(matchingAPI.getMatches).mockResolvedValue({
+        success: true,
+        matches: [
+          {
+            _id: 'other-1',
+            firstName: 'Pierre',
+            homeCountry: 'France',
+            currentProvince: 'Ontario',
+            currentCountry: 'Canada',
+            languages: ['French'],
+            interests: [],
+            lookingFor: ['Friendship'],
+          },
+        ],
+      });
+    });
+
+    const viewPierre = async () => {
+      await render(<App />);
+      await fireEvent.press(await screen.findByLabelText('More actions for Pierre'));
+      await fireEvent.press(screen.getByLabelText('View Profile'));
+      await waitFor(() => expect(screen.getByText('other-1')).toBeTruthy());
+    };
+
+    test('Back returns to your own profile', async () => {
+      await viewPierre();
+
+      await fireEvent.press(screen.getByLabelText('Back'));
+
+      expect(await screen.findByText('Lucia Martinez')).toBeTruthy();
+    });
+
+    test('the Profile tab always opens your own profile', async () => {
+      await viewPierre();
+      await fireEvent.press(screen.getAllByText('Discover')[0]);
+
+      await fireEvent.press(screen.getByText('Profile'));
+
+      expect(await screen.findByText('Lucia Martinez')).toBeTruthy();
+      expect(screen.queryByText('other-1')).toBeNull();
+    });
+  });
+
+  test('the Kins tab shows how many requests are pending', async () => {
+    mockMemory.set(TOKEN_KEY, 'test-token');
+    mockMemory.set(USER_KEY, JSON.stringify(storedUser));
+    const request = (id: string) => ({
+      _id: id,
+      createdAt: '2026-11-01T00:00:00.000Z',
+      sender: {
+        _id: `sender-${id}`,
+        firstName: 'Pierre',
+        homeCountry: 'France',
+        currentProvince: 'Ontario',
+        currentCountry: 'Canada',
+        languages: [],
+        interests: [],
+        lookingFor: [],
+      },
+    });
+    jest
+      .mocked(connectionsAPI.getConnectionRequests)
+      .mockResolvedValue({ success: true, requests: [request('r1'), request('r2'), request('r3')] });
+
+    await render(<App />);
+
+    expect(await screen.findByLabelText('Kins, 3 pending requests')).toBeTruthy();
   });
 });
