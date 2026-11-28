@@ -1,4 +1,7 @@
 import { ActivityIndicator, View } from 'react-native';
+import { ChatInboxProvider } from '../contexts/ChatInboxProvider';
+import { ConnectionRequestsProvider } from '../contexts/ConnectionRequestsProvider';
+import { SocketProvider } from '../contexts/SocketProvider';
 import { useAuth } from '../contexts/useAuth';
 import { AuthStack } from './AuthStack';
 import { MainTabs } from './MainTabs';
@@ -18,5 +21,13 @@ export const RootNavigator = () => {
     return <AuthStack />;
   }
 
-  return <MainTabs />;
+  return (
+    <SocketProvider token={token}>
+      <ChatInboxProvider>
+        <ConnectionRequestsProvider>
+          <MainTabs />
+        </ConnectionRequestsProvider>
+      </ChatInboxProvider>
+    </SocketProvider>
+  );
 };
